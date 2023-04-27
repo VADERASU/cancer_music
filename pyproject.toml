@@ -1,0 +1,38 @@
+[tool.poetry]
+name = "cancer-music"
+version = "0.1.0"
+description = ""
+authors = ["Rostyslav Hnatyshyn <rostyslav.hnatyshyn@gmail.com>"]
+readme = "README.md"
+packages = [{include = "api"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+music21 = "^8.1.0"
+fastapi = "^0.95.1"
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.3.0"
+isort = "^5.12.0"
+flake8 = "^6.0.0"
+pyright = "^1.1.305"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 79
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+
+[tool.pyright]
+include = ["api", "tests"]
+exclude = [ ".venv"]
+venvPath = "."
+venv = ".venv"
+
+executionEnviornments = [{ root = "api" }]
+
