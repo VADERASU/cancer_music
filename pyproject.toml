@@ -1,21 +1,26 @@
 [tool.poetry]
-name = "cancer-music"
+name = "cancer_music"
 version = "0.1.0"
 description = ""
 authors = ["Rostyslav Hnatyshyn <rostyslav.hnatyshyn@gmail.com>"]
-readme = "README.md"
-packages = [{include = "api"}]
+readme = "readme.md"
+packages = [
+    {include="api", from="src"}, 
+    {include="processor", from="src"}
+]
 
 [tool.poetry.dependencies]
 python = "^3.10"
 music21 = "^8.1.0"
 fastapi = "^0.95.1"
+python-multipart = "^0.0.6"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.3.0"
 isort = "^5.12.0"
 flake8 = "^6.0.0"
 pyright = "^1.1.305"
+pytest = "^7.3.1"
 
 [build-system]
 requires = ["poetry-core"]
@@ -29,10 +34,10 @@ profile = "black"
 multi_line_output = 3
 
 [tool.pyright]
-include = ["api", "tests"]
+include = ["src"]
 exclude = [ ".venv"]
 venvPath = "."
 venv = ".venv"
 
-executionEnviornments = [{ root = "api" }]
+executionEnviornments = [{ root = "src" }]
 
