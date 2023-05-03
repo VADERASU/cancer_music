@@ -63,7 +63,6 @@ def subdivide(measure, element):
     new_note.duration = Duration(element.duration.quarterLength)
     # offset is number of quarter notes from beginning of measure
     measure.insertIntoNoteOrChord(offset, new_note)
-    measure.makeBeams(inPlace=True)
 
 
 def replace_rest(measure, rest):
@@ -87,6 +86,7 @@ def insertion(measure):
         replace_rest(measure, choice)
     else:
         subdivide(measure, choice)
+    measure.makeBeams(inPlace=True)
 
 
 def choose_mutation():
