@@ -12,15 +12,8 @@ def assert_expected_length(expected, notes):
         assert note.duration.quarterLength == expected
 
 
-# should tie the two notes together, a bit tricky
-# quarter note becomes two eighth notes with bar between them
-def test_subdivide_q_note():
-    pass
-
-
-# should split one eighth note and tie both eighth notes
-# to new notes
-def test_subdivide_e_note():
+# TODO: implement
+def test_replace_rest():
     pass
 
 
@@ -49,4 +42,14 @@ def test_subdivide_chord():
 @pytest.mark.usefixtures("sample_stream")
 def test_mutate(sample_stream):
     s = mutate(sample_stream)
-    s.write("musicxml", "complete.mxl")
+    s.write("musicxml", "mutant_twinkle.mxl")
+
+
+@pytest.mark.usefixtures("finale_stream")
+def test_finale_mutate(finale_stream):
+    s = mutate(finale_stream)
+    s.write("musicxml", "mutant_hbd.mxl")
+
+
+def test_correct_measure():
+    pass
