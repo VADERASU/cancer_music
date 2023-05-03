@@ -1,7 +1,8 @@
 import random
 
-from music21.note import Note
+from music21.chord import Chord
 from music21.duration import Duration
+from music21.note import Note
 from music21.stream.base import Stream
 
 
@@ -22,7 +23,8 @@ def mutate(s: Stream):
         for m in measures:
             mutation = choose_mutation()
             mutation(m)
-    s.write("musicxml", "complete.mxl")
+    s.makeNotation()
+    return s
 
 
 # do not remove, lets us skip performing mutations
@@ -30,21 +32,36 @@ def noop(_):
     pass
 
 
-def subdivide(measure, note):
+def duplicate_element(el):
+    if el.isChord:
+        c = Chord()
+        for n in el.notes:
+            c.add(Note(nameWithOctave=n.nameWithOctave))
+        return c
+    else:
+        return Note(nameWithOctave=el.nameWithOctave)
+
+
+# TODO: when subdividing quarter notes and lower,
+# a bar should be rendered between the new notes
+def subdivide(measure, element):
     # cut the note in half to make room for the new one
-    note.augmentOrDiminish(0.5, inPlace=True)
+    element.augmentOrDiminish(0.5, inPlace=True)
     # figure out where the next note will be
-    offset = note.offset + note.duration.quarterLength
+    offset = element.offset + element.duration.quarterLength
     # insert at new location with the same pitch and length
-    # as the note we subdivided
-    new_note = Note(note.name)
-    new_note.duration = Duration(note.duration.quarterLength)
-    measure.insert(offset, new_note)
+    new_note = duplicate_element(element)
+    new_note.addLyric("i")
+    new_note.duration = Duration(element.duration.quarterLength)
+    # offset is number of quarter notes from beginning of measure
+    measure.insertIntoNoteOrChord(offset, new_note)
 
 
 def replace_rest(measure, rest):
-    # figure out how to replace a rest with a note
-    pass
+    new_note = Note()
+    new_note.addLyric("r")
+    new_note.duration = Duration(rest.duration.quarterLength)
+    measure.insertIntoNoteOrChord(rest.offset, new_note)
 
 
 def insertion(measure):
