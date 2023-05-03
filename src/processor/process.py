@@ -6,7 +6,16 @@ from music21.note import Note
 from music21.stream.base import Stream
 
 
+def correct_measure(m):
+    # create chords if notes occur at the same time
+    # remove rests if a note occurs at the same time
+
+    return m
+
+
 def mutate(s: Stream):
+    # print(s.metadata.software)
+
     # a stream has seperate instruments
     # measures (1st measure contains info like time and key)
     # voice seperating notes in chords
@@ -21,6 +30,7 @@ def mutate(s: Stream):
     for p in parts:
         measures = p.getElementsByClass("Measure")
         for m in measures:
+            correct_measure(m)
             mutation = choose_mutation()
             mutation(m)
     s.makeNotation()
@@ -42,8 +52,6 @@ def duplicate_element(el):
         return Note(nameWithOctave=el.nameWithOctave)
 
 
-# TODO: when subdividing quarter notes and lower,
-# a bar should be rendered between the new notes
 def subdivide(measure, element):
     # cut the note in half to make room for the new one
     element.augmentOrDiminish(0.5, inPlace=True)
@@ -55,6 +63,7 @@ def subdivide(measure, element):
     new_note.duration = Duration(element.duration.quarterLength)
     # offset is number of quarter notes from beginning of measure
     measure.insertIntoNoteOrChord(offset, new_note)
+    measure.makeBeams(inPlace=True)
 
 
 def replace_rest(measure, rest):
