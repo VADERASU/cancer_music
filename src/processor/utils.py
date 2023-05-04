@@ -1,4 +1,8 @@
+from typing import Union
+
+from music21.chord import Chord
 from music21.meter.base import TimeSignature
+from music21.note import Note
 from music21.stream.base import Measure
 from typeguard import typechecked
 
@@ -38,3 +42,23 @@ def correct_measure(m: Measure):
             raise ValueError(
                 f"Error: Measure {m.number} too short! Is {length}, should be {ts.beatCount}."
             )
+
+
+@typechecked
+def duplicate_element(el: Union[Note, Chord]):
+    """
+    Duplicates a chord or note.
+
+    :param el: The chord or note to duplicate.
+    """
+    if isinstance(el, Chord):
+        c = Chord()
+        for n in el.notes:
+            c.add(Note(nameWithOctave=n.nameWithOctave))
+        return c
+    else:
+        return Note(nameWithOctave=el.nameWithOctave)
+
+
+def generate_random_note():
+    raise NotImplementedError()

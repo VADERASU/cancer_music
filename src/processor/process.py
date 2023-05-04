@@ -36,22 +36,6 @@ def noop(_: Stream):
 
 
 @typechecked
-def duplicate_element(el: Union[Note, Chord]):
-    """
-    Duplicates a chord or note.
-
-    :param el: The chord or note to duplicate.
-    """
-    if isinstance(el, Chord):
-        c = Chord()
-        for n in el.notes:
-            c.add(Note(nameWithOctave=n.nameWithOctave))
-        return c
-    else:
-        return Note(nameWithOctave=el.nameWithOctave)
-
-
-@typechecked
 def subdivide(measure: Measure, element: Union[Note, Chord]):
     """
     Divides a GeneralNote in half and duplicates it in place.
@@ -64,7 +48,7 @@ def subdivide(measure: Measure, element: Union[Note, Chord]):
     # figure out where the next note will be
     offset = element.offset + element.duration.quarterLength
     # insert at new location with the same pitch and length
-    new_note = duplicate_element(element)
+    new_note = utils.duplicate_element(element)
     new_note.addLyric("i")
     new_note.duration = Duration(element.duration.quarterLength)
     # offset is number of quarter notes from beginning of measure
@@ -79,7 +63,7 @@ def replace_rest(measure: Measure, element: Rest):
     :param measure: The measure containing the rest.
     :param element: The rest to replace.
     """
-    # TODO: write a function that returns a random pitch and use it here
+    # TODO: write generate_random_note in utils
     new_note = Note()
     new_note.addLyric("r")
     new_note.duration = Duration(element.duration.quarterLength)
