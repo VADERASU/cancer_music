@@ -1,3 +1,4 @@
+import copy
 import random
 from typing import Union
 
@@ -25,12 +26,12 @@ def mutate(s: Stream):
         for m in measures:
             utils.correct_measure(m)
             mutation = choose_mutation()
-            mutation(m)
+            mutation(m, p)
 
     s.makeNotation(inPlace=True)
 
 
-def noop(_: Stream):
+def noop(_: Measure, __: Stream):
     # do not remove, lets us skip performing mutations
     pass
 
@@ -71,7 +72,7 @@ def replace_rest(measure: Measure, element: Rest):
 
 
 @typechecked
-def insertion(measure: Measure):
+def insertion(measure: Measure, _: Stream):
     """
     Inserts a note into the measure, either by replacing a rest
     or subdividing an already existing note.
@@ -89,12 +90,13 @@ def insertion(measure: Measure):
 
 
 @typechecked
-def transposition(measure: Measure):
+def transposition(measure: Measure, _: Stream):
     """
     Transposes the measure by either 1 or -1 half-steps.
 
     :param measure: The measure to transpose.
     """
+    # TODO: transpose both parts at once?
     options = [-1, 1]
     choice = random.choice(options)
     # add annotation at first note of measure
@@ -104,7 +106,7 @@ def transposition(measure: Measure):
     measure.transpose(choice, inPlace=True, classFilterList=GeneralNote)
 
 
-def deletion(measure: Measure):
+def deletion(measure: Measure, _: Stream):
     """
     Replaces a random note from the measure with a rest.
     This ensures that the measures are the correct duration.
@@ -119,14 +121,19 @@ def deletion(measure: Measure):
     measure.remove(choice)
 
 
-def inversion(measure):
+def inversion(measure: Measure, _: Stream):
     # insert part of measure backwards
     pass
 
 
-def translocation(measure):
+def translocation(measure: Measure, s: Stream):
     # replace measure with another random measure
-    pass
+    measures = list(s.getElementsByClass("Measure"))
+    choice = copy.deepcopy(random.choice(measures))
+    choice.number = measure.number
+    s.replace(measure, choice)
+    n = utils.get_first_element(choice)
+    n.addLyric("tl")
 
 
 def choose_mutation():
@@ -135,5 +142,5 @@ def choose_mutation():
     """
     # TODO: choice should be made from a set of probabilities
     # instead of each mutation being equally likely
-    mutations = [noop, insertion, transposition, deletion]
+    mutations = [noop, insertion, transposition, deletion, translocation]
     return random.choice(mutations)
