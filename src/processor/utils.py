@@ -1,3 +1,4 @@
+import random
 from typing import Union
 
 from music21.chord import Chord
@@ -66,6 +67,12 @@ def duplicate_element(el: Union[Note, Chord]):
         return c
     else:
         return Note(nameWithOctave=el.nameWithOctave)
+
+
+@typechecked
+def random_note(m: Measure) -> GeneralNote:
+    elements = m.flat.notesAndRests
+    return random.choice(elements)
 
 
 def generate_random_note():

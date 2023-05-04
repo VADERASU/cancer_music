@@ -17,6 +17,22 @@ def test_replace_rest():
     pass
 
 
+def test_inversion():
+    pass
+
+
+def test_translocation():
+    pass
+
+
+def test_transposition():
+    pass
+
+
+def test_deletion():
+    pass
+
+
 def test_subdivide_note():
     s = Measure()
     n = Note("C", type="whole")
@@ -49,3 +65,6 @@ def test_mutate(sample_stream):
 def test_finale_mutate(finale_stream):
     mutate(finale_stream)
     finale_stream.write("musicxml", "mutant_hbd.mxl")
+
+
+# TODO: add a bunch of test examples to see how well the system holds up

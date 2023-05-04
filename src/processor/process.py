@@ -16,7 +16,7 @@ def mutate(s: Stream):
     """
     Main method for mutating a file.
 
-    :param s: Music21 stream containing information about the file to mutate.
+    :param s: Music21 stream for a file.
     """
     parts = s.getElementsByClass("Part")
     # TODO: can use measureOffsetMap
@@ -37,51 +37,16 @@ def noop(_: Measure, __: Stream):
 
 
 @typechecked
-def subdivide(measure: Measure, element: Union[Note, Chord]):
-    """
-    Divides a GeneralNote in half and duplicates it in place.
-
-    :param measure: Measure containing the note or chord.
-    :param element: The note or chord to subdivide.
-    """
-    # cut the note in half to make room for the new one
-    element.augmentOrDiminish(0.5, inPlace=True)
-    # figure out where the next note will be
-    offset = element.offset + element.duration.quarterLength
-    # insert at new location with the same pitch and length
-    new_note = utils.duplicate_element(element)
-    new_note.addLyric("i")
-    new_note.duration = Duration(element.duration.quarterLength)
-    # offset is number of quarter notes from beginning of measure
-    measure.insertIntoNoteOrChord(offset, new_note)
-
-
-@typechecked
-def replace_rest(measure: Measure, element: Rest):
-    """
-    Replaces a rest with a random note.
-
-    :param measure: The measure containing the rest.
-    :param element: The rest to replace.
-    """
-    # TODO: write generate_random_note in utils
-    new_note = Note()
-    new_note.addLyric("r")
-    new_note.duration = Duration(element.duration.quarterLength)
-    measure.insertIntoNoteOrChord(element.offset, new_note)
-
-
-@typechecked
 def insertion(measure: Measure, _: Stream):
     """
     Inserts a note into the measure, either by replacing a rest
     or subdividing an already existing note.
 
-    :param measure: Measure to insert a note into.
+    :param m: Measure to insert a note into.
+    :param _: Stream, unused but do not remove.
     """
     # pick a random note or rest
-    elements = list(measure.flat.notesAndRests)
-    choice = random.choice(elements)
+    choice = utils.random_note(measure)
     if isinstance(choice, Rest):
         replace_rest(measure, choice)
     else:
@@ -94,46 +59,109 @@ def transposition(measure: Measure, _: Stream):
     """
     Transposes the measure by either 1 or -1 half-steps.
 
-    :param measure: The measure to transpose.
+    :param m: The measure to transpose.
+    :param _: Stream, unused, do not remove.
     """
     # TODO: transpose both parts at once?
     options = [-1, 1]
     choice = random.choice(options)
-    # add annotation at first note of measure
-    n = utils.get_first_element(measure)
-    n.addLyric("t")
-
-    measure.transpose(choice, inPlace=True, classFilterList=GeneralNote)
+    transpose_measure(measure, choice)
 
 
+@typechecked
 def deletion(measure: Measure, _: Stream):
     """
     Replaces a random note from the measure with a rest.
     This ensures that the measures are the correct duration.
 
-    :param measure: Measure
+    :param m: Measure to delete a note from.
+    :param _: Stream, unused, do not remove.
     """
-    elements = list(measure.flat.notesAndRests)
-    choice = random.choice(elements)
-    rest = Rest(length=choice.duration.quarterLength)
-    rest.addLyric("d")
-    measure.insert(choice.offset, rest)
-    measure.remove(choice)
+    choice = utils.random_note(measure)
+    delete_note(measure, choice)
 
 
-def inversion(measure: Measure, _: Stream):
-    # insert part of measure backwards
-    pass
-
-
-def translocation(measure: Measure, s: Stream):
+@typechecked
+def translocation(m: Measure, s: Stream):
     # replace measure with another random measure
     measures = list(s.getElementsByClass("Measure"))
     choice = copy.deepcopy(random.choice(measures))
-    choice.number = measure.number
-    s.replace(measure, choice)
-    n = utils.get_first_element(choice)
-    n.addLyric("tl")
+    replace_measure(m, choice, s)
+
+
+@typechecked
+def inversion(m: Measure, _: Stream):
+    notes = m.flat.notesAndRests
+    print("------old------")
+    m.show("text")
+    ts = utils.get_time(m)
+    count = ts.beatCount
+    for n in notes:
+        new_note = copy.deepcopy(n)
+        m.insert(count - n.offset, new_note)
+        m.remove(n, recurse=True)
+    print("-----new------")
+    m.show("text")
+    n = utils.get_first_element(m)
+    n.addLyric("inv")
+
+
+@typechecked
+def transpose_measure(measure: Measure, degree: int):
+    n = utils.get_first_element(measure)
+    n.addLyric("t")
+    measure.transpose(degree, inPlace=True, classFilterList=GeneralNote)
+
+
+@typechecked
+def delete_note(m: Measure, n: GeneralNote):
+    rest = Rest(length=n.duration.quarterLength)
+    rest.addLyric("d")
+    m.insert(n.offset, rest)
+    m.remove(n, recurse=True)
+
+
+@typechecked
+def replace_measure(m: Measure, replacement: Measure, s: Stream):
+    replacement.number = m.number
+    s.replace(m, replacement)
+    first = utils.get_first_element(replacement)
+    first.addLyric("tl")
+
+
+@typechecked
+def subdivide(m: Measure, el: Union[Note, Chord]):
+    """
+    Divides a note or chord in half and duplicates it in place.
+
+    :param m: Measure containing the note or chord.
+    :param el: The note or chord to subdivide.
+    """
+    # cut the note in half to make room for the new one
+    el.augmentOrDiminish(0.5, inPlace=True)
+    # figure out where the next note will be
+    off = el.offset + el.duration.quarterLength
+    # insert at new location with the same pitch and length
+    new_el = utils.duplicate_element(el)
+    new_el.addLyric("i")
+    new_el.duration = Duration(el.duration.quarterLength)
+    # offset is number of quarter notes from beginning of measure
+    m.insertIntoNoteOrChord(off, new_el)
+
+
+@typechecked
+def replace_rest(m: Measure, r: Rest):
+    """
+    Replaces a rest with a random note.
+
+    :param m: The measure containing the rest.
+    :param r: The rest to replace.
+    """
+    # TODO: write generate_random_note in utils
+    n = Note()
+    n.addLyric("r")
+    n.duration = Duration(r.duration.quarterLength)
+    m.insertIntoNoteOrChord(r.offset, n)
 
 
 def choose_mutation():
@@ -142,5 +170,12 @@ def choose_mutation():
     """
     # TODO: choice should be made from a set of probabilities
     # instead of each mutation being equally likely
-    mutations = [noop, insertion, transposition, deletion, translocation]
+    mutations = [
+        noop,
+        insertion,
+        transposition,
+        deletion,
+        translocation,
+        # inversion,
+    ]
     return random.choice(mutations)
