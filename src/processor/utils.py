@@ -2,19 +2,27 @@ from typing import Union
 
 from music21.chord import Chord
 from music21.meter.base import TimeSignature
-from music21.note import Note
+from music21.note import GeneralNote, Note
 from music21.stream.base import Measure
 from typeguard import typechecked
 
 
 @typechecked
 def get_time(m: Measure) -> TimeSignature:
-    notes = m.flat.notesAndRests
-    ts = notes[0].getContextByClass("TimeSignature")
+    note = get_first_element(m)
+    ts = note.getContextByClass("TimeSignature")
     if isinstance(ts, TimeSignature):
         return ts
     else:
         raise ValueError(f"No time signature found for measure {m.number}.")
+
+
+@typechecked
+def get_first_element(m: Measure) -> GeneralNote:
+    notes = m.flat.notesAndRests
+    if len(notes) == 0:
+        raise ValueError(f"Error: No notes or rests in measure {m.number}.")
+    return notes[0]
 
 
 @typechecked

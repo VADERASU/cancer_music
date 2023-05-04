@@ -3,7 +3,7 @@ from typing import Union
 
 from music21.chord import Chord
 from music21.duration import Duration
-from music21.note import Note, Rest
+from music21.note import GeneralNote, Note, Rest
 from music21.stream.base import Measure, Stream
 from typeguard import typechecked
 
@@ -88,10 +88,36 @@ def insertion(measure: Measure):
     measure.makeBeams(inPlace=True)  # cleans up notation
 
 
+@typechecked
+def transposition(measure: Measure):
+    options = [-1, 1]
+    choice = random.choice(options)
+    # add annotation at first note of measure
+    n = utils.get_first_element(measure)
+    n.addLyric("t")
+
+    measure.transpose(choice, inPlace=True, classFilterList=GeneralNote)
+
+
+def deletion(measure):
+    # delete random note
+    pass
+
+
+def inversion(measure):
+    # insert part of measure backwards
+    pass
+
+
+def translocation(measure):
+    # replace measure with another random measure
+    pass
+
+
 def choose_mutation():
     """
     Randomly picks a mutation to perform on a measure.
 
     """
-    mutations = [noop, insertion]
+    mutations = [noop, insertion, transposition]
     return random.choice(mutations)
