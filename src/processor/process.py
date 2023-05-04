@@ -90,6 +90,11 @@ def insertion(measure: Measure):
 
 @typechecked
 def transposition(measure: Measure):
+    """
+    Transposes the measure by either 1 or -1 half-steps.
+
+    :param measure: The measure to transpose.
+    """
     options = [-1, 1]
     choice = random.choice(options)
     # add annotation at first note of measure
@@ -99,9 +104,19 @@ def transposition(measure: Measure):
     measure.transpose(choice, inPlace=True, classFilterList=GeneralNote)
 
 
-def deletion(measure):
-    # delete random note
-    pass
+def deletion(measure: Measure):
+    """
+    Replaces a random note from the measure with a rest.
+    This ensures that the measures are the correct duration.
+
+    :param measure: Measure
+    """
+    elements = list(measure.flat.notesAndRests)
+    choice = random.choice(elements)
+    rest = Rest(length=choice.duration.quarterLength)
+    rest.addLyric("d")
+    measure.insert(choice.offset, rest)
+    measure.remove(choice)
 
 
 def inversion(measure):
@@ -117,7 +132,8 @@ def translocation(measure):
 def choose_mutation():
     """
     Randomly picks a mutation to perform on a measure.
-
     """
-    mutations = [noop, insertion, transposition]
+    # TODO: choice should be made from a set of probabilities
+    # instead of each mutation being equally likely
+    mutations = [noop, insertion, transposition, deletion]
     return random.choice(mutations)
