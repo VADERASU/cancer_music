@@ -9,6 +9,9 @@ packages = [
     {include="processor", from="src"}
 ]
 
+[tool.poetry.scripts]
+mutate_sheet = 'processor.main:main'
+
 [tool.poetry.dependencies]
 python = "^3.10"
 music21 = "^8.1.0"

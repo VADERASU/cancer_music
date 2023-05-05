@@ -1,4 +1,6 @@
+import os
 import random
+from pathlib import Path
 from typing import Union
 
 from music21.chord import Chord
@@ -73,6 +75,27 @@ def duplicate_element(el: Union[Note, Chord]):
 def random_note(m: Measure) -> GeneralNote:
     elements = m.flat.notesAndRests
     return random.choice(elements)
+
+
+@typechecked
+def build_file_path(path: Union[Path, str]) -> Path:
+    """
+    Builds an absolute path from a string.
+
+    :param path: The name of the path.
+    :raises ValueError: If the path was empty.
+    """
+    if path == "":
+        raise ValueError("Specified path was empty.")
+
+    fp = Path(os.path.abspath(path))
+    if not fp.exists():
+        raise FileNotFoundError(f"{fp} does not exist.")
+
+    if not fp.is_file():
+        raise ValueError(f"{fp} is not a file.")
+
+    return fp
 
 
 def generate_random_note():
