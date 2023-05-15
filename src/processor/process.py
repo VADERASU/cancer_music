@@ -1,6 +1,6 @@
 import copy
 import random
-from typing import Union, Optional
+from typing import Optional, Union
 
 from music21.chord import Chord
 from music21.duration import Duration
@@ -84,7 +84,7 @@ def deletion(measure: Measure, _: Stream):
 # TODO: move these operations to another file, write tests
 @typechecked
 def translocation(m: Measure, s: Stream):
-    # replace measure with another random measure
+    # TODO: make sure translocation does not copy final bar line
     measures = list(s.getElementsByClass("Measure"))
     choice = copy.deepcopy(random.choice(measures))
     replace_measure(m, choice, s)
@@ -101,6 +101,7 @@ def inversion(m: Measure, _: Optional[Stream]):
         m.remove(n, recurse=True)
     n = utils.get_first_element(m)
     n.addLyric("inv")
+    m.makeBeams(inPlace=True)  # cleans up notation
 
 
 @typechecked
@@ -154,8 +155,7 @@ def replace_rest(m: Measure, r: Rest):
     :param m: The measure containing the rest.
     :param r: The rest to replace.
     """
-    # TODO: write generate_random_note in utils
-    n = Note()
+    n = utils.generate_note(utils.get_key(m))
     n.addLyric("r")
     n.duration = Duration(r.duration.quarterLength)
     m.insertIntoNoteOrChord(r.offset, n)

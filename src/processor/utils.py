@@ -1,9 +1,10 @@
 import os
 import random
 from pathlib import Path
-from typing import Union
+from typing import Optional, Union
 
 from music21.chord import Chord
+from music21.key import Key
 from music21.meter.base import TimeSignature
 from music21.note import GeneralNote, Note
 from music21.stream.base import Measure
@@ -18,6 +19,22 @@ def get_time(m: Measure) -> TimeSignature:
         return ts
     else:
         raise ValueError(f"No time signature found for measure {m.number}.")
+
+
+@typechecked
+def get_key(m: Measure) -> Key:
+    """
+    Gets the key of the measure. If none is found, returns C major.
+
+    :param m: Measure to get the key for.
+    :return: Key signature of the measure.
+    """
+    note = get_first_element(m)
+    key = note.getContextByClass("Key")
+    if isinstance(key, Key):
+        return key
+    else:
+        return Key('C')
 
 
 @typechecked
@@ -98,8 +115,17 @@ def build_file_path(path: Union[Path, str]) -> Path:
     return fp
 
 
-def generate_random_note():
-    raise NotImplementedError()
+def generate_note(key: Key = Key('C')):
+    """
+    Generates a random note from the optionally provided key.
+    Assumes key is C major by default.
+
+    :param key: Key to generate notes from.
+    :returns: Note picked from the scale.
+    """
+    degree = random.randint(0, 7)
+    p = key.pitchFromDegree(degree)
+    return Note(p)
 
 
 def reverse(m: Measure):
