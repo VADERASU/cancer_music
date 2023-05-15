@@ -1,7 +1,7 @@
 import os
 import random
 from pathlib import Path
-from typing import Optional, Union
+from typing import Union
 
 from music21.chord import Chord
 from music21.key import Key
@@ -13,6 +13,13 @@ from typeguard import typechecked
 
 @typechecked
 def get_time(m: Measure) -> TimeSignature:
+    """
+    Gets the time signature for a measure.
+
+    :param m: Measure to get time signature for.
+    :return: The measure's time signature.
+    :raises ValueError: Raised if no time signature exists.
+    """
     note = get_first_element(m)
     ts = note.getContextByClass("TimeSignature")
     if isinstance(ts, TimeSignature):
@@ -34,15 +41,22 @@ def get_key(m: Measure) -> Key:
     if isinstance(key, Key):
         return key
     else:
-        return Key('C')
+        return Key("C")
 
 
 @typechecked
 def get_first_element(m: Measure) -> GeneralNote:
-    notes = m.flat.notesAndRests
-    if len(notes) == 0:
+    """
+    Gets the first note from the measure.
+
+    :param m: The measure to get the first note for.
+    :return: The first note in the measure.
+    :raises ValueError: Raised if no notes or rests are present in the measure.
+    """
+    first = m.flat.notesAndRests.first()
+    if first is None:
         raise ValueError(f"Error: No notes or rests in measure {m.number}.")
-    return notes[0]
+    return first
 
 
 @typechecked
@@ -90,6 +104,12 @@ def duplicate_element(el: Union[Note, Chord]):
 
 @typechecked
 def random_note(m: Measure) -> GeneralNote:
+    """
+    Picks a random note from the measure.
+
+    :param m: The measure to pick a note from.
+    :return: A random note from the measure.
+    """
     elements = m.flat.notesAndRests
     return random.choice(elements)
 
@@ -115,7 +135,7 @@ def build_file_path(path: Union[Path, str]) -> Path:
     return fp
 
 
-def generate_note(key: Key = Key('C')):
+def generate_note(key: Key = Key("C")):
     """
     Generates a random note from the optionally provided key.
     Assumes key is C major by default.
@@ -129,6 +149,11 @@ def generate_note(key: Key = Key('C')):
 
 
 def reverse(m: Measure):
+    """
+    Returns the notes in a measure in reverse order.
+
+    :param m: The measure to get the notes from.
+    """
     notes = m.notesAndRests
     el = []
     for n in notes:

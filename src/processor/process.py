@@ -1,6 +1,6 @@
 import copy
 import random
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 from music21.chord import Chord
 from music21.duration import Duration
@@ -51,7 +51,7 @@ def insertion(measure: Measure, _: Stream):
         replace_rest(measure, choice)
     else:
         subdivide(measure, choice)
-    measure.makeBeams(inPlace=True)  # cleans up notation
+    measure.makeBeams(inPlace=True)
 
 
 @typechecked
@@ -90,6 +90,7 @@ def translocation(m: Measure, s: Stream):
     replace_measure(m, choice, s)
 
 
+# inversion still wrong
 @typechecked
 def inversion(m: Measure, _: Optional[Stream]):
     notes = m.flat.notesAndRests
@@ -101,7 +102,7 @@ def inversion(m: Measure, _: Optional[Stream]):
         m.remove(n, recurse=True)
     n = utils.get_first_element(m)
     n.addLyric("inv")
-    m.makeBeams(inPlace=True)  # cleans up notation
+    m.makeBeams(inPlace=True)
 
 
 @typechecked
@@ -161,12 +162,17 @@ def replace_rest(m: Measure, r: Rest):
     m.insertIntoNoteOrChord(r.offset, n)
 
 
-def choose_mutation():
+def choose_mutation(weights: List[float] = [0.3, 0.3, 0.15, 0.15, 0.05, 0.05]):
     """
     Randomly picks a mutation to perform on a measure.
+
+    :param weights: Weights to pick the mutations with.
+    :raises ValueError: Thrown if the weights do not sum to one.
     """
-    # TODO: choice should be made from a set of probabilities
-    # instead of each mutation being equally likely
+
+    if sum(weights) != 1.0:
+        raise ValueError("Mutation weights do not sum to 1.")
+
     mutations = [
         noop,
         insertion,
@@ -175,4 +181,5 @@ def choose_mutation():
         translocation,
         inversion,
     ]
-    return random.choice(mutations)
+    # need to return 0th element because random.choices() returns a list
+    return random.choices(mutations, weights)[0]
