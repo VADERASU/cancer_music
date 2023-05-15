@@ -100,3 +100,11 @@ def build_file_path(path: Union[Path, str]) -> Path:
 
 def generate_random_note():
     raise NotImplementedError()
+
+
+def reverse(m: Measure):
+    notes = m.notesAndRests
+    el = []
+    for n in notes:
+        el.insert(0, n)
+    return el

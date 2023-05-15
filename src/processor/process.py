@@ -1,6 +1,6 @@
 import copy
 import random
-from typing import Union
+from typing import Union, Optional
 
 from music21.chord import Chord
 from music21.duration import Duration
@@ -81,6 +81,7 @@ def deletion(measure: Measure, _: Stream):
     delete_note(measure, choice)
 
 
+# TODO: move these operations to another file, write tests
 @typechecked
 def translocation(m: Measure, s: Stream):
     # replace measure with another random measure
@@ -90,7 +91,7 @@ def translocation(m: Measure, s: Stream):
 
 
 @typechecked
-def inversion(m: Measure, _: Stream):
+def inversion(m: Measure, _: Optional[Stream]):
     notes = m.flat.notesAndRests
     print("------old------")
     m.show("text")
@@ -98,7 +99,7 @@ def inversion(m: Measure, _: Stream):
     count = ts.beatCount
     for n in notes:
         new_note = copy.deepcopy(n)
-        m.insert(count - n.offset, new_note)
+        m.insert(count - n.offset - n.quarterLength, new_note)
         m.remove(n, recurse=True)
     print("-----new------")
     m.show("text")
@@ -176,6 +177,6 @@ def choose_mutation():
         transposition,
         deletion,
         translocation,
-        # inversion,
+        inversion,
     ]
     return random.choice(mutations)

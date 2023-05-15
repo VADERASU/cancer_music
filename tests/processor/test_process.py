@@ -3,8 +3,8 @@ from music21.chord import Chord
 from music21.duration import Duration
 from music21.note import Note
 from music21.stream.base import Measure
-
-from processor.process import mutate, subdivide
+from music21.meter.base import TimeSignature
+from processor.process import inversion, mutate, subdivide
 
 
 def assert_expected_length(expected, notes):
@@ -18,7 +18,19 @@ def test_replace_rest():
 
 
 def test_inversion():
-    pass
+    m = Measure()
+    m.append(TimeSignature('4/4'))
+    m.append(Note("C", type="quarter"))
+    m.append(Note("D", type="quarter"))
+    m.append(Note("E", type="quarter"))
+    m.append(Note("F", type="quarter"))
+
+    inversion(m, None)
+
+    assert m[1].name == "F"
+    assert m[2].name == "E"
+    assert m[3].name == "D"
+    assert m[4].name == "C"
 
 
 def test_translocation():
