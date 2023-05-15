@@ -93,16 +93,12 @@ def translocation(m: Measure, s: Stream):
 @typechecked
 def inversion(m: Measure, _: Optional[Stream]):
     notes = m.flat.notesAndRests
-    print("------old------")
-    m.show("text")
     ts = utils.get_time(m)
     count = ts.beatCount
     for n in notes:
         new_note = copy.deepcopy(n)
         m.insert(count - n.offset - n.quarterLength, new_note)
         m.remove(n, recurse=True)
-    print("-----new------")
-    m.show("text")
     n = utils.get_first_element(m)
     n.addLyric("inv")
 
