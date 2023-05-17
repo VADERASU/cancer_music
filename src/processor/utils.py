@@ -5,7 +5,9 @@ from pathlib import Path
 from typing import Union
 
 from music21.chord import Chord
-from music21.key import Key
+from music21.clef import Clef
+from music21.instrument import Instrument
+from music21.key import Key, KeySignature
 from music21.meter.base import TimeSignature
 from music21.note import GeneralNote, Note, Rest
 from music21.stream.base import Measure, Part
@@ -165,6 +167,13 @@ def reverse(m: Measure):
     return el
 
 
+def get_signs(m: Measure):
+    ts = m.getElementsByClass(TimeSignature).first()
+    clef = m.getElementsByClass(Clef).first()
+    ks = m.getElementsByClass(KeySignature).first()
+    return ts, clef, ks
+
+
 def duplicate_part(p: Part) -> Part:
     """
     Duplicates a part, returning a part with the same length.
@@ -174,22 +183,26 @@ def duplicate_part(p: Part) -> Part:
     :param p: Part to duplicate.
     :return: A part of the same length with the same time changes.
     """
-    dup = Part()
 
+    dup = Part(Instrument(p.getInstrument().instrumentName))
     measures = p.getElementsByClass("Measure")
+
     for m in measures:
         dup_m = Measure()
-        # only copy over time signatures to ensure we stay in time
-        # time signatures can change over the course of a piece
-        ts = m.getElementsByClass(TimeSignature).first()
+        ts, clef, ks = get_signs(m)
+
+        if clef is not None:
+            dup_m.append(copy.deepcopy(clef))
+
+        if ks is not None:
+            dup_m.append(copy.deepcopy(ks))
+
         if ts is None:
             ts = m.getContextByClass(TimeSignature)
         else:
             dup_m.append(copy.deepcopy(ts))
 
-        # TODO: copy key signature
-        # TODO: copy final bar line
-
+        dup_m.number = m.number
         dup_m.append(Rest(length=ts.beatCount))
         dup.append(dup_m)
 
