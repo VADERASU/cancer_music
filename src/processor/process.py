@@ -1,5 +1,4 @@
 import copy
-import functools as f
 import random
 from typing import List, Optional, Union
 
@@ -56,12 +55,66 @@ def insertion(measure: Measure, _: Stream):
     :param _: Stream, unused but do not remove.
     """
     # pick a random note or rest
-    choice = utils.random_note(measure)
+    m = copy.deepcopy(measure)
+    s = utils.random_notes(m)
+    return subdivide(m, s)
 
-    # if isinstance(choice, Rest):
-    #    replace_rest(measure, choice)
-    # else:
-    #    subdivide(measure, choice)
+
+@typechecked
+def subdivide(measure: Measure, substring: List[GeneralNote]):
+    """
+    Divides a note or chord in half and duplicates it in place.
+
+    :param m: Measure containing the note or chord.
+    :param el: The note or chord to subdivide.
+    """
+    m = Measure()
+    # copy measure except for substring
+    for n in measure.notesAndRests:
+        if n not in substring:
+            m.insert(n.offset, n)
+
+    # off is where we start the substring
+
+    grouped_by_offset = {}
+    for el in substring:
+        els = grouped_by_offset.get(el.offset, None)
+        if els is None:
+            grouped_by_offset[el.offset] = [el]
+        else:
+            els.append(el)
+
+    off = None
+    for offset in grouped_by_offset.keys():
+        els = grouped_by_offset[offset]
+
+        if off is None:
+            off = offset
+
+        lengths = []
+        for el in els:
+            new_el = el.augmentOrDiminish(0.5)
+            m.insertIntoNoteOrChord(off, new_el)
+            lengths.append(new_el.duration.quarterLength)
+        off += min(lengths)
+
+    sub_offset = 0
+    for offset in grouped_by_offset.keys():
+        els = grouped_by_offset[offset]
+
+        lengths = []
+        for el in els:
+            new_el = el.augmentOrDiminish(0.5)
+            new_el.addLyric("i")
+            m.insertIntoNoteOrChord(off + sub_offset, new_el)
+            lengths.append(new_el.duration.quarterLength)
+
+        sub_offset += min(lengths)
+
+    n = utils.get_first_element(m)
+    n.addLyric(str(len(substring)))
+    m.makeBeams(inPlace=True)
+    return m
 
 
 @typechecked
@@ -99,7 +152,6 @@ def deletion(measure: Measure, _: Stream):
     """
     m = copy.deepcopy(measure)
     to_delete = utils.random_notes(m)
-
     delete_substring(m, to_delete)
 
     return m
@@ -108,11 +160,7 @@ def deletion(measure: Measure, _: Stream):
 @typechecked
 def delete_substring(m: Measure, to_delete: List[GeneralNote]):
     # sum all of the durations up and delete each note
-    length = f.reduce(
-        lambda a, b: a + b.duration.quarterLength,
-        to_delete,
-        0
-    )
+    length = utils.get_substring_length(to_delete)
     rest = Rest(length=length)
     rest.addLyric("d")
     m.insert(to_delete[0].offset, rest)
@@ -161,42 +209,7 @@ def replace_measure(m: Measure, replacement: Measure, s: Stream):
     first.addLyric("tl")
 
 
-@typechecked
-def subdivide(m: Measure, el: Union[Note, Chord]):
-    """
-    Divides a note or chord in half and duplicates it in place.
-
-    :param m: Measure containing the note or chord.
-    :param el: The note or chord to subdivide.
-    """
-    # TODO: cannot divide to less than 2048th
-    # cut the note in half to make room for the new one
-    el.augmentOrDiminish(0.5, inPlace=True)
-    # figure out where the next note will be
-    off = el.offset + el.duration.quarterLength
-    # insert at new location with the same pitch and length
-    new_el = utils.duplicate_element(el)
-    new_el.addLyric("i")
-    new_el.duration = Duration(el.duration.quarterLength)
-    # offset is number of quarter notes from beginning of measure
-    m.insertIntoNoteOrChord(off, new_el)
-
-
-@typechecked
-def replace_rest(m: Measure, r: Rest):
-    """
-    Replaces a rest with a random note.
-
-    :param m: The measure containing the rest.
-    :param r: The rest to replace.
-    """
-    n = utils.generate_note(utils.get_key(m))
-    n.addLyric("r")
-    n.duration = Duration(r.duration.quarterLength)
-    m.insertIntoNoteOrChord(r.offset, n)
-
-
-def choose_mutation(weights: List[float] = [0.5, 0.25, 0.25]):
+def choose_mutation(weights: List[float] = [0.1, 0.4, 0.25, 0.25]):
     """
     Randomly picks a mutation to perform on a measure.
 
@@ -209,7 +222,7 @@ def choose_mutation(weights: List[float] = [0.5, 0.25, 0.25]):
 
     mutations = [
         noop,
-        # insertion,
+        insertion,
         transposition,
         deletion,
         # translocation,

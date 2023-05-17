@@ -55,28 +55,43 @@ def test_delete_substring():
     assert m[2].duration.quarterLength == 1
 
 
-def test_subdivide_note():
-    s = Measure()
-    n = Note("C", type="whole")
-    expected = n.duration.quarterLength / 2
-    s.append(n)
-    subdivide(s, n)
-
-    assert_expected_length(expected, s.notes)
-    assert s.duration.quarterLength == 4.0
-
-
-def test_subdivide_chord():
-    s = Measure()
-    n = Chord("C5 E5 G5", quarterLength=4)
-    expected = n.duration.quarterLength / 2
-    s.append(n)
-    subdivide(s, n)
-
-    assert_expected_length(expected, s.notes)
-    assert s.duration.quarterLength == 4.0
+# measure we use for subdivision testing
+@pytest.fixture
+def sm():
+    m = Measure()
+    m.append(Note("C", type="quarter"))
+    m.append(Note("D", type="quarter"))
+    m.append(Note("E", type="quarter"))
+    m.append(Note("F", type="quarter"))
+    return m
 
 
+def test_subdivide_begin(sm):
+    d = sm[0:2]
+    m = subdivide(sm, d)
+    assert m[0] == Note("C", type="eighth")
+    assert m[1] == Note("D", type="eighth")
+    assert m[2] == Note("C", type="eighth")
+    assert m[3] == Note("D", type="eighth")
+    assert m[4] == Note("E", type="quarter")
+    assert m[5] == Note("F", type="quarter")
+
+
+def test_subdivide_mid(sm):
+    d = sm[1:3]
+    m = subdivide(sm, d)
+    assert m[0] == Note("C", type="quarter")
+    assert m[1] == Note("D", type="eighth")
+    assert m[2] == Note("E", type="eighth")
+    assert m[3] == Note("D", type="eighth")
+    assert m[4] == Note("E", type="eighth")
+    assert m[5] == Note("F", type="quarter")
+
+# TODO: add test with voices and chords
+
+
+# TODO: make this test compare the new measure
+# with the original
 @pytest.mark.usefixtures("streams")
 def test_mutate(streams):
     for filename, stream in streams:

@@ -1,4 +1,5 @@
 import copy
+import functools as f
 import os
 import random
 from pathlib import Path
@@ -93,22 +94,6 @@ def correct_measure(m: Measure):
 
 
 @typechecked
-def duplicate_element(el: GeneralNote) -> GeneralNote:
-    """
-    Duplicates a GeneralNote object. (Chord, Note, Rest)
-    :param el: The GeneralNote to duplicate.
-    """
-    # might be able to just get away with copy.deepcopy here...
-    if isinstance(el, Chord):
-        c = Chord()
-        for n in el.notes:
-            c.add(Note(nameWithOctave=n.nameWithOctave))
-        return c
-    else:
-        return copy.deepcopy(el)
-
-
-@typechecked
 def random_notes(m: Measure) -> List[GeneralNote]:
     """
     Picks a subset of notes from the measure.
@@ -120,6 +105,11 @@ def random_notes(m: Measure) -> List[GeneralNote]:
     start = random.randint(0, len(elements) - 1)
 
     return elements[start:]
+
+
+def get_substring_length(el: List[GeneralNote]) -> float:
+    # fails when you have multiple voices...
+    return f.reduce(lambda a, b: a + b.duration.quarterLength, el, 0)
 
 
 @typechecked
