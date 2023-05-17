@@ -71,10 +71,9 @@ def transposition(measure: Measure, _: Stream):
     :param m: The measure to transpose.
     :param _: Stream, unused, do not remove.
     """
-    # TODO: transpose both parts at once?
     options = [-1, 1]
     choice = random.choice(options)
-    transpose_measure(measure, choice)
+    return transpose_measure(measure, choice)
 
 
 @typechecked
@@ -86,8 +85,20 @@ def deletion(measure: Measure, _: Stream):
     :param m: Measure to delete a note from.
     :param _: Stream, unused, do not remove.
     """
-    choice = utils.random_note(measure)
-    delete_note(measure, choice)
+    m = copy.deepcopy(measure)
+    # TODO: function that makes a selection from all notes
+    choice = random.choice(m.flat.notes)
+    delete_note(m, choice)
+    return m
+
+
+@typechecked
+def delete_note(m: Measure, n: GeneralNote):
+    rest = Rest(length=n.duration.quarterLength)
+    rest.addLyric("d")
+
+    m.insert(n.offset, rest)
+    m.remove(n, recurse=True)
 
 
 # TODO: move these operations to another file, write tests
@@ -125,22 +136,13 @@ def inversion(m: Measure, _: Optional[Stream]):
 
 @typechecked
 def transpose_measure(measure: Measure, degree: int):
-    n = utils.get_first_element(measure)
+    transposed = measure.transpose(degree, classFilterList=GeneralNote)
+    if transposed is None:
+        raise ValueError("Measure does not exist.")
+    n = utils.get_first_element(transposed)
     n.addLyric("t")
-    measure.transpose(degree, inPlace=True, classFilterList=GeneralNote)
 
-
-@typechecked
-def delete_note(m: Measure, n: GeneralNote):
-    measure = copy.deepcopy(m)
-
-    rest = Rest(length=n.duration.quarterLength)
-    rest.addLyric("d")
-
-    measure.insert(n.offset, rest)
-    measure.remove(n, recurse=True)
-
-    return measure
+    return transposed
 
 
 @typechecked
@@ -186,7 +188,7 @@ def replace_rest(m: Measure, r: Rest):
     m.insertIntoNoteOrChord(r.offset, n)
 
 
-def choose_mutation(weights: List[float] = [1.0]):
+def choose_mutation(weights: List[float] = [0.5, 0.25, 0.25]):
     """
     Randomly picks a mutation to perform on a measure.
 
@@ -200,7 +202,7 @@ def choose_mutation(weights: List[float] = [1.0]):
     mutations = [
         noop,
         # insertion,
-        # transposition,
+        transposition,
         # deletion,
         # translocation,
         # inversion,
