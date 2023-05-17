@@ -1,39 +1,49 @@
 import copy
 import random
+from itertools import cycle
 from typing import List, Optional, Union
 
 from music21.chord import Chord
 from music21.duration import Duration
 from music21.note import GeneralNote, Note, Rest
-from music21.stream.base import Measure, Stream
+from music21.stream.base import Measure, Part, Stream
 from typeguard import typechecked
 
 from processor import utils
 
 
 @typechecked
-def mutate(s: Stream):
+def mutate(s: Stream, how_many: int = 4):
     """
     Main method for mutating a file.
 
     :param s: Music21 stream for a file.
     """
     parts = s.getElementsByClass("Part")
-    # TODO: can use measureOffsetMap
-    # can iterate through multiple measures this way
-    for p in parts:
-        measures = p.getElementsByClass("Measure")
-        for m in measures:
-            utils.correct_measure(m)
-            mutation = choose_mutation()
-            mutation(m, p)
+    p = random.choice(list(parts))
 
-    s.makeNotation(inPlace=True)
+    measures = p.getElementsByClass("Measure")
+    start = random.randint(0, len(measures) - how_many)
+    tumors = measures[start : start + how_many]
+
+    dup = utils.duplicate_part(p)
+    # start adding mutant measures at the first measure
+    dpm = dup.getElementsByClass("Measure")[start:]
+
+    for i, dm in enumerate(dpm):
+        t = tumors[i % len(tumors)]  # pick tumor measure
+
+        mutation = choose_mutation()
+        mutant = mutation(t, p)  # mutate it
+        mutant.number = dm.number
+        dup.replace(dm, mutant)  # replace in duplicate part
+
+    s.append(dup)
 
 
-def noop(_: Measure, __: Stream):
+def noop(m: Measure, _: Stream):
     # do not remove, lets us skip performing mutations
-    pass
+    return copy.deepcopy(m)
 
 
 @typechecked
@@ -51,7 +61,6 @@ def insertion(measure: Measure, _: Stream):
         replace_rest(measure, choice)
     else:
         subdivide(measure, choice)
-    measure.makeBeams(inPlace=True)
 
 
 @typechecked
@@ -88,21 +97,30 @@ def translocation(m: Measure, s: Stream):
     measures = list(s.getElementsByClass("Measure"))
     choice = copy.deepcopy(random.choice(measures))
     replace_measure(m, choice, s)
+    # first = utils.get_first_element(m)
+    # first.addLyric("tl")
 
 
-# inversion still wrong
 @typechecked
 def inversion(m: Measure, _: Optional[Stream]):
+    measure = copy.deepcopy(m)
+
+    # clear all notes in the measure
     notes = m.flat.notesAndRests
+
     ts = utils.get_time(m)
     count = ts.beatCount
+
     for n in notes:
-        new_note = copy.deepcopy(n)
-        m.insert(count - n.offset - n.quarterLength, new_note)
-        m.remove(n, recurse=True)
-    n = utils.get_first_element(m)
+        new_note = utils.duplicate_element(n)
+        measure.insertIntoNoteOrChord(
+            count - n.offset - n.quarterLength, new_note
+        )
+
+    n = utils.get_first_element(measure)
     n.addLyric("inv")
-    m.makeBeams(inPlace=True)
+
+    return measure
 
 
 @typechecked
@@ -114,10 +132,15 @@ def transpose_measure(measure: Measure, degree: int):
 
 @typechecked
 def delete_note(m: Measure, n: GeneralNote):
+    measure = copy.deepcopy(m)
+
     rest = Rest(length=n.duration.quarterLength)
     rest.addLyric("d")
-    m.insert(n.offset, rest)
-    m.remove(n, recurse=True)
+
+    measure.insert(n.offset, rest)
+    measure.remove(n, recurse=True)
+
+    return measure
 
 
 @typechecked
@@ -136,6 +159,7 @@ def subdivide(m: Measure, el: Union[Note, Chord]):
     :param m: Measure containing the note or chord.
     :param el: The note or chord to subdivide.
     """
+    # TODO: cannot divide to less than 2048th
     # cut the note in half to make room for the new one
     el.augmentOrDiminish(0.5, inPlace=True)
     # figure out where the next note will be
@@ -162,7 +186,7 @@ def replace_rest(m: Measure, r: Rest):
     m.insertIntoNoteOrChord(r.offset, n)
 
 
-def choose_mutation(weights: List[float] = [0.3, 0.3, 0.15, 0.15, 0.05, 0.05]):
+def choose_mutation(weights: List[float] = [1.0]):
     """
     Randomly picks a mutation to perform on a measure.
 
@@ -175,11 +199,11 @@ def choose_mutation(weights: List[float] = [0.3, 0.3, 0.15, 0.15, 0.05, 0.05]):
 
     mutations = [
         noop,
-        insertion,
-        transposition,
-        deletion,
-        translocation,
-        inversion,
+        # insertion,
+        # transposition,
+        # deletion,
+        # translocation,
+        # inversion,
     ]
     # need to return 0th element because random.choices() returns a list
     return random.choices(mutations, weights)[0]

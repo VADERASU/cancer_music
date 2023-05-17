@@ -189,6 +189,9 @@ def duplicate_part(p: Part) -> Part:
 
     for m in measures:
         dup_m = Measure()
+        # replace with music21 function that gets all signs?
+        # theoretically, could do get elements by class
+        # and just put the classes we want...
         ts, clef, ks = get_signs(m)
 
         if clef is not None:
