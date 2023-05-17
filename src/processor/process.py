@@ -105,11 +105,13 @@ def deletion(measure: Measure, _: Stream):
     return m
 
 
-def delete_substring(m, to_delete):
+@typechecked
+def delete_substring(m: Measure, to_delete: List[GeneralNote]):
     # sum all of the durations up and delete each note
     length = f.reduce(
-        lambda a, b: a.duration.quarterLength + b.duration.quarterLength,
+        lambda a, b: a + b.duration.quarterLength,
         to_delete,
+        0
     )
     rest = Rest(length=length)
     rest.addLyric("d")
