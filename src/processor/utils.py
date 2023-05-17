@@ -2,7 +2,7 @@ import copy
 import os
 import random
 from pathlib import Path
-from typing import Union
+from typing import List, Union
 
 from music21.chord import Chord
 from music21.clef import Clef
@@ -109,15 +109,17 @@ def duplicate_element(el: GeneralNote) -> GeneralNote:
 
 
 @typechecked
-def random_note(m: Measure) -> GeneralNote:
+def random_notes(m: Measure) -> List[GeneralNote]:
     """
-    Picks a random note from the measure.
+    Picks a subset of notes from the measure.
 
     :param m: The measure to pick a note from.
     :return: A random note from the measure.
     """
     elements = m.flat.notesAndRests
-    return random.choice(elements)
+    start = random.randint(0, len(elements) - 1)
+
+    return elements[start:]
 
 
 @typechecked

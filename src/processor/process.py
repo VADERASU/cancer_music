@@ -1,6 +1,6 @@
 import copy
+import functools as f
 import random
-from itertools import cycle
 from typing import List, Optional, Union
 
 from music21.chord import Chord
@@ -57,14 +57,15 @@ def insertion(measure: Measure, _: Stream):
     """
     # pick a random note or rest
     choice = utils.random_note(measure)
-    if isinstance(choice, Rest):
-        replace_rest(measure, choice)
-    else:
-        subdivide(measure, choice)
+
+    # if isinstance(choice, Rest):
+    #    replace_rest(measure, choice)
+    # else:
+    #    subdivide(measure, choice)
 
 
 @typechecked
-def transposition(measure: Measure, _: Stream):
+def transposition(measure: Measure, _: Stream) -> Measure:
     """
     Transposes the measure by either 1 or -1 half-steps.
 
@@ -77,6 +78,17 @@ def transposition(measure: Measure, _: Stream):
 
 
 @typechecked
+def transpose_measure(measure: Measure, degree: int) -> Measure:
+    transposed = measure.transpose(degree, classFilterList=GeneralNote)
+    if transposed is None:
+        raise ValueError("Measure does not exist.")
+    n = utils.get_first_element(transposed)
+    n.addLyric("t")
+
+    return transposed
+
+
+@typechecked
 def deletion(measure: Measure, _: Stream):
     """
     Replaces a random note from the measure with a rest.
@@ -86,19 +98,24 @@ def deletion(measure: Measure, _: Stream):
     :param _: Stream, unused, do not remove.
     """
     m = copy.deepcopy(measure)
-    # TODO: function that makes a selection from all notes
-    choice = random.choice(m.flat.notes)
-    delete_note(m, choice)
+    to_delete = utils.random_notes(m)
+
+    delete_substring(m, to_delete)
+
     return m
 
 
-@typechecked
-def delete_note(m: Measure, n: GeneralNote):
-    rest = Rest(length=n.duration.quarterLength)
+def delete_substring(m, to_delete):
+    # sum all of the durations up and delete each note
+    length = f.reduce(
+        lambda a, b: a.duration.quarterLength + b.duration.quarterLength,
+        to_delete,
+    )
+    rest = Rest(length=length)
     rest.addLyric("d")
-
-    m.insert(n.offset, rest)
-    m.remove(n, recurse=True)
+    m.insert(to_delete[0].offset, rest)
+    for n in to_delete:
+        m.remove(n, recurse=True)
 
 
 # TODO: move these operations to another file, write tests
@@ -132,17 +149,6 @@ def inversion(m: Measure, _: Optional[Stream]):
     n.addLyric("inv")
 
     return measure
-
-
-@typechecked
-def transpose_measure(measure: Measure, degree: int):
-    transposed = measure.transpose(degree, classFilterList=GeneralNote)
-    if transposed is None:
-        raise ValueError("Measure does not exist.")
-    n = utils.get_first_element(transposed)
-    n.addLyric("t")
-
-    return transposed
 
 
 @typechecked
@@ -203,7 +209,7 @@ def choose_mutation(weights: List[float] = [0.5, 0.25, 0.25]):
         noop,
         # insertion,
         transposition,
-        # deletion,
+        deletion,
         # translocation,
         # inversion,
     ]
