@@ -8,6 +8,14 @@ from music21.stream.base import Measure, Part
 from processor import utils
 
 
+def clean_measure_voiced():
+    pass
+
+
+def clean_measure_clean():
+    pass
+
+
 def test_duplicate_part():
     p = Part()
     # four measures, two in 4/4 and two in 3/4

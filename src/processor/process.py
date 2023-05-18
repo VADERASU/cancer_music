@@ -1,6 +1,6 @@
 import copy
 import random
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from music21.chord import Chord
 from music21.duration import Duration
@@ -61,7 +61,7 @@ def insertion(measure: Measure, _: Stream):
 
 
 @typechecked
-def subdivide(measure: Measure, substring: List[GeneralNote]):
+def subdivide(measure: Measure, offsets: Dict[float, List[GeneralNote]]):
     """
     Divides a note or chord in half and duplicates it in place.
 
@@ -71,40 +71,30 @@ def subdivide(measure: Measure, substring: List[GeneralNote]):
     m = Measure()
     # copy measure except for substring
     for n in measure.notesAndRests:
-        if n not in substring:
+        if n.offset not in offsets.keys():
             m.insert(n.offset, n)
 
-    # off is where we start the substring
-
-    grouped_by_offset = {}
-    for el in substring:
-        els = grouped_by_offset.get(el.offset, None)
-        if els is None:
-            grouped_by_offset[el.offset] = [el]
-        else:
-            els.append(el)
-
     off = None
-    for offset in grouped_by_offset.keys():
-        els = grouped_by_offset[offset]
+    for offset in offsets.keys():
+        els = offsets[offset]
 
         if off is None:
             off = offset
 
         lengths = []
         for el in els:
-            new_el = el.augmentOrDiminish(0.5)
+            new_el = utils.subdivide_element(el)
             m.insertIntoNoteOrChord(off, new_el)
             lengths.append(new_el.duration.quarterLength)
         off += min(lengths)
 
     sub_offset = 0
-    for offset in grouped_by_offset.keys():
-        els = grouped_by_offset[offset]
+    for offset in offsets.keys():
+        els = offsets[offset]
 
         lengths = []
         for el in els:
-            new_el = el.augmentOrDiminish(0.5)
+            new_el = utils.subdivide_element(el)
             new_el.addLyric("i")
             m.insertIntoNoteOrChord(off + sub_offset, new_el)
             lengths.append(new_el.duration.quarterLength)
@@ -112,7 +102,7 @@ def subdivide(measure: Measure, substring: List[GeneralNote]):
         sub_offset += min(lengths)
 
     n = utils.get_first_element(m)
-    n.addLyric(str(len(substring)))
+    n.addLyric(str(len(offsets.keys())))
     m.makeBeams(inPlace=True)
     return m
 
@@ -209,7 +199,7 @@ def replace_measure(m: Measure, replacement: Measure, s: Stream):
     first.addLyric("tl")
 
 
-def choose_mutation(weights: List[float] = [0.1, 0.4, 0.25, 0.25]):
+def choose_mutation(weights: List[float] = [0.1, 0.5, 0.4]):
     """
     Randomly picks a mutation to perform on a measure.
 
@@ -224,7 +214,7 @@ def choose_mutation(weights: List[float] = [0.1, 0.4, 0.25, 0.25]):
         noop,
         insertion,
         transposition,
-        deletion,
+        # deletion,
         # translocation,
         # inversion,
     ]

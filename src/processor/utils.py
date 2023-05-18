@@ -3,15 +3,16 @@ import functools as f
 import os
 import random
 from pathlib import Path
-from typing import List, Union
+from typing import Dict, List, Union
 
 from music21.chord import Chord
 from music21.clef import Clef
+from music21.duration import Duration
 from music21.instrument import Instrument
 from music21.key import Key, KeySignature
 from music21.meter.base import TimeSignature
 from music21.note import GeneralNote, Note, Rest
-from music21.stream.base import Measure, Part
+from music21.stream.base import Measure, Part, Voice
 from typeguard import typechecked
 
 
@@ -94,7 +95,7 @@ def correct_measure(m: Measure):
 
 
 @typechecked
-def random_notes(m: Measure) -> List[GeneralNote]:
+def random_notes(m: Measure) -> Dict[float, List[GeneralNote]]:
     """
     Picks a subset of notes from the measure.
 
@@ -102,9 +103,15 @@ def random_notes(m: Measure) -> List[GeneralNote]:
     :return: A random note from the measure.
     """
     elements = m.flat.notesAndRests
-    start = random.randint(0, len(elements) - 1)
+    timing = [el.offset for el in m.flat.notesAndRests]
+    start = random.choice(timing)
+    offsets = group_by_offset(list(elements))
+    trunc = {}
+    for off in offsets.keys():
+        if off >= start and off <= max(timing):
+            trunc[off] = offsets[off]
 
-    return elements[start:]
+    return trunc
 
 
 def get_substring_length(el: List[GeneralNote]) -> float:
@@ -202,3 +209,82 @@ def duplicate_part(p: Part) -> Part:
         dup.append(dup_m)
 
     return dup
+
+
+def group_by_offset(els: List[GeneralNote]) -> Dict[float, List[GeneralNote]]:
+    d = {}
+    for el in els:
+        this_off = d.get(el.offset, None)
+        if this_off is None:
+            d[el.offset] = [el]
+        else:
+            d[el.offset].append(el)
+    return d
+
+
+def duplicate_note(n: Note):
+    dn = Note(nameWithOctave=n.nameWithOctave)
+    dn.duration = Duration(n.quarterLength)
+    return dn
+
+
+# different than deepcopy, ensures that we don't copy any voice info
+def duplicate_element(el: GeneralNote) -> GeneralNote:
+    if isinstance(el, Chord):
+        c = Chord()
+        for n in el.notes:
+            c.add(duplicate_note(n))
+        return c
+    elif isinstance(el, Note):
+        return duplicate_note(el)
+    else:
+        return Rest(length=el.duration.quarterLength)
+
+
+# need to do this because notes are heavily coupled with streams
+def subdivide_element(el: GeneralNote) -> GeneralNote:
+    divided = el.augmentOrDiminish(0.5)
+    dup = duplicate_element(el)
+    dup.duration.quarterLength = divided.duration.quarterLength
+    return dup
+
+
+def duplicate_measure(measure: Measure, includeNotes=False):
+    m = Measure()
+    if includeNotes:
+        m = copy.deepcopy(measure)
+    else:
+        # Voices are not generalNotes, so they also need to be excluded
+        els = measure.getElementsNotOfClass([GeneralNote, Voice])
+        for el in els:
+            m.append(el)
+    return m
+
+
+# could be used if chords could have multiple durations...
+# doesn't work unfortunately
+def clean_measure(m: Measure):
+    clean = duplicate_measure(m)
+    offsets = group_by_offset(list(m.flat.notesAndRests))
+
+    for offset in offsets.keys():
+        els = offsets[offset]
+
+        durations = [el.duration.quarterLength for el in els]
+
+        for el in els:
+            dup = duplicate_element(el)
+            # if we can make chords have varied durations for notes
+            # we solve the issue
+            clean.insertIntoNoteOrChord(offset, dup)
+
+        cleaned = clean.getElementsByOffset(offset)
+
+        for c in cleaned:
+            if isinstance(c, Chord):
+                notes = list(filter(lambda e: not e.isRest, els))
+                for i, el in enumerate(notes):
+                    c[i].duration = Duration(el.duration.quarterLength)
+                # c.duration = Duration(min(durations))
+
+    return clean
