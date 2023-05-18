@@ -32,12 +32,14 @@ def mutate(s: Stream, how_many: int = 4):
     for i, dm in enumerate(dpm):
         t = tumors[i % len(tumors)]  # pick tumor measure
 
+        # each mutation should be equal length to its original measure
         mutation = choose_mutation()
         mutant = mutation(t, p)  # mutate it
         mutant.number = dm.number
         dup.replace(dm, mutant)  # replace in duplicate part
-
+        mutant.makeBeams(inPlace=True)
     s.append(dup)
+    return p, dup
 
 
 def noop(m: Measure, _: Stream):
@@ -61,7 +63,7 @@ def insertion(measure: Measure, _: Stream):
 
 
 @typechecked
-def subdivide(measure: Measure, offsets: Dict[float, List[GeneralNote]]):
+def subdivide(measure: Measure, offsets: utils.OffsetDict):
     """
     Divides a note or chord in half and duplicates it in place.
 
@@ -70,9 +72,11 @@ def subdivide(measure: Measure, offsets: Dict[float, List[GeneralNote]]):
     """
     m = Measure()
     # copy measure except for substring
-    for n in measure.notesAndRests:
-        if n.offset not in offsets.keys():
-            m.insert(n.offset, n)
+    for n in measure.flat.notesAndRests:
+        if n.offset not in list(offsets.keys()):
+            m.insertIntoNoteOrChord(n.offset, n)
+
+    measure.show("text")
 
     off = None
     for offset in offsets.keys():
@@ -103,7 +107,6 @@ def subdivide(measure: Measure, offsets: Dict[float, List[GeneralNote]]):
 
     n = utils.get_first_element(m)
     n.addLyric(str(len(offsets.keys())))
-    m.makeBeams(inPlace=True)
     return m
 
 
@@ -117,6 +120,7 @@ def transposition(measure: Measure, _: Stream) -> Measure:
     """
     options = [-1, 1]
     choice = random.choice(options)
+
     return transpose_measure(measure, choice)
 
 
@@ -148,25 +152,27 @@ def deletion(measure: Measure, _: Stream):
 
 
 @typechecked
-def delete_substring(m: Measure, to_delete: List[GeneralNote]):
+def delete_substring(m: Measure, offsets: utils.OffsetDict):
     # sum all of the durations up and delete each note
-    length = utils.get_substring_length(to_delete)
-    rest = Rest(length=length)
+    length = utils.get_substring_length(offsets)
+    rest = Rest()
+    rest.duration.quarterLength = length
     rest.addLyric("d")
-    m.insert(to_delete[0].offset, rest)
-    for n in to_delete:
-        m.remove(n, recurse=True)
+
+    for off in offsets.keys():
+        group = offsets[off]
+        for el in group:
+            m.remove(el, recurse=True)
+    m.insertIntoNoteOrChord(list(offsets.keys())[0], rest)
 
 
-# TODO: move these operations to another file, write tests
 @typechecked
-def translocation(m: Measure, s: Stream):
-    # TODO: make sure translocation does not copy final bar line
+def translocation(_: Measure, s: Stream):
     measures = list(s.getElementsByClass("Measure"))
     choice = copy.deepcopy(random.choice(measures))
-    replace_measure(m, choice, s)
-    # first = utils.get_first_element(m)
-    # first.addLyric("tl")
+    first = utils.get_first_element(choice)
+    first.addLyric("tl")
+    return choice
 
 
 @typechecked
@@ -195,11 +201,9 @@ def inversion(m: Measure, _: Optional[Stream]):
 def replace_measure(m: Measure, replacement: Measure, s: Stream):
     replacement.number = m.number
     s.replace(m, replacement)
-    first = utils.get_first_element(replacement)
-    first.addLyric("tl")
 
 
-def choose_mutation(weights: List[float] = [0.1, 0.5, 0.4]):
+def choose_mutation(weights: List[float] = [0.2, 0.4, 0.1, 0.1, 0.2]):
     """
     Randomly picks a mutation to perform on a measure.
 
@@ -214,8 +218,8 @@ def choose_mutation(weights: List[float] = [0.1, 0.5, 0.4]):
         noop,
         insertion,
         transposition,
-        # deletion,
-        # translocation,
+        deletion,
+        translocation,
         # inversion,
     ]
     # need to return 0th element because random.choices() returns a list

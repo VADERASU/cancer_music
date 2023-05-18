@@ -15,6 +15,8 @@ from music21.note import GeneralNote, Note, Rest
 from music21.stream.base import Measure, Part, Voice
 from typeguard import typechecked
 
+OffsetDict = Dict[float, List[GeneralNote]]
+
 
 @typechecked
 def get_time(m: Measure) -> TimeSignature:
@@ -95,7 +97,7 @@ def correct_measure(m: Measure):
 
 
 @typechecked
-def random_notes(m: Measure) -> Dict[float, List[GeneralNote]]:
+def random_notes(m: Measure) -> OffsetDict:
     """
     Picks a subset of notes from the measure.
 
@@ -105,6 +107,7 @@ def random_notes(m: Measure) -> Dict[float, List[GeneralNote]]:
     elements = m.flat.notesAndRests
     timing = [el.offset for el in m.flat.notesAndRests]
     start = random.choice(timing)
+
     offsets = group_by_offset(list(elements))
     trunc = {}
     for off in offsets.keys():
@@ -114,9 +117,23 @@ def random_notes(m: Measure) -> Dict[float, List[GeneralNote]]:
     return trunc
 
 
-def get_substring_length(el: List[GeneralNote]) -> float:
-    # fails when you have multiple voices...
-    return f.reduce(lambda a, b: a + b.duration.quarterLength, el, 0)
+def group_by_offset(els: List[GeneralNote]) -> OffsetDict:
+    d = {}
+    for el in els:
+        this_off = d.get(el.offset, None)
+        if this_off is None:
+            d[el.offset] = [el]
+        else:
+            d[el.offset].append(el)
+    return d
+
+
+def get_substring_length(offsets: OffsetDict) -> float:
+    total = 0
+    for off in offsets.keys():
+        durations = [el.duration.quarterLength for el in offsets[off]]
+        total += min(durations)
+    return total
 
 
 @typechecked
@@ -209,17 +226,6 @@ def duplicate_part(p: Part) -> Part:
         dup.append(dup_m)
 
     return dup
-
-
-def group_by_offset(els: List[GeneralNote]) -> Dict[float, List[GeneralNote]]:
-    d = {}
-    for el in els:
-        this_off = d.get(el.offset, None)
-        if this_off is None:
-            d[el.offset] = [el]
-        else:
-            d[el.offset].append(el)
-    return d
 
 
 def duplicate_note(n: Note):
