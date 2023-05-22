@@ -230,8 +230,7 @@ def invert_stream(s: Stream, og: Stream, offsets: List[float]):
                 off += new_el.duration.quarterLength
 
 
-# [0.2, 0.2, 0.1, 0.25, 0.05, 0.2]
-def choose_mutation(weights: List[float] = [0.2, 0.0, 0.0, 0.0, 0.0, 0.8]):
+def choose_mutation(weights: List[float] = [0.2, 0.2, 0.1, 0.25, 0.05, 0.2]):
     """
     Randomly picks a mutation to perform on a measure.
 
