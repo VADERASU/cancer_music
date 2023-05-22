@@ -4,19 +4,20 @@ from music21.chord import Chord
 from music21.duration import Duration
 from music21.meter.base import TimeSignature
 from music21.note import Note, Rest
-from music21.stream.base import Measure
+from music21.stream.base import Measure, Voice
 
-from processor.process import delete_substring, inversion, mutate, subdivide
+from processor.process import (
+    delete_substring,
+    inversion,
+    mutate,
+    subdivide,
+    transpose_measure,
+)
 
 
 def assert_expected_length(expected, notes):
     for note in notes:
         assert note.duration.quarterLength == expected
-
-
-# TODO: implement
-def test_replace_rest():
-    pass
 
 
 """
@@ -59,7 +60,6 @@ def test_delete_substring():
 """
 
 
-# measure we use for subdivision testing
 @pytest.fixture
 def sm():
     m = Measure()
@@ -67,6 +67,22 @@ def sm():
     m.append(Note("D", type="quarter"))
     m.append(Note("E", type="quarter"))
     m.append(Note("F", type="quarter"))
+    return m
+
+
+@pytest.fixture
+def voiced():
+    m = Measure()
+    v1 = Voice()
+    v1.append(Note("C", type="quarter"))
+    v1.append(Note("D", type="quarter"))
+    v1.append(Note("E", type="quarter"))
+    v1.append(Note("F", type="quarter"))
+    v2 = Voice()
+    v2.append(Note("G", type="half"))
+    v2.append(Note("G", type="half"))
+    m.insert(0, v1)
+    m.insert(0, v2)
     return m
 
 
@@ -80,6 +96,25 @@ def test_subdivide_begin(sm):
     assert m[5] == Note("F", type="quarter")
 
 
+def test_subdivide_voiced(voiced):
+    m = subdivide(voiced, [0.0, 1.0, 2.0])
+    v1 = m.voices[0]
+    v2 = m.voices[1]
+
+    assert v1[0] == Note("C", type="eighth")
+    assert v1[1] == Note("D", type="eighth")
+    assert v1[2] == Note("E", type="eighth")
+    assert v1[3] == Note("C", type="eighth")
+    assert v1[4] == Note("D", type="eighth")
+    assert v1[5] == Note("E", type="eighth")
+    assert v1[6] == Note("F", type="quarter")
+
+    assert v2[0] == Note("G", type="quarter")
+    assert v2[1] == Note("G", type="quarter")
+    assert v2[2] == Note("G", type="quarter")
+    assert v2[3] == Note("G", type="quarter")
+
+
 def test_subdivide_mid(sm):
     m = subdivide(sm, [1.0, 2.0])
     assert m[0] == Note("C", type="quarter")
@@ -88,6 +123,28 @@ def test_subdivide_mid(sm):
     assert m[3] == Note("D", type="eighth")
     assert m[4] == Note("E", type="eighth")
     assert m[5] == Note("F", type="quarter")
+
+
+def test_transpose_measure(sm):
+    m = transpose_measure(sm, 2)
+    assert m[0] == Note("D", type="quarter")
+    assert m[1] == Note("E", type="quarter")
+    assert m[2] == Note("F#", type="quarter")
+    assert m[3] == Note("G", type="quarter")
+
+
+def test_transpose_voiced(voiced):
+    m = transpose_measure(voiced, 2)
+    v1 = m.voices[0]
+    v2 = m.voices[1]
+
+    assert v1[0] == Note("D", type="quarter")
+    assert v1[1] == Note("E", type="quarter")
+    assert v1[2] == Note("F#", type="quarter")
+    assert v1[3] == Note("G", type="quarter")
+
+    assert v2[0] == Note("A", type="half")
+    assert v2[1] == Note("A", type="half")
 
 
 # TODO: add test with voices and chords

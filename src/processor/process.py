@@ -229,7 +229,7 @@ def replace_measure(m: Measure, replacement: Measure, s: Stream):
     s.replace(m, replacement)
 
 
-def choose_mutation(weights: List[float] = [0.2, 0.8]):
+def choose_mutation(weights: List[float] = [0.2, 0.6, 0.2]):
     """
     Randomly picks a mutation to perform on a measure.
 
@@ -243,7 +243,7 @@ def choose_mutation(weights: List[float] = [0.2, 0.8]):
     mutations = [
         noop,
         insertion,
-        # transposition,
+        transposition,
         # deletion,
         # translocation,
         # inversion,
