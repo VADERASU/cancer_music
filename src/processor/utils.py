@@ -12,7 +12,7 @@ from music21.instrument import Instrument
 from music21.key import Key, KeySignature
 from music21.meter.base import TimeSignature
 from music21.note import GeneralNote, Note, Rest
-from music21.stream.base import Measure, Part, Voice
+from music21.stream.base import Measure, Part, Stream, Voice
 from typeguard import typechecked
 
 OffsetDict = Dict[float, List[GeneralNote]]
@@ -97,35 +97,18 @@ def correct_measure(m: Measure):
 
 
 @typechecked
-def random_notes(m: Measure) -> OffsetDict:
+def random_offsets(m: Measure) -> List[float]:
     """
-    Picks a subset of notes from the measure.
+    Picks a subset of offsets from the measure.
 
     :param m: The measure to pick a note from.
     :return: A random note from the measure.
     """
-    elements = m.flat.notesAndRests
-    timing = [el.offset for el in m.flat.notesAndRests]
-    start = random.choice(timing)
+    timing = list(set([el.offset for el in m.flat.notesAndRests]))
+    timing.sort()
+    start = random.randint(0, len(timing) - 1)
 
-    offsets = group_by_offset(list(elements))
-    trunc = {}
-    for off in offsets.keys():
-        if off >= start and off <= max(timing):
-            trunc[off] = offsets[off]
-
-    return trunc
-
-
-def group_by_offset(els: List[GeneralNote]) -> OffsetDict:
-    d = {}
-    for el in els:
-        this_off = d.get(el.offset, None)
-        if this_off is None:
-            d[el.offset] = [el]
-        else:
-            d[el.offset].append(el)
-    return d
+    return timing[start:]
 
 
 def get_substring_length(offsets: OffsetDict) -> float:
@@ -183,59 +166,20 @@ def reverse(m: Measure):
     return el
 
 
-def get_signs(m: Measure):
-    ts = m.getElementsByClass(TimeSignature).first()
-    clef = m.getElementsByClass(Clef).first()
-    ks = m.getElementsByClass(KeySignature).first()
-    return ts, clef, ks
-
-
-def duplicate_part(p: Part) -> Part:
-    """
-    Duplicates a part, returning a part with the same length.
-    Only saves the time changes throughout the part to match the rest
-    of the piece.
-
-    :param p: Part to duplicate.
-    :return: A part of the same length with the same time changes.
-    """
-
-    dup = Part(Instrument(p.getInstrument().instrumentName))
-    measures = p.getElementsByClass("Measure")
-
-    for m in measures:
-        dup_m = Measure()
-        # replace with music21 function that gets all signs?
-        # theoretically, could do get elements by class
-        # and just put the classes we want...
-        ts, clef, ks = get_signs(m)
-
-        if clef is not None:
-            dup_m.append(copy.deepcopy(clef))
-
-        if ks is not None:
-            dup_m.append(copy.deepcopy(ks))
-
-        if ts is None:
-            ts = m.getContextByClass(TimeSignature)
-        else:
-            dup_m.append(copy.deepcopy(ts))
-
-        dup_m.number = m.number
-        dup_m.append(Rest(length=ts.beatCount))
-        dup.append(dup_m)
-
-    return dup
-
-
 def duplicate_note(n: Note):
     dn = Note(nameWithOctave=n.nameWithOctave)
     dn.duration = Duration(n.quarterLength)
     return dn
 
 
-# different than deepcopy, ensures that we don't copy any voice info
 def duplicate_element(el: GeneralNote) -> GeneralNote:
+    """
+    Duplicates a GeneralNote. Different than copy.deepcopy,
+    as it ensures that we remove all stream information from the element.
+
+    :param el: The element to copy.
+    :return: A stream-free copy of the element.
+    """
     if isinstance(el, Chord):
         c = Chord()
         for n in el.notes:
@@ -255,42 +199,21 @@ def subdivide_element(el: GeneralNote) -> GeneralNote:
     return dup
 
 
-def duplicate_measure(measure: Measure, includeNotes=False):
+def copy_stream_inverse(s: Stream, og: Stream, offsets):
+    for n in og.getElementsByClass(GeneralNote):
+        if n.offset < min(offsets) or n.offset > max(offsets):
+            new_el = duplicate_element(n)
+            s.insert(n.offset, new_el)
+
+
+def copy_inverse(measure, offsets):
     m = Measure()
-    if includeNotes:
-        m = copy.deepcopy(measure)
+    if len(measure.voices) > 0:
+        for v in measure.voices:
+            nv = Voice()
+            copy_stream_inverse(nv, v, offsets)
+            m.insert(0, nv)
     else:
-        # Voices are not generalNotes, so they also need to be excluded
-        els = measure.getElementsNotOfClass([GeneralNote, Voice])
-        for el in els:
-            m.append(el)
+        copy_stream_inverse(m, measure, offsets)
+
     return m
-
-
-# could be used if chords could have multiple durations...
-# doesn't work unfortunately
-def clean_measure(m: Measure):
-    clean = duplicate_measure(m)
-    offsets = group_by_offset(list(m.flat.notesAndRests))
-
-    for offset in offsets.keys():
-        els = offsets[offset]
-
-        durations = [el.duration.quarterLength for el in els]
-
-        for el in els:
-            dup = duplicate_element(el)
-            # if we can make chords have varied durations for notes
-            # we solve the issue
-            clean.insertIntoNoteOrChord(offset, dup)
-
-        cleaned = clean.getElementsByOffset(offset)
-
-        for c in cleaned:
-            if isinstance(c, Chord):
-                notes = list(filter(lambda e: not e.isRest, els))
-                for i, el in enumerate(notes):
-                    c[i].duration = Duration(el.duration.quarterLength)
-                # c.duration = Duration(min(durations))
-
-    return clean

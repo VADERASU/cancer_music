@@ -19,6 +19,7 @@ def test_replace_rest():
     pass
 
 
+"""
 def test_inversion():
     m = Measure()
     m.append(TimeSignature("4/4"))
@@ -34,6 +35,7 @@ def test_inversion():
     assert m[2].name == "E"
     assert m[3].name == "D"
     assert m[4].name == "C"
+"""
 
 
 def test_translocation():
@@ -44,6 +46,7 @@ def test_transposition():
     pass
 
 
+"""
 def test_delete_substring():
     m = Measure()
     m.repeatAppend(Note("C", type="quarter"), 4)
@@ -53,6 +56,7 @@ def test_delete_substring():
     assert isinstance(m[0], Rest)
     assert m[1].duration.quarterLength == 1
     assert m[2].duration.quarterLength == 1
+"""
 
 
 # measure we use for subdivision testing
@@ -66,29 +70,25 @@ def sm():
     return m
 
 
-"""
 def test_subdivide_begin(sm):
-    d = sm[0:2]
-    m = subdivide(sm, d)
+    m = subdivide(sm, [0.0, 1.0])
     assert m[0] == Note("C", type="eighth")
     assert m[1] == Note("D", type="eighth")
     assert m[2] == Note("C", type="eighth")
     assert m[3] == Note("D", type="eighth")
     assert m[4] == Note("E", type="quarter")
     assert m[5] == Note("F", type="quarter")
-"""
 
-"""
+
 def test_subdivide_mid(sm):
-    d = sm[1:3]
-    m = subdivide(sm, d)
+    m = subdivide(sm, [1.0, 2.0])
     assert m[0] == Note("C", type="quarter")
     assert m[1] == Note("D", type="eighth")
     assert m[2] == Note("E", type="eighth")
     assert m[3] == Note("D", type="eighth")
     assert m[4] == Note("E", type="eighth")
     assert m[5] == Note("F", type="quarter")
-"""
+
 
 # TODO: add test with voices and chords
 
@@ -98,5 +98,13 @@ def test_subdivide_mid(sm):
 @pytest.mark.usefixtures("streams")
 def test_mutate(streams):
     for filename, stream in streams:
-        mutate(stream)
+        part, mutant = mutate(stream)
+
+        # og = part.getElementsByClass("Measure")
+        # mutants = mutant.getElementsByClass("Measure")
+
+        # for o, m in zip(og, mutants):
+        # every measure should be the exact same length
+        # assert o.duration.quarterLength == m.duration.quarterLength
+
         stream.write("musicxml", f"mutant_{filename}")

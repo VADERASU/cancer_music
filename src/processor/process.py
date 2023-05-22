@@ -4,8 +4,9 @@ from typing import Dict, List, Optional, Union
 
 from music21.chord import Chord
 from music21.duration import Duration
+from music21.instrument import Instrument
 from music21.note import GeneralNote, Note, Rest
-from music21.stream.base import Measure, Part, Stream
+from music21.stream.base import Measure, Part, Stream, Voice
 from typeguard import typechecked
 
 from processor import utils
@@ -25,19 +26,23 @@ def mutate(s: Stream, how_many: int = 4):
     start = random.randint(0, len(measures) - how_many)
     tumors = measures[start : start + how_many]
 
-    dup = utils.duplicate_part(p)
+    dup = Stream.template(
+        p,
+        removeClasses=[Instrument, GeneralNote, "Dynamic", "Expression"],
+        fillWithRests=True,
+    )
+    dup.insert(0, Instrument(p.getInstrument().instrumentName))
     # start adding mutant measures at the first measure
     dpm = dup.getElementsByClass("Measure")[start:]
 
     for i, dm in enumerate(dpm):
         t = tumors[i % len(tumors)]  # pick tumor measure
-
         # each mutation should be equal length to its original measure
         mutation = choose_mutation()
         mutant = mutation(t, p)  # mutate it
         mutant.number = dm.number
         dup.replace(dm, mutant)  # replace in duplicate part
-        mutant.makeBeams(inPlace=True)
+
     s.append(dup)
     return p, dup
 
@@ -56,57 +61,69 @@ def insertion(measure: Measure, _: Stream):
     :param m: Measure to insert a note into.
     :param _: Stream, unused but do not remove.
     """
-    # pick a random note or rest
-    m = copy.deepcopy(measure)
-    s = utils.random_notes(m)
-    return subdivide(m, s)
+    s = utils.random_offsets(measure)
+    return subdivide(measure, s)
+
+
+def subdivide_stream(s: Stream, og: Stream, offsets: List[float]):
+    """
+    Takes a stream to modify, a stream containing the relevant info,
+    and a list of offsets. Subdivides the elements specifed in
+    offsets and then makes a copy of the passage in the empty
+    space left by the offsets.
+
+    :param s: Stream to modify.
+    :param og: Stream containing note information.
+    :param offsets: The offsets to modify.
+    """
+    # TODO: make this more general
+    # find all child streams and recurse over them
+    if len(og.voices) > 0:
+        for i, v in enumerate(og.voices):
+            nv = s.voices[i]
+            subdivide_stream(nv, v, offsets)
+    else:
+        off = None
+        for offset in offsets:
+            el = (
+                og.getElementsByOffset(offset)
+                .getElementsByClass(GeneralNote)
+                .first()
+            )
+
+            if el is not None:
+                new_el = utils.subdivide_element(el)
+                if off is None:
+                    off = el.offset
+
+                s.insert(off, new_el)
+                off += new_el.duration.quarterLength
+
+        sub_offset = 0
+        for offset in offsets:
+            el = (
+                og.getElementsByOffset(offset)
+                .getElementsByClass(GeneralNote)
+                .first()
+            )
+            if el is not None:
+                new_el = utils.subdivide_element(el)
+                new_el.addLyric("i")
+                s.insert(off + sub_offset, new_el)
+                sub_offset += new_el.duration.quarterLength
 
 
 @typechecked
-def subdivide(measure: Measure, offsets: utils.OffsetDict):
+def subdivide(measure: Measure, offsets: List[float]):
     """
     Divides a note or chord in half and duplicates it in place.
 
     :param m: Measure containing the note or chord.
     :param el: The note or chord to subdivide.
     """
-    m = Measure()
-    # copy measure except for substring
-    for n in measure.flat.notesAndRests:
-        if n.offset not in list(offsets.keys()):
-            m.insertIntoNoteOrChord(n.offset, n)
+    m = utils.copy_inverse(measure, offsets)
+    subdivide_stream(m, measure, offsets)
 
-    measure.show("text")
-
-    off = None
-    for offset in offsets.keys():
-        els = offsets[offset]
-
-        if off is None:
-            off = offset
-
-        lengths = []
-        for el in els:
-            new_el = utils.subdivide_element(el)
-            m.insertIntoNoteOrChord(off, new_el)
-            lengths.append(new_el.duration.quarterLength)
-        off += min(lengths)
-
-    sub_offset = 0
-    for offset in offsets.keys():
-        els = offsets[offset]
-
-        lengths = []
-        for el in els:
-            new_el = utils.subdivide_element(el)
-            new_el.addLyric("i")
-            m.insertIntoNoteOrChord(off + sub_offset, new_el)
-            lengths.append(new_el.duration.quarterLength)
-
-        sub_offset += min(lengths)
-
-    n = utils.get_first_element(m)
-    n.addLyric(str(len(offsets.keys())))
     return m
 
 
@@ -177,24 +194,33 @@ def translocation(_: Measure, s: Stream):
 
 @typechecked
 def inversion(m: Measure, _: Optional[Stream]):
-    measure = copy.deepcopy(m)
+    substring = utils.random_notes(m)
+    if len(substring.keys()) > 1:
+        return invert_measure(m, substring)
+    else:
+        return copy.deepcopy(m)
 
-    # clear all notes in the measure
-    notes = m.flat.notesAndRests
 
-    ts = utils.get_time(m)
-    count = ts.beatCount
+def invert_measure(measure: Measure, offsets: utils.OffsetDict):
+    m = Measure()
+    # copy measure except for substring
+    for n in measure.flat.notesAndRests:
+        if n.offset not in list(offsets.keys()):
+            m.insertIntoNoteOrChord(n.offset, n)
 
-    for n in notes:
-        new_note = utils.duplicate_element(n)
-        measure.insertIntoNoteOrChord(
-            count - n.offset - n.quarterLength, new_note
-        )
-
-    n = utils.get_first_element(measure)
+    new_off_idx = len(offsets.keys()) - 1
+    for off in offsets.keys():
+        group = offsets[off]
+        for el in group:
+            new_off = list(offsets.keys())[new_off_idx]
+            new_note = utils.duplicate_element(el)
+            m.insertIntoNoteOrChord(new_off, new_note)
+        new_off_idx -= 1
+    # maybe we could grab the first element of the inversion
+    n = utils.get_first_element(m)
     n.addLyric("inv")
 
-    return measure
+    return m
 
 
 @typechecked
@@ -203,7 +229,7 @@ def replace_measure(m: Measure, replacement: Measure, s: Stream):
     s.replace(m, replacement)
 
 
-def choose_mutation(weights: List[float] = [0.2, 0.4, 0.1, 0.1, 0.2]):
+def choose_mutation(weights: List[float] = [0.2, 0.8]):
     """
     Randomly picks a mutation to perform on a measure.
 
@@ -217,9 +243,9 @@ def choose_mutation(weights: List[float] = [0.2, 0.4, 0.1, 0.1, 0.2]):
     mutations = [
         noop,
         insertion,
-        transposition,
-        deletion,
-        translocation,
+        # transposition,
+        # deletion,
+        # translocation,
         # inversion,
     ]
     # need to return 0th element because random.choices() returns a list

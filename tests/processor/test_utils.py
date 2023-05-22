@@ -1,3 +1,4 @@
+import pytest
 from music21.chord import Chord
 from music21.clef import BassClef, TrebleClef
 from music21.key import Key, KeySignature
@@ -16,42 +17,47 @@ def clean_measure_clean():
     pass
 
 
-def test_duplicate_part():
-    p = Part()
-    # four measures, two in 4/4 and two in 3/4
-    m1 = Measure()
-    m1.append(TimeSignature("4/4"))
-    m1.repeatAppend(Note("C", quarterLength=1), 4)
-    p.append(m1)
+@pytest.fixture
+def mes():
+    m = Measure()
+    m.append(Note("C", type="quarter"))
+    m.append(Note("C", type="quarter"))
+    m.append(Note("C", type="quarter"))
+    m.append(Note("C", type="quarter"))
+    return m
 
-    # this measure switches to bass clef
-    m2 = Measure()
-    m2.append(BassClef())
-    m2.repeatAppend(Note("C", quarterLength=1), 4)
-    p.append(m2)
 
-    m3 = Measure()
-    m3.append(TimeSignature("3/4"))
-    m3.repeatAppend(Note("C", quarterLength=1), 3)
-    p.append(m3)
+def test_copy_stream_inverse_first(mes):
+    m = Measure()
+    utils.copy_stream_inverse(m, mes, [0.0])
 
-    # this measure switches back to treble clef
-    # and changes the key signature to one sharp
-    m4 = Measure()
-    m4.append(TrebleClef())
-    m4.append(KeySignature(sharps=1))
-    m4.repeatAppend(Note("C", quarterLength=1), 3)
-    p.append(m4)
+    assert len(m) == 3
+    assert m[0].offset == 1.0
+    assert m[1].offset == 2.0
+    assert m[2].offset == 3.0
 
-    dup = utils.duplicate_part(p)
-    measures = dup.getElementsByClass("Measure")
 
-    assert isinstance(measures[0][0], TimeSignature)
-    assert isinstance(measures[1][0], BassClef)
-    assert isinstance(measures[2][0], TimeSignature)
-    assert isinstance(measures[3][0], TrebleClef)
-    assert isinstance(measures[3][1], KeySignature)
-    assert measures[0].duration.quarterLength == 4
-    assert measures[1].duration.quarterLength == 4
-    assert measures[2].duration.quarterLength == 3
-    assert measures[3].duration.quarterLength == 3
+def test_copy_stream_inverse_mid(mes):
+    m = Measure()
+    utils.copy_stream_inverse(m, mes, [1.0, 2.0])
+
+    assert len(m) == 2
+    assert m[0].offset == 0.0
+    assert m[1].offset == 3.0
+
+
+def test_copy_stream_inverse_last(mes):
+    m = Measure()
+    utils.copy_stream_inverse(m, mes, [3.0])
+
+    assert len(m) == 3
+    assert m[0].offset == 0.0
+    assert m[1].offset == 1.0
+    assert m[2].offset == 2.0
+
+
+def test_copy_stream_inverse_whole(mes):
+    m = Measure()
+    utils.copy_stream_inverse(m, mes, [0.0, 3.0])
+
+    assert len(m) == 0
