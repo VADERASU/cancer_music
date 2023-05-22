@@ -6,6 +6,7 @@ from music21.meter.base import TimeSignature
 from music21.note import Note, Rest
 from music21.stream.base import Measure, Voice
 
+from processor import utils
 from processor.process import (
     delete_substring,
     inversion,
@@ -147,7 +148,24 @@ def test_transpose_voiced(voiced):
     assert v2[1] == Note("A", type="half")
 
 
-# TODO: add test with voices and chords
+def test_delete_substring(sm):
+    offsets = [0.0, 1.0]
+    m = utils.copy_inverse(sm, offsets)
+    delete_substring(m, sm, offsets)
+    assert m[0] == Rest(type="half")
+    assert m[1] == Note("E", type="quarter")
+    assert m[2] == Note("F", type="quarter")
+
+
+def test_delete_substring_voiced(voiced):
+    offsets = [0.0, 1.0]
+    m = utils.copy_inverse(voiced, offsets)
+    delete_substring(m, voiced, offsets)
+    v1 = m.voices[0]
+    v2 = m.voices[1]
+
+    assert v1[0] == Rest(type="half")
+    assert v2[0] == Rest(type="half")
 
 
 # TODO: make this test compare the new measure
