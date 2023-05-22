@@ -55,9 +55,9 @@ def get_key(m: Measure) -> Key:
 
 
 @typechecked
-def get_first_element(m: Measure) -> GeneralNote:
+def get_first_element(m: Stream) -> GeneralNote:
     """
-    Gets the first note from the measure.
+    Gets the first note from the stream.
 
     :param m: The measure to get the first note for.
     :return: The first note in the measure.
@@ -67,33 +67,6 @@ def get_first_element(m: Measure) -> GeneralNote:
     if first is None:
         raise ValueError(f"Error: No notes or rests in measure {m.number}.")
     return first
-
-
-@typechecked
-def correct_measure(m: Measure):
-    """
-    Preprocessing step for a measure. Ensures that its length is equal to
-    the time signature's length by deleting extraneous
-    elements. Modifies the measure in place.
-
-    :param m: Measure to modify.
-    :raises ValueError: Raised if the measure is too short.
-    """
-
-    # TODO: Add a check to see if a measure is an anacrusis
-    # https://en.wikipedia.org/wiki/Anacrusis
-    ts = get_time(m)
-    length = m.duration.quarterLength
-    if length != ts.beatCount:
-        if length > ts.beatCount:
-            too_long = m.flatten().getElementsByOffset(ts.beatCount)
-            for el in too_long.notesAndRests:
-                m.remove(el, recurse=True)
-        else:
-            # TODO: implement fix for measures that are too short
-            raise ValueError(
-                f"Error: Measure {m.number} too short! Is {length}, should be {ts.beatCount}."
-            )
 
 
 @typechecked
@@ -183,6 +156,7 @@ def duplicate_element(el: GeneralNote) -> GeneralNote:
         c = Chord()
         for n in el.notes:
             c.add(duplicate_note(n))
+        c.duration.quarterLength = el.duration.quarterLength
         return c
     elif isinstance(el, Note):
         return duplicate_note(el)
@@ -216,3 +190,8 @@ def copy_inverse(measure, offsets):
         copy_stream_inverse(m, measure, offsets)
 
     return m
+
+
+# duplicate stream correctly without any references
+def duplicate_stream(s: Stream):
+    pass

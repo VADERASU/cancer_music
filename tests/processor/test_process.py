@@ -9,35 +9,11 @@ from music21.stream.base import Measure, Voice
 from processor import utils
 from processor.process import (
     delete_substring,
-    inversion,
+    invert_stream,
     mutate,
     subdivide,
     transpose_measure,
 )
-
-
-def assert_expected_length(expected, notes):
-    for note in notes:
-        assert note.duration.quarterLength == expected
-
-
-"""
-def test_inversion():
-    m = Measure()
-    m.append(TimeSignature("4/4"))
-    m.append(Note("C", type="quarter"))
-    m.append(Note("D", type="quarter"))
-    m.append(Note("E", type="quarter"))
-    m.append(Note("F", type="quarter"))
-
-    m.show("text")
-    inversion(m, None)
-    m.show("text")
-    assert m[1].name == "F"
-    assert m[2].name == "E"
-    assert m[3].name == "D"
-    assert m[4].name == "C"
-"""
 
 
 def test_translocation():
@@ -46,19 +22,6 @@ def test_translocation():
 
 def test_transposition():
     pass
-
-
-"""
-def test_delete_substring():
-    m = Measure()
-    m.repeatAppend(Note("C", type="quarter"), 4)
-    to_delete = m[0:2]
-    delete_substring(m, to_delete)
-    assert m[0].duration.quarterLength == 2
-    assert isinstance(m[0], Rest)
-    assert m[1].duration.quarterLength == 1
-    assert m[2].duration.quarterLength == 1
-"""
 
 
 @pytest.fixture
@@ -168,18 +131,41 @@ def test_delete_substring_voiced(voiced):
     assert v2[0] == Rest(type="half")
 
 
-# TODO: make this test compare the new measure
-# with the original
+def test_invert_stream(sm):
+    offsets = [0.0, 1.0]
+    m = utils.copy_inverse(sm, offsets)
+    invert_stream(m, sm, offsets)
+    assert m[0] == Note("D", type="quarter")
+    assert m[1] == Note("C", type="quarter")
+    assert m[2] == Note("E", type="quarter")
+    assert m[3] == Note("F", type="quarter")
+
+
+def test_invert_stream_voiced(voiced):
+    offsets = [0.0, 1.0]
+    m = utils.copy_inverse(voiced, offsets)
+    invert_stream(m, voiced, offsets)
+
+    v1 = m.voices[0]
+    v2 = m.voices[1]
+
+    assert v1[0] == Note("D", type="quarter")
+    assert v1[1] == Note("C", type="quarter")
+    assert v1[2] == Note("E", type="quarter")
+    assert v1[3] == Note("F", type="quarter")
+
+    assert v2[0] == Note("G", type="half")
+    assert v2.offset == 0.0
+    assert v2[1] == Note("G", type="half")
+
+
 @pytest.mark.usefixtures("streams")
 def test_mutate(streams):
     for filename, stream in streams:
-        part, mutant = mutate(stream)
-
-        # og = part.getElementsByClass("Measure")
-        # mutants = mutant.getElementsByClass("Measure")
-
-        # for o, m in zip(og, mutants):
-        # every measure should be the exact same length
-        # assert o.duration.quarterLength == m.duration.quarterLength
-
+        mutate(stream)
+        for p in stream.parts:
+            if p.id == "mutant":
+                for m in p.getElementsByClass(Measure):
+                    ts = m.getTimeSignatures()[0]
+                    # assert m.duration.quarterLength == ts.beatCount
         stream.write("musicxml", f"mutant_{filename}")

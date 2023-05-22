@@ -41,10 +41,11 @@ def mutate(s: Stream, how_many: int = 4):
         mutation = choose_mutation()
         mutant = mutation(t, p)  # mutate it
         mutant.number = dm.number
+        mutant.makeBeams(inPlace=True)
         dup.replace(dm, mutant)  # replace in duplicate part
 
+    dup.id = "mutant"
     s.append(dup)
-    return p, dup
 
 
 def noop(m: Measure, _: Stream):
@@ -62,7 +63,11 @@ def insertion(measure: Measure, _: Stream):
     :param _: Stream, unused but do not remove.
     """
     s = utils.random_offsets(measure)
-    return subdivide(measure, s)
+    m = subdivide(measure, s)
+    n = utils.get_first_element(m)
+    n.addLyric("ins")
+
+    return m
 
 
 @typechecked
@@ -157,6 +162,8 @@ def deletion(measure: Measure, _: Stream):
     offsets = utils.random_offsets(measure)
     m = utils.copy_inverse(measure, offsets)
     delete_substring(m, measure, offsets)
+    n = utils.get_first_element(m)
+    n.addLyric("del")
 
     return m
 
@@ -169,8 +176,9 @@ def delete_substring(s: Stream, og: Stream, offsets: List[float]):
             delete_substring(nv, v, offsets)
     else:
         el = og.getElementAtOrBefore(max(offsets), [GeneralNote])
-        rest = Rest()
-        rest.duration.quarterLength = el.offset + el.duration.quarterLength
+        rest = Rest(
+            length=el.offset - min(offsets) + el.duration.quarterLength
+        )
         rest.addLyric("d")
         s.insert(min(offsets), rest)
 
@@ -185,43 +193,45 @@ def translocation(_: Measure, s: Stream):
 
 
 @typechecked
-def inversion(m: Measure, _: Optional[Stream]):
-    substring = utils.random_notes(m)
-    if len(substring.keys()) > 1:
-        return invert_measure(m, substring)
-    else:
-        return copy.deepcopy(m)
-
-
-def invert_measure(measure: Measure, offsets: utils.OffsetDict):
-    m = Measure()
-    # copy measure except for substring
-    for n in measure.flat.notesAndRests:
-        if n.offset not in list(offsets.keys()):
-            m.insertIntoNoteOrChord(n.offset, n)
-
-    new_off_idx = len(offsets.keys()) - 1
-    for off in offsets.keys():
-        group = offsets[off]
-        for el in group:
-            new_off = list(offsets.keys())[new_off_idx]
-            new_note = utils.duplicate_element(el)
-            m.insertIntoNoteOrChord(new_off, new_note)
-        new_off_idx -= 1
-    # maybe we could grab the first element of the inversion
+def inversion(measure: Measure, _: Optional[Stream]):
+    offsets = utils.random_offsets(measure)
+    m = utils.copy_inverse(measure, offsets)
+    invert_stream(m, measure, offsets)
     n = utils.get_first_element(m)
     n.addLyric("inv")
 
     return m
 
 
-@typechecked
-def replace_measure(m: Measure, replacement: Measure, s: Stream):
-    replacement.number = m.number
-    s.replace(m, replacement)
+def invert_stream(s: Stream, og: Stream, offsets: List[float]):
+    if len(og.voices) > 0:
+        for i, v in enumerate(og.voices):
+            nv = s.voices[i]
+            invert_stream(nv, v, offsets)
+    else:
+        notes = list(
+            filter(
+                lambda e: e is not None,
+                map(
+                    lambda o: og.getElementsByOffset(o)
+                    .getElementsByClass(GeneralNote)
+                    .first(),
+                    offsets,
+                ),
+            )
+        )
+        if len(notes) > 0:
+            off = notes[0].offset
+            notes.reverse()
+            for el in notes:
+                new_el = utils.duplicate_element(el)
+                new_el.addLyric(str(el.offset))
+                s.insert(off, new_el)
+                off += new_el.duration.quarterLength
 
 
-def choose_mutation(weights: List[float] = [0.2, 0.4, 0.2, 0.1, 0.1]):
+# [0.2, 0.2, 0.1, 0.25, 0.05, 0.2]
+def choose_mutation(weights: List[float] = [0.2, 0.0, 0.0, 0.0, 0.0, 0.8]):
     """
     Randomly picks a mutation to perform on a measure.
 
@@ -238,7 +248,7 @@ def choose_mutation(weights: List[float] = [0.2, 0.4, 0.2, 0.1, 0.1]):
         transposition,
         deletion,
         translocation,
-        # inversion,
+        inversion,
     ]
     # need to return 0th element because random.choices() returns a list
     return random.choices(mutations, weights)[0]
