@@ -107,7 +107,6 @@ def random_offsets(m: Measure) -> List[float]:
     timing = list(set([el.offset for el in m.flat.notesAndRests]))
     timing.sort()
     start = random.randint(0, len(timing) - 1)
-
     return timing[start:]
 
 

@@ -65,6 +65,20 @@ def insertion(measure: Measure, _: Stream):
     return subdivide(measure, s)
 
 
+@typechecked
+def subdivide(measure: Measure, offsets: List[float]):
+    """
+    Divides a note or chord in half and duplicates it in place.
+
+    :param m: Measure containing the note or chord.
+    :param el: The note or chord to subdivide.
+    """
+    m = utils.copy_inverse(measure, offsets)
+    subdivide_stream(m, measure, offsets)
+
+    return m
+
+
 def subdivide_stream(s: Stream, og: Stream, offsets: List[float]):
     """
     Takes a stream to modify, a stream containing the relevant info,
@@ -114,20 +128,6 @@ def subdivide_stream(s: Stream, og: Stream, offsets: List[float]):
 
 
 @typechecked
-def subdivide(measure: Measure, offsets: List[float]):
-    """
-    Divides a note or chord in half and duplicates it in place.
-
-    :param m: Measure containing the note or chord.
-    :param el: The note or chord to subdivide.
-    """
-    m = utils.copy_inverse(measure, offsets)
-    subdivide_stream(m, measure, offsets)
-
-    return m
-
-
-@typechecked
 def transposition(measure: Measure, _: Stream) -> Measure:
     """
     Transposes the measure by either 1 or -1 half-steps.
@@ -154,33 +154,25 @@ def transpose_measure(measure: Measure, degree: int) -> Measure:
 
 @typechecked
 def deletion(measure: Measure, _: Stream):
-    """
-    Replaces a random note from the measure with a rest.
-    This ensures that the measures are the correct duration.
-
-    :param m: Measure to delete a note from.
-    :param _: Stream, unused, do not remove.
-    """
-    m = copy.deepcopy(measure)
-    to_delete = utils.random_notes(m)
-    delete_substring(m, to_delete)
+    offsets = utils.random_offsets(measure)
+    m = utils.copy_inverse(measure, offsets)
+    delete_substring(m, measure, offsets)
 
     return m
 
 
 @typechecked
-def delete_substring(m: Measure, offsets: utils.OffsetDict):
-    # sum all of the durations up and delete each note
-    length = utils.get_substring_length(offsets)
-    rest = Rest()
-    rest.duration.quarterLength = length
-    rest.addLyric("d")
-
-    for off in offsets.keys():
-        group = offsets[off]
-        for el in group:
-            m.remove(el, recurse=True)
-    m.insertIntoNoteOrChord(list(offsets.keys())[0], rest)
+def delete_substring(s: Stream, og: Stream, offsets: List[float]):
+    if len(og.voices) > 0:
+        for i, v in enumerate(og.voices):
+            nv = s.voices[i]
+            delete_substring(nv, v, offsets)
+    else:
+        el = og.getElementAtOrBefore(max(offsets), [GeneralNote])
+        rest = Rest()
+        rest.duration.quarterLength = el.offset + el.duration.quarterLength
+        rest.addLyric("d")
+        s.insert(min(offsets), rest)
 
 
 @typechecked
@@ -229,7 +221,7 @@ def replace_measure(m: Measure, replacement: Measure, s: Stream):
     s.replace(m, replacement)
 
 
-def choose_mutation(weights: List[float] = [0.2, 0.6, 0.2]):
+def choose_mutation(weights: List[float] = [0.2, 0.4, 0.2, 0.2]):
     """
     Randomly picks a mutation to perform on a measure.
 
@@ -244,7 +236,7 @@ def choose_mutation(weights: List[float] = [0.2, 0.6, 0.2]):
         noop,
         insertion,
         transposition,
-        # deletion,
+        deletion,
         # translocation,
         # inversion,
     ]
