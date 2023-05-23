@@ -1,12 +1,10 @@
 import copy
 import random
-from typing import Dict, List, Optional, Union
+from typing import List, Optional
 
-from music21.chord import Chord
-from music21.duration import Duration
 from music21.instrument import Instrument
-from music21.note import GeneralNote, Note, Rest
-from music21.stream.base import Measure, Part, Stream, Voice
+from music21.note import GeneralNote, Rest
+from music21.stream.base import Measure, Stream
 from typeguard import typechecked
 
 from processor import utils
@@ -62,8 +60,10 @@ def insertion(measure: Measure, _: Stream):
     :param m: Measure to insert a note into.
     :param _: Stream, unused but do not remove.
     """
-    s = utils.random_offsets(measure)
-    m = subdivide(measure, s)
+    offsets = utils.random_offsets(measure)
+    m = utils.copy_inverse(measure, offsets)
+
+    subdivide_stream(m, measure, offsets)
     n = utils.get_first_element(m)
     n.addLyric("ins")
 
@@ -71,19 +71,6 @@ def insertion(measure: Measure, _: Stream):
 
 
 @typechecked
-def subdivide(measure: Measure, offsets: List[float]):
-    """
-    Divides a note or chord in half and duplicates it in place.
-
-    :param m: Measure containing the note or chord.
-    :param el: The note or chord to subdivide.
-    """
-    m = utils.copy_inverse(measure, offsets)
-    subdivide_stream(m, measure, offsets)
-
-    return m
-
-
 def subdivide_stream(s: Stream, og: Stream, offsets: List[float]):
     """
     Takes a stream to modify, a stream containing the relevant info,
@@ -95,14 +82,16 @@ def subdivide_stream(s: Stream, og: Stream, offsets: List[float]):
     :param og: Stream containing note information.
     :param offsets: The offsets to modify.
     """
-    # TODO: make this more general
-    # find all child streams and recurse over them
+    # could try taking a look at recurse()
+    # but need to guarantee that everything will be
+    # in its right place
     if len(og.voices) > 0:
         for i, v in enumerate(og.voices):
             nv = s.voices[i]
             subdivide_stream(nv, v, offsets)
     else:
         off = None
+        # original notes getting subdivided
         for offset in offsets:
             el = (
                 og.getElementsByOffset(offset)
@@ -118,6 +107,7 @@ def subdivide_stream(s: Stream, og: Stream, offsets: List[float]):
                 s.insert(off, new_el)
                 off += new_el.duration.quarterLength
 
+        # the copy appended after
         sub_offset = 0
         for offset in offsets:
             el = (
@@ -139,6 +129,7 @@ def transposition(measure: Measure, _: Stream) -> Measure:
 
     :param m: The measure to transpose.
     :param _: Stream, unused, do not remove.
+    :returns: A tranposed copy of the measure.
     """
     options = [-1, 1]
     choice = random.choice(options)
@@ -148,6 +139,14 @@ def transposition(measure: Measure, _: Stream) -> Measure:
 
 @typechecked
 def transpose_measure(measure: Measure, degree: int) -> Measure:
+    """
+    Transposes a measure by the provided number of steps.
+
+    :param measure: The measure to transpose.
+    :param degree: How many steps to transpose it by.
+    :return: A tranposed copy of the measure.
+    :raises ValueError: Raised if measure does not exist.
+    """
     transposed = measure.transpose(degree, classFilterList=GeneralNote)
     if transposed is None:
         raise ValueError("Measure does not exist.")
@@ -159,8 +158,18 @@ def transpose_measure(measure: Measure, degree: int) -> Measure:
 
 @typechecked
 def deletion(measure: Measure, _: Stream):
+    """
+    Picks a random substring of the measure and
+    returns a copy with that substring replaced
+    with a rest.
+
+    :param measure: The measure to delete a substring from.
+    :param _: Stream, unused.
+    :returns: A measure with random offsets deleted.
+    """
     offsets = utils.random_offsets(measure)
     m = utils.copy_inverse(measure, offsets)
+
     delete_substring(m, measure, offsets)
     n = utils.get_first_element(m)
     n.addLyric("del")
@@ -170,6 +179,14 @@ def deletion(measure: Measure, _: Stream):
 
 @typechecked
 def delete_substring(s: Stream, og: Stream, offsets: List[float]):
+    """
+    Recursively deletes the offsets provided by the offsets parameter.
+    The entire substring is replaced with a rest.
+
+    :param s: The stream to perform this operation on.
+    :param og: The original stream containing note information.
+    :param offsets: The offsets to delete.
+    """
     if len(og.voices) > 0:
         for i, v in enumerate(og.voices):
             nv = s.voices[i]
@@ -185,8 +202,17 @@ def delete_substring(s: Stream, og: Stream, offsets: List[float]):
 
 @typechecked
 def translocation(_: Measure, s: Stream):
+    """
+    Picks a random measure from the part to replace
+    the measure with.
+
+    :param _: Measure, unused.
+    :param s: The stream to pick a new measure from.
+    :returns: A random measure from the stream.
+    """
     measures = list(s.getElementsByClass("Measure"))
     choice = copy.deepcopy(random.choice(measures))
+
     first = utils.get_first_element(choice)
     first.addLyric("tl")
     return choice
@@ -194,8 +220,17 @@ def translocation(_: Measure, s: Stream):
 
 @typechecked
 def inversion(measure: Measure, _: Optional[Stream]):
+    """
+    Picks a set of offsets to invert in a measure and returns
+    a copy with the inverted measure.
+
+    :param measure: The measure to invert.
+    :param _: Stream, unused.
+    :returns: A measure with a random offset inverted.
+    """
     offsets = utils.random_offsets(measure)
     m = utils.copy_inverse(measure, offsets)
+
     invert_stream(m, measure, offsets)
     n = utils.get_first_element(m)
     n.addLyric("inv")
@@ -203,7 +238,15 @@ def inversion(measure: Measure, _: Optional[Stream]):
     return m
 
 
+@typechecked
 def invert_stream(s: Stream, og: Stream, offsets: List[float]):
+    """
+    Recursively inverts a stream at the given offsets.
+
+    :param s: The stream to invert.
+    :param og: Stream containing original note information.
+    :param offsets: The offsets to invert.
+    """
     if len(og.voices) > 0:
         for i, v in enumerate(og.voices):
             nv = s.voices[i]

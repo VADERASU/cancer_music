@@ -1,8 +1,4 @@
 import pytest
-from music21 import corpus
-from music21.chord import Chord
-from music21.duration import Duration
-from music21.meter.base import TimeSignature
 from music21.note import Note, Rest
 from music21.stream.base import Measure, Voice
 
@@ -11,7 +7,7 @@ from processor.process import (
     delete_substring,
     invert_stream,
     mutate,
-    subdivide,
+    subdivide_stream,
     transpose_measure,
 )
 
@@ -51,7 +47,10 @@ def voiced():
 
 
 def test_subdivide_begin(sm):
-    m = subdivide(sm, [0.0, 1.0])
+    offsets = [0.0, 1.0]
+    m = utils.copy_inverse(sm, offsets)
+    subdivide_stream(m, sm, offsets)
+
     assert m[0] == Note("C", type="eighth")
     assert m[1] == Note("D", type="eighth")
     assert m[2] == Note("C", type="eighth")
@@ -61,7 +60,9 @@ def test_subdivide_begin(sm):
 
 
 def test_subdivide_voiced(voiced):
-    m = subdivide(voiced, [0.0, 1.0, 2.0])
+    offsets = [0.0, 1.0, 2.0]
+    m = utils.copy_inverse(voiced, offsets)
+    subdivide_stream(m, voiced, offsets)
     v1 = m.voices[0]
     v2 = m.voices[1]
 
@@ -80,7 +81,9 @@ def test_subdivide_voiced(voiced):
 
 
 def test_subdivide_mid(sm):
-    m = subdivide(sm, [1.0, 2.0])
+    offsets = [1.0, 2.0]
+    m = utils.copy_inverse(sm, offsets)
+    subdivide_stream(m, sm, offsets)
     assert m[0] == Note("C", type="quarter")
     assert m[1] == Note("D", type="eighth")
     assert m[2] == Note("E", type="eighth")
@@ -167,5 +170,5 @@ def test_mutate(streams):
             if p.id == "mutant":
                 for m in p.getElementsByClass(Measure):
                     ts = m.getTimeSignatures()[0]
-                    # assert m.duration.quarterLength == ts.beatCount
+                    assert m.duration.quarterLength == ts.beatCount
         stream.write("musicxml", f"mutant_{filename}")

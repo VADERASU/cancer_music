@@ -3,19 +3,15 @@ import functools as f
 import os
 import random
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import List, Union
 
 from music21.chord import Chord
-from music21.clef import Clef
 from music21.duration import Duration
-from music21.instrument import Instrument
-from music21.key import Key, KeySignature
+from music21.key import Key
 from music21.meter.base import TimeSignature
 from music21.note import GeneralNote, Note, Rest
-from music21.stream.base import Measure, Part, Stream, Voice
+from music21.stream.base import Measure, Stream, Voice
 from typeguard import typechecked
-
-OffsetDict = Dict[float, List[GeneralNote]]
 
 
 @typechecked
@@ -27,8 +23,7 @@ def get_time(m: Measure) -> TimeSignature:
     :return: The measure's time signature.
     :raises ValueError: Raised if no time signature exists.
     """
-    note = get_first_element(m)
-    ts = note.getContextByClass("TimeSignature")
+    ts = m.getTimeSignatures()[0]
     if isinstance(ts, TimeSignature):
         return ts
     else:
@@ -75,20 +70,12 @@ def random_offsets(m: Measure) -> List[float]:
     Picks a subset of offsets from the measure.
 
     :param m: The measure to pick a note from.
-    :return: A random note from the measure.
+    :return: A list of random offsets from the measure.
     """
     timing = list(set([el.offset for el in m.flat.notesAndRests]))
     timing.sort()
     start = random.randint(0, len(timing) - 1)
     return timing[start:]
-
-
-def get_substring_length(offsets: OffsetDict) -> float:
-    total = 0
-    for off in offsets.keys():
-        durations = [el.duration.quarterLength for el in offsets[off]]
-        total += min(durations)
-    return total
 
 
 @typechecked
@@ -125,25 +112,21 @@ def generate_note(key: Key = Key("C")):
     return Note(p)
 
 
-def reverse(m: Measure):
+@typechecked
+def duplicate_note(n: Note) -> Note:
     """
-    Returns the notes in a measure in reverse order.
+    Duplicates a note. Again, need this because copy.deepcopy
+    copies over additional unnecessary information.
 
-    :param m: The measure to get the notes from.
+    :param n: Note to duplicate.
+    :return: Copy of note.
     """
-    notes = m.notesAndRests
-    el = []
-    for n in notes:
-        el.insert(0, n)
-    return el
-
-
-def duplicate_note(n: Note):
     dn = Note(nameWithOctave=n.nameWithOctave)
     dn.duration = Duration(n.quarterLength)
     return dn
 
 
+@typechecked
 def duplicate_element(el: GeneralNote) -> GeneralNote:
     """
     Duplicates a GeneralNote. Different than copy.deepcopy,
@@ -164,22 +147,46 @@ def duplicate_element(el: GeneralNote) -> GeneralNote:
         return Rest(length=el.duration.quarterLength)
 
 
-# need to do this because notes are heavily coupled with streams
+@typechecked
 def subdivide_element(el: GeneralNote) -> GeneralNote:
+    """
+    Subdivides an element. This is necessary because copy.deepcopy
+    copies over stream information which leads to weird errors.
+
+    :param el: Element to subdivide.
+    :return: A copy of the element with half its duration.
+    """
     divided = el.augmentOrDiminish(0.5)
     dup = duplicate_element(el)
     dup.duration.quarterLength = divided.duration.quarterLength
     return dup
 
 
-def copy_stream_inverse(s: Stream, og: Stream, offsets):
+@typechecked
+def copy_stream_inverse(s: Stream, og: Stream, offsets: List[float]):
+    """
+    Recursive helper method for copy_inverse.
+
+    :param s: Stream to copy.
+    :param og: Original note information.
+    :param offsets: List of offsets to avoid copying.
+    """
     for n in og.getElementsByClass(GeneralNote):
         if n.offset < min(offsets) or n.offset > max(offsets):
             new_el = duplicate_element(n)
             s.insert(n.offset, new_el)
 
 
-def copy_inverse(measure, offsets):
+@typechecked
+def copy_inverse(measure: Measure, offsets: List[float]):
+    """
+    Given a measure and a list of offsets, copies over all notes
+    NOT in the offsets list.
+
+    :param measure: Measure to make an inverse copy of.
+    :param offsets: List of offsets to not copy.
+    :returns: Measure without elements in offsets.
+    """
     m = Measure()
     if len(measure.voices) > 0:
         for v in measure.voices:
@@ -190,8 +197,3 @@ def copy_inverse(measure, offsets):
         copy_stream_inverse(m, measure, offsets)
 
     return m
-
-
-# duplicate stream correctly without any references
-def duplicate_stream(s: Stream):
-    pass

@@ -3,7 +3,6 @@ Command-line script for running the mutation on a file.
 """
 
 import argparse
-import os
 from datetime import datetime
 
 from music21 import converter
@@ -19,7 +18,7 @@ def main():
     )
     parser.add_argument(
         "-o",
-        '--output',
+        "--output",
         help="Name of the output file. Optional; if not provided, named with unix timestamp.",
         required=False,
         default=f"mutant_{int(datetime.timestamp(datetime.now()))}.mxl",
