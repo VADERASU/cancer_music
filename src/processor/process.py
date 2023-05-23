@@ -1,6 +1,6 @@
 import copy
 import random
-from typing import List, Optional
+from typing import List, Optional, TypedDict
 
 from music21.instrument import Instrument
 from music21.note import GeneralNote, Rest
@@ -10,8 +10,29 @@ from typeguard import typechecked
 from processor import utils
 
 
+class Parameters(TypedDict):
+    how_many: int
+    noop: float
+    insertion: float
+    transposition: float
+    deletion: float
+    translocation: float
+    inversion: float
+
+
 @typechecked
-def mutate(s: Stream, how_many: int = 4):
+def mutate(
+    s: Stream,
+    params: Parameters = Parameters(
+        how_many=4,
+        noop=0.2,
+        insertion=0.2,
+        transposition=0.1,
+        deletion=0.25,
+        translocation=0.05,
+        inversion=0.2,
+    ),
+):
     """
     Main method for mutating a file.
 
@@ -21,8 +42,8 @@ def mutate(s: Stream, how_many: int = 4):
     p = random.choice(list(parts))
 
     measures = p.getElementsByClass("Measure")
-    start = random.randint(0, len(measures) - how_many)
-    tumors = measures[start : start + how_many]
+    start = random.randint(0, len(measures) - params["how_many"])
+    tumors = measures[start : start + params["how_many"]]
 
     dup = Stream.template(
         p,
@@ -36,7 +57,16 @@ def mutate(s: Stream, how_many: int = 4):
     for i, dm in enumerate(dpm):
         t = tumors[i % len(tumors)]  # pick tumor measure
         # each mutation should be equal length to its original measure
-        mutation = choose_mutation()
+        mutation = choose_mutation(
+            [
+                params["noop"],
+                params["insertion"],
+                params["transposition"],
+                params["deletion"],
+                params["translocation"],
+                params["inversion"],
+            ]
+        )
         mutant = mutation(t, p)  # mutate it
         mutant.number = dm.number
         mutant.makeBeams(inPlace=True)
