@@ -1,12 +1,22 @@
 from zipfile import BadZipFile, ZipFile
 
 from fastapi import FastAPI, HTTPException, Response, UploadFile
+from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from music21 import converter
 from music21.musicxml.m21ToXml import GeneralObjectExporter
 
 from processor.process import mutate
 
+from .utils import get_this_dir
+
 app = FastAPI()
+this_dir = get_this_dir()
+
+
+@app.get("/")
+def redirect_to_index():
+    return RedirectResponse(url="/index.html", status_code=303)
 
 
 @app.post("/process_file")
@@ -53,3 +63,10 @@ def process_file(
     return Response(
         content=gex.parse(s), media_type="application/vnd.recordare.musicxml"
     )
+
+
+app.mount(
+    "/",
+    StaticFiles(directory=f"{this_dir}/front/dist"),
+    name="static",
+)
