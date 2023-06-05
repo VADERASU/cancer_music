@@ -30,11 +30,6 @@ def process_file(
     inversion: float,
     file: UploadFile,
 ):
-    if file.content_type != "application/vnd.recordare.musicxml":
-        raise HTTPException(
-            422, f"Cannot process file type {file.content_type}"
-        )
-
     # this should be handled by music21's archive manager
     # but it doesn't support byte objects
     try:
