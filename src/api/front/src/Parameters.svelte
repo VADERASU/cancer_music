@@ -48,7 +48,7 @@
         const fd = new FormData();
         fd.append("file", file, file.name);
         const response = await fetch(
-            "http://localhost:8000/process_file?" +
+            "/process_file?" +
                 new URLSearchParams({
                     ...probabilities,
                     how_many,
@@ -66,7 +66,7 @@
 </script>
 
 <div>
-    <input accept="application/xml" on:change={readFile} type="file" />
+    <input on:change={readFile} type="file" />
     {#if file}
         <h2>
             Sum of probabilities:
