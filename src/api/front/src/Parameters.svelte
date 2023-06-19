@@ -1,5 +1,6 @@
 <script>
     import ProbSlider from "./ProbSlider.svelte";
+    import { API_URL } from "./api/constants.js";
     export let mutant;
     let file;
     let how_many = 4;
@@ -48,7 +49,7 @@
         const fd = new FormData();
         fd.append("file", file, file.name);
         const response = await fetch(
-            "/process_file?" +
+            `${API_URL}/process_file?` +
                 new URLSearchParams({
                     ...probabilities,
                     how_many,
