@@ -25,23 +25,6 @@
                         }
                     }
                 }
-                /*while (currentMeasure <= lastMeasure) {
-                    const voices = cursor.VoicesUnderCursor();
-                    for (const v of voices) {
-                        const lyrics = v.LyricsEntries;
-                        for (const lyric of Object.values(lyrics.table)) {
-                            console.log(lyric);
-                            if (lyric.Text === marker) {
-                                // get the note
-                                console.log(cursor.GNotesUnderCursor());
-                                // get its graphical representation
-                                // mutate
-                            }
-                        }
-                    }
-                    cursor.next();
-                    currentMeasure += 1;
-                }*/
             }
         });
     }

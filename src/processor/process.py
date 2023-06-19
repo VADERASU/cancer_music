@@ -135,6 +135,7 @@ def subdivide_stream(s: Stream, og: Stream, offsets: List[float]):
                     off = el.offset
 
                 s.insert(off, new_el)
+                new_el.addLyric("i")
                 off += new_el.duration.quarterLength
 
         # the copy appended after
