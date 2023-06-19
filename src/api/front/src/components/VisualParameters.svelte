@@ -2,6 +2,13 @@
     import { colorNotes } from "../api/fx.js";
     export let vis;
     let selected;
+    let values = {
+        insertion: {},
+        transposition: {},
+        deletion: {},
+        inversion: {},
+        translocation: {},
+    };
 </script>
 
 {#each Object.keys(vis) as m}
@@ -16,8 +23,12 @@
             const visuals = vis[selected];
             visuals["color"] = colorNotes(e.target.value);
             vis = { ...vis };
+
+            const value = values[selected];
+            value["color"] = e.target.value;
+            values = { ...values };
         }}
-        value={vis[selected]["color"] ? vis[selected]["color"] : "black"}
+        value={values[selected]["color"] ? values[selected]["color"] : "black"}
     />
 {/if}
 
