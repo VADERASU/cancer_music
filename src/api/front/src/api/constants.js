@@ -8,6 +8,6 @@ export const mutationMarkers = {
     "deletion": "d",
     "transposition": "t",
     "translocation": "tl",
-    "inversion": "inv",
+    "inversion": "iv",
 };
 

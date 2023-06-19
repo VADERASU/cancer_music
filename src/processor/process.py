@@ -181,9 +181,7 @@ def transpose_measure(measure: Measure, degree: int) -> Measure:
     transposed = measure.transpose(degree, classFilterList=GeneralNote)
     if transposed is None:
         raise ValueError("Measure does not exist.")
-    n = utils.get_first_element(transposed)
-    n.addLyric("t")
-
+    utils.add_lyric_for_measure(transposed, "t")
     return transposed
 
 
@@ -243,9 +241,7 @@ def translocation(_: Measure, s: Stream):
     """
     measures = list(s.getElementsByClass("Measure"))
     choice = copy.deepcopy(random.choice(measures))
-
-    first = utils.get_first_element(choice)
-    first.addLyric("tl")
+    utils.add_lyric_for_measure(choice, "t")
     return choice
 
 
@@ -299,7 +295,7 @@ def invert_stream(s: Stream, og: Stream, offsets: List[float]):
             notes.reverse()
             for el in notes:
                 new_el = utils.duplicate_element(el)
-                new_el.addLyric(str(el.offset))
+                new_el.addLyric(str('iv'))
                 s.insert(off, new_el)
                 off += new_el.duration.quarterLength
 

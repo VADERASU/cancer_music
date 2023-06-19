@@ -64,6 +64,12 @@ def get_first_element(m: Stream) -> GeneralNote:
     return first
 
 
+def add_lyric_for_measure(m: Stream, annotation: str):
+    notes = m.flat.notesAndRests
+    for n in notes:
+        n.addLyric(annotation)
+
+
 @typechecked
 def random_offsets(m: Measure) -> List[float]:
     """
