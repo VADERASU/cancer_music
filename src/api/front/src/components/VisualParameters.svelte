@@ -1,5 +1,5 @@
 <script>
-    import { colorNotes, modifyAlpha } from "../api/fx.js";
+    import { colorNotes, modifyAlpha, modifySize } from "../api/fx.js";
     export let vis;
     let selected;
     let values = {
@@ -45,6 +45,13 @@
             on:change={(e) =>
                 modifyValue(selected, "transparency", modifyAlpha, e)}
             value={getValue("transparency", selected, 1)}
+        />
+        <span>Size</span><input
+            type="number"
+            step="1"
+            min="1"
+            on:change={(e) => modifyValue(selected, "size", modifySize, e)}
+            value={getValue("size", selected, 1)}
         />
     {/key}
 {/if}

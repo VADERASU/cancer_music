@@ -24,3 +24,16 @@ const _modifyAlpha = (alpha, staffEntry) => {
 };
 
 export const modifyAlpha = (alpha) => curry(_modifyAlpha)(alpha);
+
+const _modifySize = (size, staffEntry) => {
+    for (const g of staffEntry.graphicalVoiceEntries) {
+        for (const n of g.notes) {
+            const svg = n.vfnote[0].attrs.el;
+            for (const child of svg.getElementsByTagName('path')) {
+                child.setAttribute("stroke-width", `${size}px`);
+            }
+        }
+    }
+};
+
+export const modifySize = (size) => curry(_modifySize)(size);
