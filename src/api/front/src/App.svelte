@@ -11,6 +11,17 @@
         inversion: {},
         translocation: {},
     };
+
+    // reset effects if sheet changes
+    $: if (mutant) {
+        vis = {
+            insertion: {},
+            transposition: {},
+            deletion: {},
+            inversion: {},
+            translocation: {},
+        };
+    }
 </script>
 
 <main>

@@ -37,7 +37,7 @@
             on:change={(e) => modifyValue(selected, "color", colorNotes, e)}
             value={getValue("color", selected, "black")}
         />
-        <span>Transparency></span><input
+        <span>Transparency</span><input
             type="number"
             step="0.1"
             min="0"
