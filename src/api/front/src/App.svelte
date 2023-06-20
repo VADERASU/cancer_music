@@ -2,8 +2,10 @@
     import Parameters from "./Parameters.svelte";
     import SheetDisplay from "./SheetDisplay.svelte";
     import VisualParameters from "./components/VisualParameters.svelte";
+    import { fade } from "svelte/transition";
 
     let mutant;
+    let showParams = true;
     let vis = {
         insertion: {},
         transposition: {},
@@ -21,14 +23,20 @@
             inversion: {},
             translocation: {},
         };
+        showParams = false;
     }
 </script>
 
 <main>
-    <h1>Capturing Cancer with Music</h1>
-    <Parameters bind:mutant />
+    <h1 on:click={() => (showParams = true)}>Capturing Cancer with Music</h1>
+    {#if showParams}
+        <div transition:fade>
+            <Parameters bind:mutant />
+        </div>
+    {/if}
     {#if mutant}
         {#key mutant}
+            <br />
             <VisualParameters bind:vis />
             <SheetDisplay musicxml={mutant} {vis} />
         {/key}

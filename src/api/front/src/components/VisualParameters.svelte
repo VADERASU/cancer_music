@@ -1,5 +1,7 @@
 <script>
     import { colorNotes, modifyAlpha, modifySize } from "../api/fx.js";
+    import { fade } from "svelte/transition";
+
     export let vis;
     let selected;
     let values = {
