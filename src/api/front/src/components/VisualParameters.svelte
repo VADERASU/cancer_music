@@ -4,6 +4,7 @@
         modifyAlpha,
         modifySize,
         modifyAngle,
+        blur,
     } from "../api/fx.js";
 
     export let vis;
@@ -18,11 +19,11 @@
 
     const modifyValue = (selected, val, func, e) => {
         const visuals = vis[selected];
-        visuals[val] = func(e.target.value);
+        visuals[val] = func(e);
         vis = { ...vis };
 
         const value = values[selected];
-        value[val] = e.target.value;
+        value[val] = e;
         values = { ...values };
     };
 
@@ -44,7 +45,12 @@
                     type="color"
                     name="color"
                     on:change={(e) =>
-                        modifyValue(selected, "color", colorNotes, e)}
+                        modifyValue(
+                            selected,
+                            "color",
+                            colorNotes,
+                            e.target.value
+                        )}
                     value={getValue("color", selected, "black")}
                 />
             </div>
@@ -56,7 +62,12 @@
                     min="0"
                     max="1"
                     on:change={(e) =>
-                        modifyValue(selected, "transparency", modifyAlpha, e)}
+                        modifyValue(
+                            selected,
+                            "transparency",
+                            modifyAlpha,
+                            e.target.value
+                        )}
                     value={getValue("transparency", selected, 1)}
                 />
             </div>
@@ -67,7 +78,12 @@
                     step="1"
                     min="1"
                     on:change={(e) =>
-                        modifyValue(selected, "size", modifySize, e)}
+                        modifyValue(
+                            selected,
+                            "size",
+                            modifySize,
+                            e.target.value
+                        )}
                     value={getValue("size", selected, 1)}
                 />
             </div>
@@ -79,8 +95,21 @@
                     min="-180"
                     max="180"
                     on:change={(e) =>
-                        modifyValue(selected, "angle", modifyAngle, e)}
+                        modifyValue(
+                            selected,
+                            "angle",
+                            modifyAngle,
+                            e.target.value
+                        )}
                     value={getValue("angle", selected, 0)}
+                />
+            </div>
+            <div class="container">
+                <label for="blur">Blur</label><input
+                    type="checkbox"
+                    on:change={(e) =>
+                        modifyValue(selected, "blur", blur, e.target.checked)}
+                    value={getValue("blur", selected, false)}
                 />
             </div>
         {/key}

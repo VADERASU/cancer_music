@@ -30,7 +30,6 @@ const _modifySize = (size, staffEntry) => {
         for (const n of g.notes) {
             const svg = n.vfnote[0].attrs.el;
             const bBox = n.vfnote[0].getBoundingBox();
-            const { x, y, w, h } = bBox;
             for (const child of svg.getElementsByTagName('path')) {
                 child.setAttribute("stroke-width", `${size}px`);
             }
@@ -52,3 +51,26 @@ const _modifyAngle = (angle, staffEntry) => {
 };
 
 export const modifyAngle = (angle) => curry(_modifyAngle)(angle);
+
+export const initFilters = (svg) => {
+    const defs = document.createElementNS('http://www.w3.org/2000/svg', "defs");
+    const blur = document.createElementNS('http://www.w3.org/2000/svg', "filter");
+    blur.id = 'blur';
+    const blurfx = document.createElementNS('http://www.w3.org/2000/svg', "feGaussianBlur");
+    blurfx.setAttribute('stdDeviation', 2);
+    blur.appendChild(blurfx);
+    defs.appendChild(blur);
+    svg.appendChild(defs);
+};
+
+export const _blur = (val, staffEntry) => {
+    for (const g of staffEntry.graphicalVoiceEntries) {
+        for (const n of g.notes) {
+            const svg = n.vfnote[0].attrs.el;
+            const filter = (val) ? 'url(#blur)' : '';
+            svg.setAttribute('filter', filter);
+        }
+    }
+};
+
+export const blur = (val) => curry(_blur)(val);
