@@ -1,6 +1,10 @@
 <script>
-    import { colorNotes, modifyAlpha, modifySize } from "../api/fx.js";
-    import { fade } from "svelte/transition";
+    import {
+        colorNotes,
+        modifyAlpha,
+        modifySize,
+        modifyAngle,
+    } from "../api/fx.js";
 
     export let vis;
     let selected;
@@ -65,6 +69,18 @@
                     on:change={(e) =>
                         modifyValue(selected, "size", modifySize, e)}
                     value={getValue("size", selected, 1)}
+                />
+            </div>
+            <div class="container">
+                <label for="angle">Angle</label><input
+                    type="number"
+                    name="size"
+                    step="1"
+                    min="-180"
+                    max="180"
+                    on:change={(e) =>
+                        modifyValue(selected, "angle", modifyAngle, e)}
+                    value={getValue("angle", selected, 0)}
                 />
             </div>
         {/key}
