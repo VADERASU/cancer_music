@@ -32,7 +32,7 @@
 </script>
 
 <div class="stack">
-    <div class="container">
+    <div class="hStack">
         {#each Object.keys(vis) as m}
             <button on:click={() => (selected = m)}>{m}</button>
         {/each}
@@ -120,6 +120,10 @@
     .stack {
         flex-direction: column;
         display: flex;
+    }
+    .hStack {
+        display: flex;
+        gap: 5px;
     }
     .container {
         display: flex;
