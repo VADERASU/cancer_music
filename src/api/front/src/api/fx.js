@@ -45,7 +45,15 @@ const _modifyAngle = (angle, staffEntry) => {
             const svg = n.vfnote[0].attrs.el;
             const bBox = n.vfnote[0].getBoundingBox();
             const { x, y, w, h } = bBox;
-            svg.setAttribute("transform", `rotate(${angle},${x + (w / 2)}, ${y + (h / 2)})`);
+            const t = `rotate(${angle},${x + (w / 2)}, ${y + (h / 2)})`;
+            if (n.sourceNote.isRestFlag) {
+                svg.setAttribute("transform", t);
+            } else {
+                const stem = svg.querySelector('.vf-stem');
+                if (stem) {
+                    stem.setAttribute("transform", t);
+                }
+            }
         }
     }
 };
