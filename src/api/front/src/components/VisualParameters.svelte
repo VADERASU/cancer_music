@@ -5,6 +5,7 @@
         modifySize,
         modifyAngle,
         blur,
+        erode,
     } from "../api/fx.js";
 
     export let vis;
@@ -110,6 +111,14 @@
                     on:change={(e) =>
                         modifyValue(selected, "blur", blur, e.target.checked)}
                     value={getValue("blur", selected, false)}
+                />
+            </div>
+            <div class="container">
+                <label for="erode">Erode</label><input
+                    type="checkbox"
+                    on:change={(e) =>
+                        modifyValue(selected, "erode", erode, e.target.checked)}
+                    value={getValue("erode", selected, false)}
                 />
             </div>
         {/key}
