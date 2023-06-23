@@ -1,7 +1,7 @@
 <script>
     import { OpenSheetMusicDisplay } from "opensheetmusicdisplay";
     import { mutationMarkers } from "../api/constants";
-    import { initFilters } from "../api/fx";
+    import { initFilter, initDefs } from "../api/fx";
     import { onMount } from "svelte";
 
     export let vis;
@@ -22,9 +22,10 @@
             .getElementsByTagName("svg");
 
         for (const svg of pages) {
-            const defs = svg.getElementsByTagName("defs");
-            if (defs.length === 0) {
-                initFilters(svg);
+            const defs = document.querySelector("#defs");
+            if (defs === null) {
+                initDefs(svg);
+                Object.keys(vis).forEach((mutation) => initFilter(mutation));
             }
         }
         for (const mutation of Object.keys(vis)) {

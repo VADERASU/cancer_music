@@ -18,9 +18,10 @@
         translocation: {},
     };
 
-    const modifyValue = (selected, val, func, e) => {
+    const modifyValue = (selected, val, func, e, args) => {
         const visuals = vis[selected];
-        visuals[val] = func(e);
+        const use = args ? { ...args, val: e } : e;
+        visuals[val] = func(use);
         vis = { ...vis };
 
         const value = values[selected];
@@ -107,18 +108,26 @@
             </div>
             <div class="container">
                 <label for="blur">Blur</label><input
-                    type="checkbox"
+                    type="range"
+                    min={0}
+                    max={5}
                     on:change={(e) =>
-                        modifyValue(selected, "blur", blur, e.target.checked)}
-                    value={getValue("blur", selected, false)}
+                        modifyValue(selected, "blur", blur, e.target.value, {
+                            id: selected,
+                        })}
+                    value={getValue("blur", selected, 0)}
                 />
             </div>
             <div class="container">
                 <label for="erode">Erode</label><input
-                    type="checkbox"
+                    type="range"
+                    min={0}
+                    max={5}
                     on:change={(e) =>
-                        modifyValue(selected, "erode", erode, e.target.checked)}
-                    value={getValue("erode", selected, false)}
+                        modifyValue(selected, "erode", erode, e.target.value, {
+                            id: selected,
+                        })}
+                    value={getValue("erode", selected, 0)}
                 />
             </div>
         {/key}

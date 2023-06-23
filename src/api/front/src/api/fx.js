@@ -60,46 +60,44 @@ const _modifyAngle = (angle, staffEntry) => {
 
 export const modifyAngle = (angle) => curry(_modifyAngle)(angle);
 
-export const initFilters = (svg) => {
-    const defs = document.createElementNS('http://www.w3.org/2000/svg', "defs");
+export const initFilter = (id) => {
+    const filter = document.createElementNS('http://www.w3.org/2000/svg', "filter");
+    filter.id = `${id}_filter`;
+    filter.setAttribute('filterUnits', 'objectBoundingBox');
+    filter.setAttribute('primitiveUnits', 'userSpaceOnUse');
 
-    const blur = document.createElementNS('http://www.w3.org/2000/svg', "filter");
-    blur.id = 'blur';
     const blurfx = document.createElementNS('http://www.w3.org/2000/svg', "feGaussianBlur");
-    blurfx.setAttribute('stdDeviation', "2");
-    blur.appendChild(blurfx);
-    defs.appendChild(blur);
-
-    const erosion = document.createElementNS('http://www.w3.org/2000/svg', "filter");
-    erosion.id = 'erode';
-    erosion.setAttribute('x', '-20%');
-    erosion.setAttribute('y', '-20%');
-    erosion.setAttribute('width', '140%');
-    erosion.setAttribute('height', '140%');
-    erosion.setAttribute('filterUnits', 'objectBoundingBox');
-    erosion.setAttribute('primitiveUnits', 'userSpaceOnUse');
+    blurfx.id = `${id}_blur`;
+    blurfx.setAttribute('stdDeviation', "0");
+    blurfx.setAttribute('result', 'blurred');
+    filter.appendChild(blurfx);
 
     const erosionfx = document.createElementNS('http://www.w3.org/2000/svg', "feMorphology");
+    erosionfx.id = `${id}_erode`;
     erosionfx.setAttribute('operator', "erode");
-    erosionfx.setAttribute('radius', '1 1');
-    erosionfx.setAttribute('in', 'SourceGraphic');
-    erosionfx.setAttribute('x', '0%');
-    erosionfx.setAttribute('y', '0%');
-    erosionfx.setAttribute('width', '100%');
-    erosionfx.setAttribute('height', '100%');
+    erosionfx.setAttribute('radius', '0 0');
+    erosionfx.setAttribute('in', 'blurred');
     erosionfx.setAttribute('result', 'morphology');
+    filter.appendChild(erosionfx);
 
-    erosion.appendChild(erosionfx);
-    defs.appendChild(erosion);
+    const defs = document.querySelector('#defs');
+    defs.append(filter);
+}
 
+export const initDefs = (svg) => {
+    const defs = document.createElementNS('http://www.w3.org/2000/svg', "defs");
+    defs.id = 'defs'
     svg.appendChild(defs);
 };
 
-const _blur = (val, staffEntry) => {
+const _blur = ({ val, id }, staffEntry) => {
+    const blur = document.querySelector(`#${id}_blur`);
+    blur.setAttribute('stdDeviation', val);
+
     staffEntry.graphicalVoiceEntries.forEach((g) =>
         g.notes.forEach((n) => {
             const svg = n.getSVGGElement();
-            const filter = (val) ? 'url(#blur)' : '';
+            const filter = `url(#${id}_filter)`;
             svg.setAttribute('filter', filter);
         })
     );
@@ -107,11 +105,14 @@ const _blur = (val, staffEntry) => {
 
 export const blur = (val) => curry(_blur)(val);
 
-const _erode = (val, staffEntry) => {
+const _erode = ({ val, id }, staffEntry) => {
+    const erode = document.querySelector(`#${id}_erode`);
+    erode.setAttribute('radius', `${val} ${val}`);
+
     staffEntry.graphicalVoiceEntries.forEach((g) =>
         g.notes.forEach((n) => {
             const svg = n.getSVGGElement();
-            const filter = (val) ? 'url(#erode)' : '';
+            const filter = `url(#${id}_filter)`;
             svg.setAttribute('filter', filter);
         })
     );
