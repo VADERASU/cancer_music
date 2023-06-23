@@ -1,6 +1,6 @@
 <script>
-    import Parameters from "./Parameters.svelte";
-    import SheetDisplay from "./SheetDisplay.svelte";
+    import Parameters from "./components/Parameters.svelte";
+    import SheetDisplay from "./components/SheetDisplay.svelte";
     import VisualParameters from "./components/VisualParameters.svelte";
     import { fade } from "svelte/transition";
 

@@ -1,6 +1,6 @@
 <script>
     import ProbSlider from "./ProbSlider.svelte";
-    import { API_URL } from "./api/constants.js";
+    import { API_URL } from "../api/constants.js";
     export let mutant;
     let file;
     let how_many = 4;
