@@ -1,47 +1,46 @@
 import { curry } from './utils';
 
 const _colorNotes = (color, staffEntry) => {
-    for (const g of staffEntry.graphicalVoiceEntries) {
-        for (const n of g.notes) {
+    staffEntry.graphicalVoiceEntries.forEach((g) =>
+        g.notes.forEach((n) => {
             const svg = n.getSVGGElement();
-            for (const child of svg.getElementsByTagName('path')) {
+            const paths = Array.from(svg.getElementsByTagName('path'));
+            paths.forEach((child) => {
                 child.setAttribute("stroke", color);
                 child.setAttribute("fill", color);
-            }
-        }
-    }
+            })
+        })
+    )
 };
 
 export const colorNotes = (color) => curry(_colorNotes)(color);
 
 const _modifyAlpha = (alpha, staffEntry) => {
-    for (const g of staffEntry.graphicalVoiceEntries) {
-        for (const n of g.notes) {
+    staffEntry.graphicalVoiceEntries.forEach((g) =>
+        g.notes.forEach((n) => {
             const svg = n.getSVGGElement();
             svg.setAttribute("opacity", alpha);
-        }
-    }
+        })
+    )
 };
 
 export const modifyAlpha = (alpha) => curry(_modifyAlpha)(alpha);
 
 const _modifySize = (size, staffEntry) => {
-    for (const g of staffEntry.graphicalVoiceEntries) {
-        for (const n of g.notes) {
+    staffEntry.graphicalVoiceEntries.forEach((g) =>
+        g.notes.forEach((n) => {
             const svg = n.getSVGGElement();
-            const bBox = n.vfnote[0].getBoundingBox();
-            for (const child of svg.getElementsByTagName('path')) {
-                child.setAttribute("stroke-width", `${size}px`);
-            }
-        }
-    }
+            const paths = Array.from(svg.getElementsByTagName('path'));
+            paths.forEach((child) => child.setAttribute("stroke-width", `${size}px`));
+        })
+    );
 };
 
 export const modifySize = (size) => curry(_modifySize)(size);
 
 const _modifyAngle = (angle, staffEntry) => {
-    for (const g of staffEntry.graphicalVoiceEntries) {
-        for (const n of g.notes) {
+    staffEntry.graphicalVoiceEntries.forEach((g) =>
+        g.notes.forEach((n) => {
             const svg = n.getSVGGElement();
             const bBox = n.vfnote[0].getBoundingBox();
             const { x, y, w, h } = bBox;
@@ -56,8 +55,7 @@ const _modifyAngle = (angle, staffEntry) => {
                     stem.setAttribute("transform", t);
                 }
             }
-        }
-    }
+        }));
 };
 
 export const modifyAngle = (angle) => curry(_modifyAngle)(angle);
@@ -68,7 +66,7 @@ export const initFilters = (svg) => {
     const blur = document.createElementNS('http://www.w3.org/2000/svg', "filter");
     blur.id = 'blur';
     const blurfx = document.createElementNS('http://www.w3.org/2000/svg', "feGaussianBlur");
-    blurfx.setAttribute('stdDeviation', 2);
+    blurfx.setAttribute('stdDeviation', "2");
     blur.appendChild(blurfx);
     defs.appendChild(blur);
 
@@ -98,25 +96,25 @@ export const initFilters = (svg) => {
 };
 
 const _blur = (val, staffEntry) => {
-    for (const g of staffEntry.graphicalVoiceEntries) {
-        for (const n of g.notes) {
+    staffEntry.graphicalVoiceEntries.forEach((g) =>
+        g.notes.forEach((n) => {
             const svg = n.getSVGGElement();
             const filter = (val) ? 'url(#blur)' : '';
             svg.setAttribute('filter', filter);
-        }
-    }
+        })
+    );
 };
 
 export const blur = (val) => curry(_blur)(val);
 
 const _erode = (val, staffEntry) => {
-    for (const g of staffEntry.graphicalVoiceEntries) {
-        for (const n of g.notes) {
+    staffEntry.graphicalVoiceEntries.forEach((g) =>
+        g.notes.forEach((n) => {
             const svg = n.getSVGGElement();
             const filter = (val) ? 'url(#erode)' : '';
             svg.setAttribute('filter', filter);
-        }
-    }
+        })
+    );
 };
 
 export const erode = (val) => curry(_erode)(val);

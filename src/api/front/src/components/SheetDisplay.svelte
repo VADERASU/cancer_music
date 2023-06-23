@@ -20,6 +20,7 @@
         const pages = document
             .getElementById("sheet")
             .getElementsByTagName("svg");
+
         for (const svg of pages) {
             const defs = svg.getElementsByTagName("defs");
             if (defs.length === 0) {
