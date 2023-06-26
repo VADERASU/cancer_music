@@ -89,6 +89,25 @@ export const initFilter = (id) => {
     shadow.setAttribute('result', 'shadow');
     filter.appendChild(shadow);
 
+    // turbulence + displacementMap work together to create the waves effect
+    const turbulence = document.createElementNS('http://www.w3.org/2000/svg', "feTurbulence");
+    turbulence.id = `${id}_turbulence`;
+    turbulence.setAttribute('baseFrequency', `0.1 0.05`);
+    turbulence.setAttribute('numOctaves', '2');
+    turbulence.setAttribute('seed', '2');
+    turbulence.setAttribute('result', 'turbulence');
+    filter.appendChild(turbulence);
+
+    const displacement = document.createElementNS('http://www.w3.org/2000/svg', "feDisplacementMap");
+    displacement.id = `${id}_displacement`;
+    displacement.setAttribute('in', 'shadow');
+    displacement.setAttribute('in2', 'turbulence');
+    displacement.setAttribute('scale', '0');
+    displacement.setAttribute('xChannelSelector', 'G');
+    displacement.setAttribute('yChannelSelector', 'A');
+    displacement.setAttribute('result', 'dp');
+    filter.appendChild(displacement);
+
     const defs = document.querySelector('#defs');
     defs.append(filter);
 }
@@ -99,10 +118,7 @@ export const initDefs = (svg) => {
     svg.appendChild(defs);
 };
 
-const _blur = ({ val, id }, staffEntry) => {
-    const blur = document.querySelector(`#${id}_blur`);
-    blur.setAttribute('stdDeviation', val);
-
+const applyFilter = (id, staffEntry) => {
     staffEntry.graphicalVoiceEntries.forEach((g) =>
         g.notes.forEach((n) => {
             const svg = n.getSVGGElement();
@@ -110,6 +126,12 @@ const _blur = ({ val, id }, staffEntry) => {
             svg.setAttribute('filter', filter);
         })
     );
+};
+
+const _blur = ({ val, id }, staffEntry) => {
+    const blur = document.querySelector(`#${id}_blur`);
+    blur.setAttribute('stdDeviation', val);
+    applyFilter(id, staffEntry);
 };
 
 export const blur = (val) => curry(_blur)(val);
@@ -119,14 +141,7 @@ export const blur = (val) => curry(_blur)(val);
 const _erode = ({ val, id }, staffEntry) => {
     const erode = document.querySelector(`#${id}_erode`);
     erode.setAttribute('radius', `${val} ${val}`);
-
-    staffEntry.graphicalVoiceEntries.forEach((g) =>
-        g.notes.forEach((n) => {
-            const svg = n.getSVGGElement();
-            const filter = `url(#${id}_filter)`;
-            svg.setAttribute('filter', filter);
-        })
-    );
+    applyFilter(id, staffEntry);
 };
 
 export const erode = (val) => curry(_erode)(val);
@@ -135,14 +150,15 @@ const _shadow = ({ val, id }, staffEntry) => {
     const f = document.querySelector(`#${id}_shadow`);
     f.setAttribute('dx', `${val}`);
     f.setAttribute('dy', `${val}`);
-
-    staffEntry.graphicalVoiceEntries.forEach((g) =>
-        g.notes.forEach((n) => {
-            const svg = n.getSVGGElement();
-            const filter = `url(#${id}_filter)`;
-            svg.setAttribute('filter', filter);
-        })
-    );
+    applyFilter(id, staffEntry);
 };
 
 export const shadow = (val) => curry(_shadow)(val);
+
+const _waves = ({ val, id }, staffEntry) => {
+    const f = document.querySelector(`#${id}_displacement`);
+    f.setAttribute('scale', `${val}`);
+    applyFilter(id, staffEntry);
+};
+
+export const waves = (val) => curry(_waves)(val);

@@ -7,6 +7,7 @@
         blur,
         erode,
         shadow,
+        waves,
     } from "../api/fx.js";
 
     export let vis;
@@ -147,6 +148,18 @@
                             }
                         )}
                     value={getValue("shadow", selected, 0)}
+                />
+            </div>
+            <div class="container">
+                <label for="waves">Waves</label><input
+                    type="range"
+                    min={0}
+                    max={20}
+                    on:change={(e) =>
+                        modifyValue(selected, "waves", waves, e.target.value, {
+                            id: selected,
+                        })}
+                    value={getValue("waves", selected, 0)}
                 />
             </div>
         {/key}
