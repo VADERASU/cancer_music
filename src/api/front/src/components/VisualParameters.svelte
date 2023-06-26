@@ -8,6 +8,7 @@
         erode,
         shadow,
         waves,
+        applyFilter,
     } from "../api/fx.js";
 
     export let vis;
@@ -20,12 +21,13 @@
         translocation: {},
     };
 
-    const modifyValue = (selected, val, func, e, args) => {
+    const modifyValue = (selected, val, func, args) => {
         const visuals = vis[selected];
-        const use = args ? { ...args, val: e } : e;
-        visuals[val] = func(use);
+        visuals[val] = func(args);
         vis = { ...vis };
+    };
 
+    const updateUI = (selected, val, e) => {
         const value = values[selected];
         value[val] = e;
         values = { ...values };
@@ -48,13 +50,15 @@
                 <label for="color">Color</label><input
                     type="color"
                     name="color"
-                    on:change={(e) =>
+                    on:change={(e) => {
                         modifyValue(
                             selected,
                             "color",
                             colorNotes,
                             e.target.value
-                        )}
+                        );
+                        updateUI(selected, "color", e.target.value);
+                    }}
                     value={getValue("color", selected, "black")}
                 />
             </div>
@@ -65,13 +69,15 @@
                     name="trans"
                     min="0"
                     max="1"
-                    on:change={(e) =>
+                    on:change={(e) => {
                         modifyValue(
                             selected,
                             "transparency",
                             modifyAlpha,
                             e.target.value
-                        )}
+                        );
+                        updateUI(selected, "transparency", e.target.value);
+                    }}
                     value={getValue("transparency", selected, 1)}
                 />
             </div>
@@ -81,13 +87,15 @@
                     name="size"
                     step="1"
                     min="1"
-                    on:change={(e) =>
+                    on:change={(e) => {
                         modifyValue(
                             selected,
                             "size",
                             modifySize,
                             e.target.value
-                        )}
+                        );
+                        updateUI(selected, "size", e.target.value);
+                    }}
                     value={getValue("size", selected, 1)}
                 />
             </div>
@@ -98,13 +106,15 @@
                     step="1"
                     min="-180"
                     max="180"
-                    on:change={(e) =>
+                    on:change={(e) => {
                         modifyValue(
                             selected,
                             "angle",
                             modifyAngle,
                             e.target.value
-                        )}
+                        );
+                        updateUI(selected, "angle", e.target.value);
+                    }}
                     value={getValue("angle", selected, 0)}
                 />
             </div>
@@ -113,10 +123,11 @@
                     type="range"
                     min={0}
                     max={5}
-                    on:change={(e) =>
-                        modifyValue(selected, "blur", blur, e.target.value, {
-                            id: selected,
-                        })}
+                    on:change={(e) => {
+                        blur(e.target.value, selected);
+                        modifyValue(selected, "blur", applyFilter, selected);
+                        updateUI(selected, "blur", e.target.value);
+                    }}
                     value={getValue("blur", selected, 0)}
                 />
             </div>
@@ -125,10 +136,11 @@
                     type="range"
                     min={0}
                     max={5}
-                    on:change={(e) =>
-                        modifyValue(selected, "erode", erode, e.target.value, {
-                            id: selected,
-                        })}
+                    on:change={(e) => {
+                        erode(e.target.value, selected);
+                        modifyValue(selected, "erode", applyFilter, selected);
+                        updateUI(selected, "erode", e.target.value);
+                    }}
                     value={getValue("erode", selected, 0)}
                 />
             </div>
@@ -137,16 +149,11 @@
                     type="range"
                     min={0}
                     max={20}
-                    on:change={(e) =>
-                        modifyValue(
-                            selected,
-                            "shadow",
-                            shadow,
-                            e.target.value,
-                            {
-                                id: selected,
-                            }
-                        )}
+                    on:change={(e) => {
+                        shadow(e.target.value, selected);
+                        modifyValue(selected, "shadow", applyFilter, selected);
+                        updateUI(selected, "shadow", e.target.value);
+                    }}
                     value={getValue("shadow", selected, 0)}
                 />
             </div>
@@ -155,10 +162,11 @@
                     type="range"
                     min={0}
                     max={20}
-                    on:change={(e) =>
-                        modifyValue(selected, "waves", waves, e.target.value, {
-                            id: selected,
-                        })}
+                    on:change={(e) => {
+                        waves(e.target.value, selected);
+                        modifyValue(selected, "waves", applyFilter, selected);
+                        updateUI(selected, "waves", e.target.value);
+                    }}
                     value={getValue("waves", selected, 0)}
                 />
             </div>

@@ -118,7 +118,7 @@ export const initDefs = (svg) => {
     svg.appendChild(defs);
 };
 
-const applyFilter = (id, staffEntry) => {
+const applyFilter_ = (id, staffEntry) => {
     staffEntry.graphicalVoiceEntries.forEach((g) =>
         g.notes.forEach((n) => {
             const svg = n.getSVGGElement();
@@ -128,37 +128,26 @@ const applyFilter = (id, staffEntry) => {
     );
 };
 
-const _blur = ({ val, id }, staffEntry) => {
-    const blur = document.querySelector(`#${id}_blur`);
-    blur.setAttribute('stdDeviation', val);
-    applyFilter(id, staffEntry);
+export const applyFilter = (val) => curry(applyFilter_)(val);
+
+export const blur = (val, id) => {
+    const f = document.querySelector(`#${id}_blur`);
+    f.setAttribute('stdDeviation', val);
 };
 
-export const blur = (val) => curry(_blur)(val);
-
-// can move this? erode can be changed elsewhere
-// just apply filter accordingly?
-const _erode = ({ val, id }, staffEntry) => {
-    const erode = document.querySelector(`#${id}_erode`);
-    erode.setAttribute('radius', `${val} ${val}`);
-    applyFilter(id, staffEntry);
+export const erode = (val, id) => {
+    const f = document.querySelector(`#${id}_erode`);
+    f.setAttribute('radius', `${val} ${val}`);
 };
 
-export const erode = (val) => curry(_erode)(val);
-
-const _shadow = ({ val, id }, staffEntry) => {
+export const shadow = (val, id) => {
     const f = document.querySelector(`#${id}_shadow`);
     f.setAttribute('dx', `${val}`);
     f.setAttribute('dy', `${val}`);
-    applyFilter(id, staffEntry);
 };
 
-export const shadow = (val) => curry(_shadow)(val);
 
-const _waves = ({ val, id }, staffEntry) => {
+export const waves = (val, id) => {
     const f = document.querySelector(`#${id}_displacement`);
     f.setAttribute('scale', `${val}`);
-    applyFilter(id, staffEntry);
 };
-
-export const waves = (val) => curry(_waves)(val);
