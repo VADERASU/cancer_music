@@ -112,12 +112,6 @@ export const initFilter = (id) => {
     defs.append(filter);
 }
 
-export const initDefs = (svg) => {
-    const defs = document.createElementNS('http://www.w3.org/2000/svg', "defs");
-    defs.id = 'defs'
-    svg.appendChild(defs);
-};
-
 const applyFilter_ = (id, staffEntry) => {
     staffEntry.graphicalVoiceEntries.forEach((g) =>
         g.notes.forEach((n) => {
@@ -146,6 +140,10 @@ export const shadow = (val, id) => {
     f.setAttribute('dy', `${val}`);
 };
 
+export const shadowColor = (val, id) => {
+    const f = document.querySelector(`#${id}_shadow`);
+    f.setAttribute('flood-color', val);
+};
 
 export const waves = (val, id) => {
     const f = document.querySelector(`#${id}_displacement`);

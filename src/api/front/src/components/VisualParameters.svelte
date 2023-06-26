@@ -9,7 +9,10 @@
         shadow,
         waves,
         applyFilter,
+        shadowColor,
     } from "../api/fx.js";
+
+    import SVGFilters from "./SVGFilters.svelte";
 
     export let vis;
     let selected;
@@ -38,6 +41,13 @@
 </script>
 
 <div class="stack">
+    <svg>
+        <defs id="defs">
+            {#each Object.keys(vis) as m}
+                <SVGFilters id={m} />
+            {/each}
+        </defs>
+    </svg>
     <div class="hStack">
         {#each Object.keys(vis) as m}
             <button on:click={() => (selected = m)}>{m}</button>
@@ -157,6 +167,24 @@
                     value={getValue("shadow", selected, 0)}
                 />
             </div>
+            <div class="container">
+                <label for="shadow_color">Shadow Color</label><input
+                    type="color"
+                    name="shadow_color"
+                    on:change={(e) => {
+                        shadowColor(e.target.value, selected);
+                        modifyValue(
+                            selected,
+                            "shadow_color",
+                            applyFilter,
+                            selected
+                        );
+                        updateUI(selected, "shadow_color", e.target.value);
+                    }}
+                    value={getValue("shadow_color", selected, "black")}
+                />
+            </div>
+
             <div class="container">
                 <label for="waves">Waves</label><input
                     type="range"
