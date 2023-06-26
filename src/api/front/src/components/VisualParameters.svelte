@@ -6,6 +6,7 @@
         modifyAngle,
         blur,
         erode,
+        shadow,
     } from "../api/fx.js";
 
     export let vis;
@@ -128,6 +129,24 @@
                             id: selected,
                         })}
                     value={getValue("erode", selected, 0)}
+                />
+            </div>
+            <div class="container">
+                <label for="shadow">Shadow</label><input
+                    type="range"
+                    min={0}
+                    max={20}
+                    on:change={(e) =>
+                        modifyValue(
+                            selected,
+                            "shadow",
+                            shadow,
+                            e.target.value,
+                            {
+                                id: selected,
+                            }
+                        )}
+                    value={getValue("shadow", selected, 0)}
                 />
             </div>
         {/key}

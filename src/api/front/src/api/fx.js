@@ -80,6 +80,15 @@ export const initFilter = (id) => {
     erosionfx.setAttribute('result', 'morphology');
     filter.appendChild(erosionfx);
 
+    const shadow = document.createElementNS('http://www.w3.org/2000/svg', "feDropShadow");
+    shadow.id = `${id}_shadow`;
+    shadow.setAttribute('stdDeviation', '1 1');
+    shadow.setAttribute('dx', '0');
+    shadow.setAttribute('dy', '0');
+    shadow.setAttribute('in', 'morphology');
+    shadow.setAttribute('result', 'shadow');
+    filter.appendChild(shadow);
+
     const defs = document.querySelector('#defs');
     defs.append(filter);
 }
@@ -105,6 +114,8 @@ const _blur = ({ val, id }, staffEntry) => {
 
 export const blur = (val) => curry(_blur)(val);
 
+// can move this? erode can be changed elsewhere
+// just apply filter accordingly?
 const _erode = ({ val, id }, staffEntry) => {
     const erode = document.querySelector(`#${id}_erode`);
     erode.setAttribute('radius', `${val} ${val}`);
@@ -119,3 +130,19 @@ const _erode = ({ val, id }, staffEntry) => {
 };
 
 export const erode = (val) => curry(_erode)(val);
+
+const _shadow = ({ val, id }, staffEntry) => {
+    const f = document.querySelector(`#${id}_shadow`);
+    f.setAttribute('dx', `${val}`);
+    f.setAttribute('dy', `${val}`);
+
+    staffEntry.graphicalVoiceEntries.forEach((g) =>
+        g.notes.forEach((n) => {
+            const svg = n.getSVGGElement();
+            const filter = `url(#${id}_filter)`;
+            svg.setAttribute('filter', filter);
+        })
+    );
+};
+
+export const shadow = (val) => curry(_shadow)(val);
