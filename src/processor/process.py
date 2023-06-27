@@ -57,10 +57,11 @@ def mutate_part(
         translocation=0.05,
         inversion=0.2,
     ),
+    prev_start: int = 0
 ):
     if len(mutants) < 4:
         measures = p.getElementsByClass("Measure")
-        start = random.randint(0, len(measures) - params["how_many"])
+        start = random.randint(prev_start, len(measures) - params["how_many"])
         tumors = measures[start : start + params["how_many"]]
 
         dup = Stream.template(
@@ -93,7 +94,7 @@ def mutate_part(
 
         dup.id = f"mutant_{len(mutants)}"
         mutants.append(dup)
-        mutate_part(dup, mutants, params)
+        mutate_part(dup, mutants, params, start)
     return mutants
 
 
