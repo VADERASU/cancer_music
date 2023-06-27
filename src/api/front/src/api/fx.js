@@ -60,58 +60,6 @@ const _modifyAngle = (angle, staffEntry) => {
 
 export const modifyAngle = (angle) => curry(_modifyAngle)(angle);
 
-export const initFilter = (id) => {
-    const filter = document.createElementNS('http://www.w3.org/2000/svg', "filter");
-    filter.id = `${id}_filter`;
-    filter.setAttribute('filterUnits', 'objectBoundingBox');
-    filter.setAttribute('primitiveUnits', 'userSpaceOnUse');
-
-    const blurfx = document.createElementNS('http://www.w3.org/2000/svg', "feGaussianBlur");
-    blurfx.id = `${id}_blur`;
-    blurfx.setAttribute('stdDeviation', "0");
-    blurfx.setAttribute('result', 'blurred');
-    filter.appendChild(blurfx);
-
-    const erosionfx = document.createElementNS('http://www.w3.org/2000/svg', "feMorphology");
-    erosionfx.id = `${id}_erode`;
-    erosionfx.setAttribute('operator', "erode");
-    erosionfx.setAttribute('radius', '0 0');
-    erosionfx.setAttribute('in', 'blurred');
-    erosionfx.setAttribute('result', 'morphology');
-    filter.appendChild(erosionfx);
-
-    const shadow = document.createElementNS('http://www.w3.org/2000/svg', "feDropShadow");
-    shadow.id = `${id}_shadow`;
-    shadow.setAttribute('stdDeviation', '1 1');
-    shadow.setAttribute('dx', '0');
-    shadow.setAttribute('dy', '0');
-    shadow.setAttribute('in', 'morphology');
-    shadow.setAttribute('result', 'shadow');
-    filter.appendChild(shadow);
-
-    // turbulence + displacementMap work together to create the waves effect
-    const turbulence = document.createElementNS('http://www.w3.org/2000/svg', "feTurbulence");
-    turbulence.id = `${id}_turbulence`;
-    turbulence.setAttribute('baseFrequency', `0.1 0.05`);
-    turbulence.setAttribute('numOctaves', '2');
-    turbulence.setAttribute('seed', '2');
-    turbulence.setAttribute('result', 'turbulence');
-    filter.appendChild(turbulence);
-
-    const displacement = document.createElementNS('http://www.w3.org/2000/svg', "feDisplacementMap");
-    displacement.id = `${id}_displacement`;
-    displacement.setAttribute('in', 'shadow');
-    displacement.setAttribute('in2', 'turbulence');
-    displacement.setAttribute('scale', '0');
-    displacement.setAttribute('xChannelSelector', 'G');
-    displacement.setAttribute('yChannelSelector', 'A');
-    displacement.setAttribute('result', 'dp');
-    filter.appendChild(displacement);
-
-    const defs = document.querySelector('#defs');
-    defs.append(filter);
-}
-
 const applyFilter_ = (id, staffEntry) => {
     staffEntry.graphicalVoiceEntries.forEach((g) =>
         g.notes.forEach((n) => {

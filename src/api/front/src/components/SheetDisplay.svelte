@@ -1,7 +1,6 @@
 <script>
     import { OpenSheetMusicDisplay } from "opensheetmusicdisplay";
     import { mutationMarkers } from "../api/constants";
-    import { initFilter } from "../api/fx";
     import { onMount } from "svelte";
 
     export let vis;

@@ -41,39 +41,60 @@ def mutate(
     parts = s.getElementsByClass("Part")
     p = random.choice(list(parts))
 
-    measures = p.getElementsByClass("Measure")
-    start = random.randint(0, len(measures) - params["how_many"])
-    tumors = measures[start : start + params["how_many"]]
+    mutants = mutate_part(p, [], params)
+    [s.append(mutant) for mutant in mutants]
 
-    dup = Stream.template(
-        p,
-        removeClasses=[Instrument, GeneralNote, "Dynamic", "Expression"],
-        fillWithRests=True,
-    )
-    dup.insert(0, Instrument(p.getInstrument().instrumentName))
-    # start adding mutant measures at the first measure
-    dpm = dup.getElementsByClass("Measure")[start:]
 
-    for i, dm in enumerate(dpm):
-        t = tumors[i % len(tumors)]  # pick tumor measure
-        # each mutation should be equal length to its original measure
-        mutation = choose_mutation(
-            [
-                params["noop"],
-                params["insertion"],
-                params["transposition"],
-                params["deletion"],
-                params["translocation"],
-                params["inversion"],
-            ]
+def mutate_part(
+    p: Stream,
+    mutants: List[Stream],
+    params: Parameters = Parameters(
+        how_many=4,
+        noop=0.2,
+        insertion=0.2,
+        transposition=0.1,
+        deletion=0.25,
+        translocation=0.05,
+        inversion=0.2,
+    ),
+):
+    if len(mutants) < 4:
+        measures = p.getElementsByClass("Measure")
+        start = random.randint(0, len(measures) - params["how_many"])
+        tumors = measures[start : start + params["how_many"]]
+
+        dup = Stream.template(
+            p,
+            removeClasses=[Instrument, GeneralNote, "Dynamic", "Expression"],
+            fillWithRests=True,
         )
-        mutant = mutation(t, p)  # mutate it
-        mutant.number = dm.number
-        mutant.makeBeams(inPlace=True)
-        dup.replace(dm, mutant)  # replace in duplicate part
+        dup.insert(0, Instrument(p.getInstrument().instrumentName))
 
-    dup.id = "mutant"
-    s.append(dup)
+        # start adding mutant measures at the first measure
+        dpm = dup.getElementsByClass("Measure")[start:]
+
+        for i, dm in enumerate(dpm):
+            t = tumors[i % len(tumors)]  # pick tumor measure
+            # each mutation should be equal length to its original measure
+            mutation = choose_mutation(
+                [
+                    params["noop"],
+                    params["insertion"],
+                    params["transposition"],
+                    params["deletion"],
+                    params["translocation"],
+                    params["inversion"],
+                ]
+            )
+            mutant = mutation(t, p)  # mutate it
+            mutant.number = dm.number
+            mutant.makeBeams(inPlace=True)
+            dup.replace(dm, mutant)  # replace in duplicate part
+
+        dup.id = f"mutant_{len(mutants)}"
+        mutants.append(dup)
+        mutate_part(dup, mutants, params)
+    return mutants
 
 
 def noop(m: Measure, _: Stream):
@@ -295,7 +316,7 @@ def invert_stream(s: Stream, og: Stream, offsets: List[float]):
             notes.reverse()
             for el in notes:
                 new_el = utils.duplicate_element(el)
-                new_el.addLyric(str('iv'))
+                new_el.addLyric(str("iv"))
                 s.insert(off, new_el)
                 off += new_el.duration.quarterLength
 
