@@ -36,7 +36,6 @@
     {/if}
     {#if mutant}
         {#key mutant}
-            <br />
             <VisualParameters bind:vis />
             <SheetDisplay musicxml={mutant} {vis} />
         {/key}

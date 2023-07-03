@@ -41,7 +41,7 @@
 </script>
 
 <div class="stack">
-    <svg>
+    <svg width={0} height={0}>
         <defs id="defs">
             {#each Object.keys(vis) as m}
                 <SVGFilters id={m} />

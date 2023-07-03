@@ -131,6 +131,7 @@
             {/if}
         </form>
         {#if sum == 1.0}
+            <br />
             <button on:click={startMutate}>Submit</button>
         {/if}
     {/if}
