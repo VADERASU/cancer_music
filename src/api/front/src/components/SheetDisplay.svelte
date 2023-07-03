@@ -20,12 +20,19 @@
             const marker = mutationMarkers[mutation];
             const fx = vis[mutation];
             for (const m of osmd.graphic.measureList) {
-                const mutantMeasure = m[m.length - 1];
-                for (const s of mutantMeasure.staffEntries) {
-                    for (const lyric of s.lyricsEntries) {
-                        if (lyric.lyricsEntry.text === marker) {
-                            for (const effect of Object.values(fx)) {
-                                effect(s);
+                for (const part of m) {
+                    if (
+                        part.parentStaff.parentInstrument.idString.includes(
+                            "mutant"
+                        )
+                    ) {
+                        for (const s of part.staffEntries) {
+                            for (const lyric of s.lyricsEntries) {
+                                if (lyric.lyricsEntry.text === marker) {
+                                    for (const effect of Object.values(fx)) {
+                                        effect(s);
+                                    }
+                                }
                             }
                         }
                     }

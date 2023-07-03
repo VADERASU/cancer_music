@@ -63,10 +63,18 @@ def mutate_part(
 
         dup = Stream.template(
             p,
-            removeClasses=[Instrument, GeneralNote, "Dynamic", "Expression"],
+            removeClasses=[
+                Instrument,
+                GeneralNote,
+                "Dynamic",
+                "Expression",
+                "Lyric",
+            ],
             fillWithRests=True,
         )
-        dup.insert(0, Instrument(p.getInstrument().instrumentName))
+        ins = Instrument(p.getInstrument().instrumentName)
+        ins.partId = f"mutant_{len(mutants)}"
+        dup.insert(0, ins)
 
         # start adding mutant measures at the first measure
         dpm = dup.getElementsByClass("Measure")[start:]
@@ -86,9 +94,9 @@ def mutate_part(
             )
             mutant = mutation(t, p)  # mutate it
             mutant.number = dm.number
+            mutant.partId = f"mutant_{len(mutants)}" 
             dup.replace(dm, mutant)  # replace in duplicate part
 
-        dup.id = f"mutant_{len(mutants)}"
         dup.makeBeams(inPlace=True)
         mutants.append(dup)
         mutate_part(dup, mutants, params, start)
