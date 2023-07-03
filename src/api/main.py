@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from music21 import converter
 from music21.musicxml.m21ToXml import GeneralObjectExporter
 
-from processor.parameters import Therapy, Parameters, TherapyParameters
+from processor.parameters import Parameters, Therapy, TherapyParameters
 from processor.process import mutate
 
 from .utils import get_this_dir
@@ -29,6 +29,9 @@ def process_file(
     deletion: float,
     translocation: float,
     inversion: float,
+    mode: int,
+    start: float,
+    resistance_probability: float,
     file: UploadFile,
 ):
     # this should be handled by music21's archive manager
@@ -54,7 +57,9 @@ def process_file(
             inversion=inversion,
         ),
         TherapyParameters(
-            therapy_mode=Therapy.OFF, resistance_probability=0.2, start=0.5
+            therapy_mode=Therapy(mode),
+            resistance_probability=resistance_probability,
+            start=start,
         ),
     )
 

@@ -4,7 +4,7 @@
 </script>
 
 <div>
-    <label for="slider"> Probability of {text}: {Math.round(val * 100)}%</label>
+    <label for="slider"> {text}: {Math.round(val * 100)}%</label>
     <input
         type="range"
         name="slider"

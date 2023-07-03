@@ -14,6 +14,12 @@
         inversion: 0.25,
     };
 
+    let therapy = {
+        mode: 0, //OFF, CURED, PARTIAL
+        start: 0.5,
+        resistance_probability: 0.2,
+    };
+
     let sum = 1.0;
     $: sum = Object.values(probabilities)
         .reduce((a, b) => a + b)
@@ -52,6 +58,7 @@
             `${API_URL}/process_file?` +
                 new URLSearchParams({
                     ...probabilities,
+                    ...therapy,
                     how_many,
                 }),
             {
@@ -92,18 +99,36 @@
                     bind:value={how_many}
                 />
             </div>
-            <ProbSlider text="no mutation" bind:val={probabilities.noop} />
-            <ProbSlider text="insertion" bind:val={probabilities.insertion} />
+            <ProbSlider text="No mutation" bind:val={probabilities.noop} />
+            <ProbSlider text="Insertion" bind:val={probabilities.insertion} />
             <ProbSlider
-                text="transposition"
+                text="Transposition"
                 bind:val={probabilities.transposition}
             />
-            <ProbSlider text="deletion" bind:val={probabilities.deletion} />
+            <ProbSlider text="Deletion" bind:val={probabilities.deletion} />
             <ProbSlider
-                text="translocation"
+                text="Translocation"
                 bind:val={probabilities.translocation}
             />
-            <ProbSlider text="inversion" bind:val={probabilities.inversion} />
+            <ProbSlider text="Inversion" bind:val={probabilities.inversion} />
+            <h2>Therapy</h2>
+            <div>
+                <label for="therapyMode">Therapy type</label>
+                <select name="therapyMode" bind:value={therapy.mode}>
+                    <option value={0}>Off</option>
+                    <option value={1}>Cure</option>
+                    <option value={2}>Partial cure</option>
+                </select>
+            </div>
+            {#if therapy.mode !== 0}
+                <ProbSlider text="Therapy start" bind:val={therapy.start} />
+            {/if}
+            {#if therapy.mode === 2}
+                <ProbSlider
+                    text="mutant resistance"
+                    bind:val={therapy.resistance_probability}
+                />
+            {/if}
         </form>
         {#if sum == 1.0}
             <button on:click={startMutate}>Submit</button>
