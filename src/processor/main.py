@@ -14,12 +14,15 @@ def main():
     parser = argparse.ArgumentParser(prog="SheetMusicMutator")
     parser.add_argument(
         "sheet_music",
-        help="Sheet music to mutate. Refer to music21's documentation [https://web.mit.edu/music21/doc/] for supported filetypes.",
+        help="Sheet music to mutate. \
+        Refer to music21's documentation [https://web.mit.edu/music21/doc/] \
+        for supported filetypes.",
     )
     parser.add_argument(
         "-o",
         "--output",
-        help="Name of the output file. Optional; if not provided, named with unix timestamp.",
+        help="Name of the output file. Optional; \
+        if not provided, named with unix timestamp.",
         required=False,
         default=f"mutant_{int(datetime.timestamp(datetime.now()))}.mxl",
     )

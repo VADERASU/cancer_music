@@ -6,6 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from music21 import converter
 from music21.musicxml.m21ToXml import GeneralObjectExporter
 
+from processor.parameters import Therapy, Parameters, TherapyParameters
 from processor.process import mutate
 
 from .utils import get_this_dir
@@ -43,15 +44,18 @@ def process_file(
 
     mutate(
         s,
-        {
-            "how_many": how_many,
-            "noop": noop,
-            "insertion": insertion,
-            "transposition": transposition,
-            "deletion": deletion,
-            "translocation": translocation,
-            "inversion": inversion,
-        },
+        Parameters(
+            how_many=how_many,
+            noop=noop,
+            insertion=insertion,
+            transposition=transposition,
+            deletion=deletion,
+            translocation=translocation,
+            inversion=inversion,
+        ),
+        TherapyParameters(
+            therapy_mode=Therapy.OFF, resistance_probability=0.2, start=0.5
+        ),
     )
 
     gex = GeneralObjectExporter()

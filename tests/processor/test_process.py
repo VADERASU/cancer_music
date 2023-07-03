@@ -3,6 +3,7 @@ from music21.note import Note, Rest
 from music21.stream.base import Measure, Voice
 
 from processor import utils
+from processor.parameters import Therapy, TherapyParameters
 from processor.process import (
     delete_substring,
     invert_stream,
@@ -172,3 +173,17 @@ def test_mutate(streams):
                     ts = m.getTimeSignatures()[0]
                     assert m.duration.quarterLength == ts.beatCount
         stream.write("musicxml", f"mutant_{filename}")
+
+
+@pytest.mark.usefixtures("streams")
+def test_cure(streams):
+    for filename, stream in streams:
+        mutate(
+            stream,
+            therapy_params=TherapyParameters(
+                therapy_mode=Therapy.CURED,
+                resistance_probability=0.2,
+                start=0.5,
+            ),
+        )
+        stream.write("musicxml", f"cured_{filename}")

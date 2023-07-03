@@ -1,5 +1,4 @@
-import copy
-import functools as f
+import math
 import os
 import random
 from pathlib import Path
@@ -203,3 +202,8 @@ def copy_inverse(measure: Measure, offsets: List[float]):
         copy_stream_inverse(m, measure, offsets)
 
     return m
+
+
+def get_percentile_measure_number(s: Stream, percentile: float):
+    length = len(s)
+    return math.floor(percentile * length)

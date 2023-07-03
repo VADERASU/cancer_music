@@ -9,14 +9,6 @@ from music21.stream.base import Measure, Part
 from processor import utils
 
 
-def clean_measure_voiced():
-    pass
-
-
-def clean_measure_clean():
-    pass
-
-
 @pytest.fixture
 def mes():
     m = Measure()
@@ -61,3 +53,16 @@ def test_copy_stream_inverse_whole(mes):
     utils.copy_stream_inverse(m, mes, [0.0, 3.0])
 
     assert len(m) == 0
+
+
+@pytest.fixture
+def s_stream():
+    mes = [Measure() for _ in range(0, 5)]
+    s = Part()
+    [s.append(m) for m in mes]
+    return s
+
+
+def test_get_percentile_measure_number(s_stream):
+    num = utils.get_percentile_measure_number(s_stream, 0.5)
+    assert num == 2

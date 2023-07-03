@@ -1,6 +1,6 @@
 import copy
 import random
-from typing import List, Optional, TypedDict
+from typing import List, Optional
 
 from music21.instrument import Instrument
 from music21.note import GeneralNote, Rest
@@ -8,16 +8,8 @@ from music21.stream.base import Measure, Stream
 from typeguard import typechecked
 
 from processor import utils
-
-
-class Parameters(TypedDict):
-    how_many: int
-    noop: float
-    insertion: float
-    transposition: float
-    deletion: float
-    translocation: float
-    inversion: float
+from processor.parameters import Parameters, Therapy, TherapyParameters
+from processor.therapy import get_therapy
 
 
 @typechecked
@@ -32,6 +24,9 @@ def mutate(
         translocation=0.05,
         inversion=0.2,
     ),
+    therapy_params: TherapyParameters = TherapyParameters(
+        therapy_mode=Therapy.OFF, resistance_probability=0.3, start=0.5
+    ),
 ):
     """
     Main method for mutating a file.
@@ -42,7 +37,9 @@ def mutate(
     p = random.choice(list(parts))
 
     mutants = mutate_part(p, [], params)
-    [s.append(mutant) for mutant in mutants]
+    treat_mutant = get_therapy(therapy_params["therapy_mode"])
+    treated = [treat_mutant(mutant, therapy_params) for mutant in mutants]
+    [s.append(mutant) for mutant in treated]
 
 
 def mutate_part(
@@ -57,7 +54,7 @@ def mutate_part(
         translocation=0.05,
         inversion=0.2,
     ),
-    prev_start: int = 0
+    prev_start: int = 0,
 ):
     if len(mutants) < 4:
         measures = p.getElementsByClass("Measure")
@@ -89,10 +86,10 @@ def mutate_part(
             )
             mutant = mutation(t, p)  # mutate it
             mutant.number = dm.number
-            mutant.makeBeams(inPlace=True)
             dup.replace(dm, mutant)  # replace in duplicate part
 
         dup.id = f"mutant_{len(mutants)}"
+        dup.makeBeams(inPlace=True)
         mutants.append(dup)
         mutate_part(dup, mutants, params, start)
     return mutants
