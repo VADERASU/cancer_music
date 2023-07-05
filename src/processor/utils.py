@@ -12,6 +12,8 @@ from music21.note import GeneralNote, Note, Rest
 from music21.stream.base import Measure, Stream, Voice
 from typeguard import typechecked
 
+random.seed(a=12345689)
+
 
 @typechecked
 def get_time(m: Measure) -> TimeSignature:
@@ -207,3 +209,8 @@ def copy_inverse(measure: Measure, offsets: List[float]):
 def get_percentile_measure_number(s: Stream, percentile: float):
     length = len(s)
     return math.floor(percentile * length)
+
+
+# always use this because this will be seeded correctly
+def get_probability():
+    return random.random()
