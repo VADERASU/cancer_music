@@ -4,6 +4,7 @@ from music21.stream.base import Measure, Stream
 from processor import utils
 from processor.parameters import Therapy, TherapyParameters
 
+
 def no_therapy(s: Stream, _: TherapyParameters):
     return s
 

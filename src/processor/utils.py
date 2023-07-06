@@ -68,6 +68,7 @@ def get_first_element(m: Stream) -> GeneralNote:
 def add_lyric_for_measure(m: Stream, annotation: str):
     notes = m.flat.notesAndRests
     for n in notes:
+        n.lyric = None
         n.addLyric(annotation)
 
 
