@@ -73,10 +73,10 @@
   }
 </script>
 
-<div>
+<div class="flex flex-col gap-2">
   <input on:change={readFile} type="file" />
   {#if file}
-    <h2>
+    <h2 class="text-2xl">
       Sum of probabilities:
       {#if parseInt(sum, 10) !== 1.0}
         <span style="color:red">
@@ -105,7 +105,8 @@
       <ProbSlider text="Deletion" bind:val={probabilities.deletion} />
       <ProbSlider text="Translocation" bind:val={probabilities.translocation} />
       <ProbSlider text="Inversion" bind:val={probabilities.inversion} />
-      <h2>Therapy</h2>
+      <hr />
+      <h2 class="text-2xl">Therapy</h2>
       <div>
         <label for="therapyMode">Therapy type</label>
         <select name="therapyMode" bind:value={therapy.mode}>
@@ -123,17 +124,16 @@
           bind:val={therapy.resistance_probability}
         />
       {/if}
+      {#if parseInt(sum, 10) === 1.0}
+        <br />
+        <button on:click|preventDefault={startMutate}>Submit</button>
+      {/if}
     </form>
-    {#if parseInt(sum, 10) === 1.0}
-      <br />
-      <button on:click={startMutate}>Submit</button>
-    {/if}
   {/if}
 </div>
 
-<style>
+<style lang="postcss">
   form > div {
-    display: flex;
-    justify-content: space-between;
+    @apply flex justify-between w-1/4;
   }
 </style>

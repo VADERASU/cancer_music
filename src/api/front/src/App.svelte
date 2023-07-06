@@ -1,5 +1,5 @@
 <script>
-  import { fade } from "svelte/transition";
+  import "./app.css";
   import Parameters from "./components/Parameters.svelte";
   import SheetDisplay from "./components/SheetDisplay.svelte";
   import VisualParameters from "./components/VisualParameters.svelte";
@@ -28,19 +28,23 @@
 </script>
 
 <main>
-  <h1>Capturing Cancer with Music</h1>
-  {#if showParams}
-    <div transition:fade>
+  <div class="container flex flex-col px-5 gap-2">
+    <h1 class="text-3xl">Capturing Cancer with Music</h1>
+    {#if showParams}
       <Parameters bind:mutant />
-    </div>
-  {/if}
+    {/if}
+    {#if mutant}
+      {#key mutant}
+        <VisualParameters bind:vis />
+      {/key}
+    {/if}
+  </div>
   {#if mutant}
     {#key mutant}
-      <VisualParameters bind:vis />
       <SheetDisplay musicxml={mutant} {vis} />
     {/key}
   {/if}
 </main>
 
-<style>
+<style lang="postcss">
 </style>

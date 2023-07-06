@@ -36,7 +36,7 @@
   }
 </script>
 
-<div id="sheet" bind:this={container} />
+<div class="w-full" id="sheet" bind:this={container} />
 
 <style>
 </style>

@@ -12,6 +12,7 @@
     shadowColor,
   } from "../api/fx";
 
+  import ToggleButton from "./ToggleButton.svelte";
   import SVGFilters from "./SVGFilters.svelte";
 
   export let vis;
@@ -40,7 +41,7 @@
     values[which][val] ? values[which][val] : d;
 </script>
 
-<div class="stack">
+<div class="sticky flex flex-col gap-1 w-max">
   <svg width={0} height={0}>
     <defs id="defs">
       {#each Object.keys(vis) as m}
@@ -48,19 +49,24 @@
       {/each}
     </defs>
   </svg>
-  <div class="hStack">
+  <div class="flex gap-2">
     {#each Object.keys(vis) as m}
-      <button
-        on:click={() => {
-          selected = m;
-        }}>{m}</button
-      >
+      <ToggleButton
+        onClick={() => {
+          if (selected === m) {
+            selected = null;
+          } else {
+            selected = m;
+          }
+        }}
+        label={m}
+        toggled={selected === m}
+      />
     {/each}
   </div>
   {#if selected}
     {#key selected}
-      <span>{selected}</span>
-      <div class="container">
+      <div class="parameter">
         <label for="color">Color</label><input
           type="color"
           name="color"
@@ -71,7 +77,7 @@
           value={getValue("color", selected, "black")}
         />
       </div>
-      <div class="container">
+      <div class="parameter">
         <label for="trans">Transparency</label><input
           type="number"
           step="0.1"
@@ -85,7 +91,7 @@
           value={getValue("transparency", selected, 1)}
         />
       </div>
-      <div class="container">
+      <div class="parameter">
         <label for="size">Size</label><input
           type="number"
           name="size"
@@ -98,7 +104,7 @@
           value={getValue("size", selected, 1)}
         />
       </div>
-      <div class="container">
+      <div class="parameter">
         <label for="angle">Angle</label><input
           type="number"
           name="size"
@@ -112,7 +118,7 @@
           value={getValue("angle", selected, 0)}
         />
       </div>
-      <div class="container">
+      <div class="parameter">
         <label for="blur">Blur</label><input
           type="range"
           min={0}
@@ -125,7 +131,7 @@
           value={getValue("blur", selected, 0)}
         />
       </div>
-      <div class="container">
+      <div class="parameter">
         <label for="erode">Erode</label><input
           type="range"
           min={0}
@@ -138,7 +144,7 @@
           value={getValue("erode", selected, 0)}
         />
       </div>
-      <div class="container">
+      <div class="parameter">
         <label for="shadow">Shadow</label><input
           type="range"
           min={0}
@@ -151,7 +157,7 @@
           value={getValue("shadow", selected, 0)}
         />
       </div>
-      <div class="container">
+      <div class="parameter">
         <label for="shadow_color">Shadow Color</label><input
           type="color"
           name="shadow_color"
@@ -164,7 +170,7 @@
         />
       </div>
 
-      <div class="container">
+      <div class="parameter">
         <label for="waves">Waves</label><input
           type="range"
           min={0}
@@ -181,17 +187,8 @@
   {/if}
 </div>
 
-<style>
-  .stack {
-    flex-direction: column;
-    display: flex;
-  }
-  .hStack {
-    display: flex;
-    gap: 5px;
-  }
-  .container {
-    display: flex;
-    justify-content: space-between;
+<style lang="postcss">
+  .parameter {
+    @apply flex justify-between;
   }
 </style>
