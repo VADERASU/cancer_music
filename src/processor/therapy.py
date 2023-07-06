@@ -2,6 +2,7 @@ from music21.expressions import TextExpression
 from music21.stream.base import Measure, Stream
 
 from processor import utils
+from processor.constants import mutation_markers
 from processor.parameters import Therapy, TherapyParameters
 
 
@@ -29,10 +30,14 @@ def partial_cure(s: Stream, tp: TherapyParameters):
         notes = m.getElementsByClass("GeneralNote")
         for n in notes:
             lyrics = n.lyrics
-            # TODO: check if lyrics are markers or not
             if len(lyrics) > 0:
-                if utils.get_probability() >= tp["resistance_probability"]:
-                    m.remove(n, recurse=True)
+                for lyric in lyrics:
+                    if lyric in mutation_markers.values():
+                        if (
+                            utils.get_probability()
+                            >= tp["resistance_probability"]
+                        ):
+                            m.remove(n, recurse=True)
     s.makeRests(fillGaps=True, inPlace=True)
     return s
 

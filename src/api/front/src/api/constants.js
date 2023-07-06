@@ -9,4 +9,5 @@ export const mutationMarkers = {
     "transposition": "t",
     "translocation": "tl",
     "inversion": "iv",
+    "cure": "c"
 };
