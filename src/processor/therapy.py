@@ -1,5 +1,5 @@
-from music21.expressions import TextExpression
-from music21.stream.base import Measure, Stream
+from music21.note import Rest
+from music21.stream.base import Stream
 
 from processor import utils
 from processor.constants import mutation_markers
@@ -22,23 +22,33 @@ def cure(s: Stream, tp: TherapyParameters):
     return s
 
 
+def _partial_cure(s: Stream, tp: TherapyParameters):
+    notes = s.getElementsByClass("GeneralNote")
+    for n in notes:
+        lyrics = n.lyrics
+        if len(lyrics) > 0:
+            for lyric in lyrics:
+                if lyric.text in mutation_markers.values():
+                    if utils.get_probability() >= tp["resistance_probability"]:
+                        offset = n.offset
+                        s.remove(n)
+
+                        rest = Rest(length=n.duration.quarterLength)
+                        rest.addLyric("c")
+                        s.insert(offset, rest)
+
+
 def partial_cure(s: Stream, tp: TherapyParameters):
     start = utils.get_percentile_measure_number(s, tp["start"])
     measures = s.measures(start, None).getElementsByClass("Measure")
 
     for m in measures:
-        notes = m.getElementsByClass("GeneralNote")
-        for n in notes:
-            lyrics = n.lyrics
-            if len(lyrics) > 0:
-                for lyric in lyrics:
-                    if lyric in mutation_markers.values():
-                        if (
-                            utils.get_probability()
-                            >= tp["resistance_probability"]
-                        ):
-                            m.remove(n, recurse=True)
-    s.makeRests(fillGaps=True, inPlace=True)
+        if len(m.voices) > 0:
+            for nv in m.voices:
+                _partial_cure(nv, tp)
+        else:
+            _partial_cure(m, tp)
+        s.makeRests(fillGaps=True, inPlace=True)
     return s
 
 
