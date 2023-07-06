@@ -23,6 +23,7 @@
     deletion: {},
     inversion: {},
     translocation: {},
+    cure: {},
   };
 
   const modifyValue = (which, val, func, args) => {

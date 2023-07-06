@@ -22,6 +22,7 @@
       deletion: {},
       inversion: {},
       translocation: {},
+      cure: {},
     };
     showParams = false;
   }
