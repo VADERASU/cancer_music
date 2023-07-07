@@ -78,7 +78,7 @@
   {#if file}
     <h2 class="text-2xl">
       Sum of probabilities:
-      {#if parseInt(sum, 10) !== 1.0}
+      {#if parseFloat(sum, 10) !== 1.0}
         <span style="color:red">
           {Math.round(sum * 100)}%
         </span>
@@ -134,9 +134,9 @@
         {/if}
       </div>
     </div>
-    {#if parseInt(sum, 10) === 1.0}
+    {#if parseFloat(sum) === 1.0}
       <div>
-        <button on:click|preventDefault={startMutate}>Submit</button>
+        <button on:click={startMutate}>Submit</button>
       </div>
     {/if}
   {/if}
