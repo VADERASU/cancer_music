@@ -1,4 +1,5 @@
 import random
+import sys
 from typing import List, Optional
 
 from music21.instrument import Instrument
@@ -26,6 +27,7 @@ def mutate(
     therapy_params: TherapyParameters = TherapyParameters(
         therapy_mode=Therapy.OFF, resistance_probability=0.0, start=0.0
     ),
+    seed: int = random.randrange(sys.maxsize)
 ):
     """
     Main method for mutating a file.
@@ -33,17 +35,21 @@ def mutate(
     :param s: Music21 stream for a file.
     """
     parts = s.getElementsByClass("Part")
-    p = random.choice(list(parts))
 
-    mutants = mutate_part(p, [], params)
+    rng = utils.reseed(seed)
+    p = rng.choice(list(parts))
+
+    mutants = mutate_part(p, [], rng, params)
     treat_mutant = get_therapy(therapy_params["therapy_mode"])
-    treated = [treat_mutant(mutant, therapy_params) for mutant in mutants]
+    treated = [treat_mutant(mutant, therapy_params, rng) for mutant in mutants]
     [s.append(mutant) for mutant in treated]
+    s.show("text")
 
 
 def mutate_part(
     p: Stream,
     mutants: List[Stream],
+    rng: random.Random,
     params: Parameters = Parameters(
         how_many=4,
         noop=0.2,
@@ -57,7 +63,7 @@ def mutate_part(
 ):
     if len(mutants) < 4:
         measures = p.getElementsByClass("Measure")
-        start = random.randint(prev_start, len(measures) - params["how_many"])
+        start = rng.randint(prev_start, len(measures) - params["how_many"])
         tumors = measures[start : start + params["how_many"]]
 
         dup = Stream.template(
@@ -82,6 +88,7 @@ def mutate_part(
             t = tumors[i % len(tumors)]  # pick tumor measure
             # each mutation should be equal length to its original measure
             mutation = choose_mutation(
+                rng,
                 [
                     params["noop"],
                     params["insertion"],
@@ -89,9 +96,9 @@ def mutate_part(
                     params["deletion"],
                     params["translocation"],
                     params["inversion"],
-                ]
+                ],
             )
-            mutant = mutation(t, p)  # mutate it
+            mutant = mutation(t, rng, p)  # mutate it
             mutant.number = dm.number
             mutant.partId = f"mutant_{len(mutants)}"
             mutant.makeBeams(inPlace=True)
@@ -99,16 +106,16 @@ def mutate_part(
 
         dup.makeBeams(inPlace=True)
         mutants.append(dup)
-        mutate_part(dup, mutants, params, start)
+        mutate_part(dup, mutants, rng, params, start)
     return mutants
 
 
-def noop(m: Measure, _: Stream):
+def noop(m: Measure, __: random.Random, _: Stream):
     return utils.copy_measure(m)
 
 
 @typechecked
-def insertion(measure: Measure, _: Stream):
+def insertion(measure: Measure, rng: random.Random, _: Stream):
     """
     Inserts a note into the measure, either by replacing a rest
     or subdividing an already existing note.
@@ -116,7 +123,7 @@ def insertion(measure: Measure, _: Stream):
     :param m: Measure to insert a note into.
     :param _: Stream, unused but do not remove.
     """
-    offsets = utils.random_offsets(measure)
+    offsets = utils.random_offsets(measure, rng)
     m = utils.copy_inverse(measure, offsets)
 
     subdivide_stream(m, measure, offsets)
@@ -180,7 +187,7 @@ def subdivide_stream(s: Stream, og: Stream, offsets: List[float]):
 
 
 @typechecked
-def transposition(measure: Measure, _: Stream) -> Measure:
+def transposition(measure: Measure, rng: random.Random, _: Stream) -> Measure:
     """
     Transposes the measure by either 1 or -1 half-steps.
 
@@ -189,7 +196,7 @@ def transposition(measure: Measure, _: Stream) -> Measure:
     :returns: A tranposed copy of the measure.
     """
     options = [-1, 1]
-    choice = random.choice(options)
+    choice = rng.choice(options)
 
     return transpose_measure(measure, choice)
 
@@ -212,7 +219,7 @@ def transpose_measure(measure: Measure, degree: int) -> Measure:
 
 
 @typechecked
-def deletion(measure: Measure, _: Stream):
+def deletion(measure: Measure, rng: random.Random, _: Stream):
     """
     Picks a random substring of the measure and
     returns a copy with that substring replaced
@@ -222,7 +229,7 @@ def deletion(measure: Measure, _: Stream):
     :param _: Stream, unused.
     :returns: A measure with random offsets deleted.
     """
-    offsets = utils.random_offsets(measure)
+    offsets = utils.random_offsets(measure, rng)
     m = utils.copy_inverse(measure, offsets)
 
     delete_substring(m, measure, offsets)
@@ -256,7 +263,7 @@ def delete_substring(s: Stream, og: Stream, offsets: List[float]):
 
 
 @typechecked
-def translocation(_: Measure, s: Stream):
+def translocation(_: Measure, rng: random.Random, s: Stream):
     """
     Picks a random measure from the part to replace
     the measure with.
@@ -266,13 +273,13 @@ def translocation(_: Measure, s: Stream):
     :returns: A random measure from the stream.
     """
     measures = list(s.getElementsByClass("Measure"))
-    choice = utils.copy_measure(random.choice(measures))
+    choice = utils.copy_measure(rng.choice(measures))
     utils.add_lyric_for_measure(choice, "tl")
     return choice
 
 
 @typechecked
-def inversion(measure: Measure, _: Optional[Stream]):
+def inversion(measure: Measure, rng: random.Random, _: Optional[Stream]):
     """
     Picks a set of offsets to invert in a measure and returns
     a copy with the inverted measure.
@@ -281,7 +288,7 @@ def inversion(measure: Measure, _: Optional[Stream]):
     :param _: Stream, unused.
     :returns: A measure with a random offset inverted.
     """
-    offsets = utils.random_offsets(measure)
+    offsets = utils.random_offsets(measure, rng)
     # skip inversion if only one element is selected
     if len(offsets) > 1:
         m = utils.copy_inverse(measure, offsets)
@@ -328,7 +335,9 @@ def invert_stream(s: Stream, og: Stream, offsets: List[float]):
                 off += new_el.duration.quarterLength
 
 
-def choose_mutation(weights: List[float] = [0.2, 0.2, 0.1, 0.25, 0.05, 0.2]):
+def choose_mutation(
+    rng: random.Random, weights: List[float] = [0.2, 0.2, 0.1, 0.25, 0.05, 0.2]
+):
     """
     Randomly picks a mutation to perform on a measure.
 
@@ -348,4 +357,4 @@ def choose_mutation(weights: List[float] = [0.2, 0.2, 0.1, 0.25, 0.05, 0.2]):
         inversion,
     ]
     # need to return 0th element because random.choices() returns a list
-    return random.choices(mutations, weights)[0]
+    return rng.choices(mutations, weights)[0]

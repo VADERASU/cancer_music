@@ -2,8 +2,9 @@ import copy
 import math
 import os
 import random
+import sys
 from pathlib import Path
-from typing import List, Union
+from typing import List, Optional, Union
 
 from music21.chord import Chord
 from music21.duration import Duration
@@ -13,7 +14,13 @@ from music21.note import GeneralNote, Note, Rest
 from music21.stream.base import Measure, Stream, Voice
 from typeguard import typechecked
 
-random.seed(a=12345689)
+
+def reseed(seed: Optional[int] = None):
+    if not seed:
+        seed = random.randrange(sys.maxsize)
+    rng = random.Random(seed)
+    print("Seed", seed)
+    return rng
 
 
 @typechecked
@@ -74,7 +81,7 @@ def add_lyric_for_measure(m: Stream, annotation: str):
 
 
 @typechecked
-def random_offsets(m: Measure) -> List[float]:
+def random_offsets(m: Measure, rng: random.Random) -> List[float]:
     """
     Picks a subset of offsets from the measure.
 
@@ -83,7 +90,7 @@ def random_offsets(m: Measure) -> List[float]:
     """
     timing = list(set([el.offset for el in m.flat.notesAndRests]))
     timing.sort()
-    start = random.randint(0, len(timing) - 1)
+    start = rng.randint(0, len(timing) - 1)
     return timing[start:]
 
 
@@ -106,19 +113,6 @@ def build_file_path(path: Union[Path, str]) -> Path:
         raise ValueError(f"{fp} is not a file.")
 
     return fp
-
-
-def generate_note(key: Key = Key("C")):
-    """
-    Generates a random note from the optionally provided key.
-    Assumes key is C major by default.
-
-    :param key: Key to generate notes from.
-    :returns: Note picked from the scale.
-    """
-    degree = random.randint(0, 7)
-    p = key.pitchFromDegree(degree)
-    return Note(p)
 
 
 @typechecked
@@ -213,11 +207,6 @@ def get_percentile_measure_number(s: Stream, percentile: float):
     return math.floor(percentile * length)
 
 
-# always use this because this will be seeded correctly
-def get_probability():
-    return random.random()
-
-
 def copy_measure(measure: Measure):
     """
     Copies a measure and drops all extraneous information.
@@ -231,3 +220,8 @@ def copy_measure(measure: Measure):
     cloned = copy.deepcopy(measure)
     cloned.removeByClass("Barline")
     return cloned
+
+
+def consolidate_rests(s: Stream):
+    # tricky, need to see what the measures look like with voices
+    pass
