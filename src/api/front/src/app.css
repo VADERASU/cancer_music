@@ -10,6 +10,14 @@ input[type="range"] {
     @apply accent-gray-500;
 }
 
+input[type="file"] {
+    @apply file:text-white file:bg-gray-500 file:rounded-md file:px-1 file:border-0;
+}
+
 select, input[type="number"] {
     @apply border rounded-md border-gray-500 px-1;
+}
+
+body {
+    @apply bg-neutral-200
 }

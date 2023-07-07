@@ -78,12 +78,12 @@
   {#if file}
     <h2 class="text-2xl">
       Sum of probabilities:
-      {#if parseFloat(sum, 10) !== 1.0}
-        <span style="color:red">
+      {#if parseFloat(sum) !== 1.0}
+        <span class="text-red-700">
           {Math.round(sum * 100)}%
         </span>
       {:else}
-        <span style="color:green">
+        <span class="text-green-700">
           {Math.round(sum * 100)}%
         </span>
       {/if}

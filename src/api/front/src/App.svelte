@@ -28,24 +28,22 @@
   }
 </script>
 
-<main>
-  <div class="container flex flex-col px-5 gap-2">
-    <h1 class="text-3xl">Capturing Cancer with Music</h1>
-    {#if showParams}
-      <Parameters bind:mutant />
-    {/if}
-    {#if mutant}
-      {#key mutant}
-        <VisualParameters bind:vis />
-      {/key}
-    {/if}
-  </div>
+<div class="container flex flex-col px-5 gap-2">
+  <h1 class="text-3xl">Capturing Cancer with Music</h1>
+  {#if showParams}
+    <Parameters bind:mutant />
+  {/if}
   {#if mutant}
     {#key mutant}
-      <SheetDisplay musicxml={mutant} {vis} />
+      <VisualParameters bind:vis />
     {/key}
   {/if}
-</main>
+</div>
+{#if mutant}
+  {#key mutant}
+    <SheetDisplay musicxml={mutant} {vis} />
+  {/key}
+{/if}
 
 <style lang="postcss">
 </style>

@@ -11,7 +11,6 @@
 
 <style lang="postcss">
   .selected {
-    background-color: black;
-    color: white;
+    @apply bg-gray-950 text-white;
   }
 </style>
