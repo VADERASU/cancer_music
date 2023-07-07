@@ -16,9 +16,9 @@
   };
 
   const therapy = {
-    mode: 0, // OFF, CURED, PARTIAL
+    mode: 0, // OFF, CURE
     start: 0.5,
-    resistance_probability: 0.2,
+    resistance_probability: 0.0,
   };
 
   let sum = 1;
@@ -119,14 +119,11 @@
           <label for="therapyMode">Therapy type</label>
           <select name="therapyMode" bind:value={therapy.mode}>
             <option value={0}>Off</option>
-            <option value={1}>Cure</option>
-            <option value={2}>Partial cure</option>
+            <option value={1}>On</option>
           </select>
         </div>
         {#if therapy.mode !== 0}
           <ProbSlider text="Therapy start" bind:val={therapy.start} />
-        {/if}
-        {#if therapy.mode === 2}
           <ProbSlider
             text="Mutant survival"
             bind:val={therapy.resistance_probability}

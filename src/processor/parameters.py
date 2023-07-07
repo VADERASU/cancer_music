@@ -4,8 +4,7 @@ from typing import TypedDict
 
 class Therapy(Enum):
     OFF = 0
-    CURED = 1
-    FAILED = 2
+    CURE = 1
 
 
 class TherapyParameters(TypedDict):

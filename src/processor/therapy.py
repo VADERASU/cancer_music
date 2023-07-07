@@ -10,19 +10,7 @@ def no_therapy(s: Stream, _: TherapyParameters):
     return s
 
 
-def cure(s: Stream, tp: TherapyParameters):
-    start = utils.get_percentile_measure_number(s, tp["start"])
-
-    measures = s.measures(start, None).getElementsByClass("Measure")
-
-    for m in measures:
-        m.removeByClass(["GeneralNote", "Lyric"])
-
-    s.makeRests(fillGaps=True, inPlace=True)
-    return s
-
-
-def _partial_cure(s: Stream, tp: TherapyParameters):
+def _cure(s: Stream, tp: TherapyParameters):
     notes = s.getElementsByClass("GeneralNote")
     for n in notes:
         lyrics = n.lyrics
@@ -38,16 +26,16 @@ def _partial_cure(s: Stream, tp: TherapyParameters):
                         s.insert(offset, rest)
 
 
-def partial_cure(s: Stream, tp: TherapyParameters):
+def cure(s: Stream, tp: TherapyParameters):
     start = utils.get_percentile_measure_number(s, tp["start"])
     measures = s.measures(start, None).getElementsByClass("Measure")
 
     for m in measures:
         if len(m.voices) > 0:
             for nv in m.voices:
-                _partial_cure(nv, tp)
+                _cure(nv, tp)
         else:
-            _partial_cure(m, tp)
+            _cure(m, tp)
         s.makeRests(fillGaps=True, inPlace=True)
     return s
 
@@ -55,6 +43,4 @@ def partial_cure(s: Stream, tp: TherapyParameters):
 def get_therapy(t: Therapy):
     if t.value == 0:
         return no_therapy
-    if t.value == 1:
-        return cure
-    return partial_cure
+    return cure

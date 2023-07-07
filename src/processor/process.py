@@ -24,7 +24,7 @@ def mutate(
         inversion=0.2,
     ),
     therapy_params: TherapyParameters = TherapyParameters(
-        therapy_mode=Therapy.OFF, resistance_probability=0.3, start=0.5
+        therapy_mode=Therapy.OFF, resistance_probability=0.0, start=0.0
     ),
 ):
     """
