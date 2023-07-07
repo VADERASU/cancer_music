@@ -282,12 +282,14 @@ def inversion(measure: Measure, _: Optional[Stream]):
     :returns: A measure with a random offset inverted.
     """
     offsets = utils.random_offsets(measure)
-    m = utils.copy_inverse(measure, offsets)
-
-    invert_stream(m, measure, offsets)
-    n = utils.get_first_element(m)
-    n.addLyric("inv")
-
+    # skip inversion if only one element is selected
+    if len(offsets) > 1:
+        m = utils.copy_inverse(measure, offsets)
+        invert_stream(m, measure, offsets)
+        n = utils.get_first_element(m)
+        n.addLyric("inv")
+    else:
+        m = utils.copy_measure(measure)
     return m
 
 
