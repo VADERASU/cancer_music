@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 button {
-    @apply text-white bg-gray-500 rounded-md px-2 py-2;
+    @apply text-white bg-gray-500 rounded-md px-1;
 }
 
 input[type="range"] {
@@ -11,5 +11,5 @@ input[type="range"] {
 }
 
 select, input[type="number"] {
-    @apply border rounded-md border-gray-500;
+    @apply border rounded-md border-gray-500 px-1;
 }

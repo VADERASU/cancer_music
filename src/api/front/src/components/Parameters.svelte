@@ -88,52 +88,59 @@
         </span>
       {/if}
     </h2>
-    <form>
-      <div>
-        <label for="how_many">Tumor size: {howMany}</label>
-        <input
-          type="range"
-          name="how_many"
-          min="0"
-          max="10"
-          bind:value={howMany}
-        />
-      </div>
-      <ProbSlider text="No mutation" bind:val={probabilities.noop} />
-      <ProbSlider text="Insertion" bind:val={probabilities.insertion} />
-      <ProbSlider text="Transposition" bind:val={probabilities.transposition} />
-      <ProbSlider text="Deletion" bind:val={probabilities.deletion} />
-      <ProbSlider text="Translocation" bind:val={probabilities.translocation} />
-      <ProbSlider text="Inversion" bind:val={probabilities.inversion} />
-      <hr />
-      <h2 class="text-2xl">Therapy</h2>
-      <div>
-        <label for="therapyMode">Therapy type</label>
-        <select name="therapyMode" bind:value={therapy.mode}>
-          <option value={0}>Off</option>
-          <option value={1}>Cure</option>
-          <option value={2}>Partial cure</option>
-        </select>
-      </div>
-      {#if therapy.mode !== 0}
-        <ProbSlider text="Therapy start" bind:val={therapy.start} />
-      {/if}
-      {#if therapy.mode === 2}
+    <div class="flex flex-row gap-3">
+      <div class="flex flex-col gap-2">
+        <div class="flex gap-2">
+          <label class="grow" for="how_many">Tumor size: {howMany}</label>
+          <input
+            class="shrink"
+            type="range"
+            name="how_many"
+            min="0"
+            max="10"
+            bind:value={howMany}
+          />
+        </div>
+        <ProbSlider text="No mutation" bind:val={probabilities.noop} />
+        <ProbSlider text="Insertion" bind:val={probabilities.insertion} />
         <ProbSlider
-          text="mutant resistance"
-          bind:val={therapy.resistance_probability}
+          text="Transposition"
+          bind:val={probabilities.transposition}
         />
-      {/if}
-      {#if parseInt(sum, 10) === 1.0}
-        <br />
+        <ProbSlider text="Deletion" bind:val={probabilities.deletion} />
+        <ProbSlider
+          text="Translocation"
+          bind:val={probabilities.translocation}
+        />
+        <ProbSlider text="Inversion" bind:val={probabilities.inversion} />
+      </div>
+      <div class="flex flex-col gap-2">
+        <div>
+          <label for="therapyMode">Therapy type</label>
+          <select name="therapyMode" bind:value={therapy.mode}>
+            <option value={0}>Off</option>
+            <option value={1}>Cure</option>
+            <option value={2}>Partial cure</option>
+          </select>
+        </div>
+        {#if therapy.mode !== 0}
+          <ProbSlider text="Therapy start" bind:val={therapy.start} />
+        {/if}
+        {#if therapy.mode === 2}
+          <ProbSlider
+            text="Mutant survival"
+            bind:val={therapy.resistance_probability}
+          />
+        {/if}
+      </div>
+    </div>
+    {#if parseInt(sum, 10) === 1.0}
+      <div>
         <button on:click|preventDefault={startMutate}>Submit</button>
-      {/if}
-    </form>
+      </div>
+    {/if}
   {/if}
 </div>
 
 <style lang="postcss">
-  form > div {
-    @apply flex justify-between w-1/4;
-  }
 </style>

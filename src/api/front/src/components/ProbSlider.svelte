@@ -3,8 +3,8 @@
   export let val;
 </script>
 
-<div>
-  <label for="slider"> {text}: {Math.round(val * 100)}%</label>
+<div class="flex gap-2">
+  <label class="grow" for="slider"> {text}: {Math.round(val * 100)}%</label>
   <input
     type="range"
     name="slider"
@@ -16,9 +16,4 @@
 </div>
 
 <style>
-  div {
-    display: flex;
-    justify-content: space-between;
-    width: 25%;
-  }
 </style>
