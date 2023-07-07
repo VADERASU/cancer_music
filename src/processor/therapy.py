@@ -13,17 +13,14 @@ def no_therapy(s: Stream, _: TherapyParameters):
 def _cure(s: Stream, tp: TherapyParameters):
     notes = s.getElementsByClass("GeneralNote")
     for n in notes:
-        lyrics = n.lyrics
-        if len(lyrics) > 0:
-            for lyric in lyrics:
-                if lyric.text in mutation_markers.values():
-                    if utils.get_probability() >= tp["resistance_probability"]:
-                        offset = n.offset
-                        s.remove(n)
+        # no need to check lyrics since we only work on mutant parts
+        if utils.get_probability() >= tp["resistance_probability"]:
+            offset = n.offset
+            s.remove(n)
 
-                        rest = Rest(length=n.duration.quarterLength)
-                        rest.addLyric("c")
-                        s.insert(offset, rest)
+            rest = Rest(length=n.duration.quarterLength)
+            rest.addLyric("c")
+            s.insert(offset, rest)
 
 
 def cure(s: Stream, tp: TherapyParameters):
