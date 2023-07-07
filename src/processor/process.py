@@ -95,6 +95,7 @@ def mutate_part(
             mutant = mutation(t, p)  # mutate it
             mutant.number = dm.number
             mutant.partId = f"mutant_{len(mutants)}" 
+            mutant.makeBeams(inPlace=True)
             dup.replace(dm, mutant)  # replace in duplicate part
 
         dup.makeBeams(inPlace=True)
@@ -268,7 +269,7 @@ def translocation(_: Measure, s: Stream):
     """
     measures = list(s.getElementsByClass("Measure"))
     choice = copy.deepcopy(random.choice(measures))
-    utils.add_lyric_for_measure(choice, "t")
+    utils.add_lyric_for_measure(choice, "tl")
     return choice
 
 
