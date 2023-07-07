@@ -1,4 +1,3 @@
-import copy
 import random
 from typing import List, Optional
 
@@ -94,7 +93,7 @@ def mutate_part(
             )
             mutant = mutation(t, p)  # mutate it
             mutant.number = dm.number
-            mutant.partId = f"mutant_{len(mutants)}" 
+            mutant.partId = f"mutant_{len(mutants)}"
             mutant.makeBeams(inPlace=True)
             dup.replace(dm, mutant)  # replace in duplicate part
 
@@ -105,8 +104,7 @@ def mutate_part(
 
 
 def noop(m: Measure, _: Stream):
-    # do not remove, lets us skip performing mutations
-    return copy.deepcopy(m)
+    return utils.copy_measure(m)
 
 
 @typechecked
@@ -268,7 +266,7 @@ def translocation(_: Measure, s: Stream):
     :returns: A random measure from the stream.
     """
     measures = list(s.getElementsByClass("Measure"))
-    choice = copy.deepcopy(random.choice(measures))
+    choice = utils.copy_measure(random.choice(measures))
     utils.add_lyric_for_measure(choice, "tl")
     return choice
 

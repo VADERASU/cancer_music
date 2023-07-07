@@ -1,3 +1,4 @@
+import copy
 import math
 import os
 import random
@@ -215,3 +216,18 @@ def get_percentile_measure_number(s: Stream, percentile: float):
 # always use this because this will be seeded correctly
 def get_probability():
     return random.random()
+
+
+def copy_measure(measure: Measure):
+    """
+    Copies a measure and drops all extraneous information.
+    TODO: detect if clef / key signature is necessary when copying.
+    Don't drop clefs and key signatures until there is code to make sure
+    you don't need it!
+
+    :param measure: Measure to copy.
+    :returns: Measure without unnecessary information.
+    """
+    cloned = copy.deepcopy(measure)
+    cloned.removeByClass("Barline")
+    return cloned
