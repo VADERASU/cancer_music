@@ -91,7 +91,9 @@
     <div class="flex flex-row gap-3">
       <div class="flex flex-col gap-2">
         <div class="flex gap-2">
-          <label class="grow" for="how_many">Tumor size: {howMany}</label>
+          <label class="grow" for="how_many"
+            >Length of cancer theme: {howMany}</label
+          >
           <input
             class="shrink"
             type="range"
