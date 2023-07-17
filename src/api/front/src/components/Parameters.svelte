@@ -5,7 +5,9 @@
   export let mutant;
   let file;
   let howMany = 4;
-
+  let maxParts = 1;
+  let reproductionProbability = 0.1;
+  let seed = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
   const probabilities = {
     noop: 0.05,
     insertion: 0.25,
@@ -23,6 +25,7 @@
 
   let sum = 1;
   $: sum = Object.values(probabilities)
+
     .reduce((a, b) => a + b)
     .toFixed(2);
 
@@ -60,6 +63,9 @@
         ...probabilities,
         ...therapy,
         how_many: howMany,
+        maxParts,
+        reproductionProbability,
+        seed,
       })}`,
       {
         contentType: "multipart/form-data",
@@ -90,19 +96,6 @@
     </h2>
     <div class="flex flex-row gap-3">
       <div class="flex flex-col gap-2">
-        <div class="flex gap-2">
-          <label class="grow" for="how_many"
-            >Length of cancer theme: {howMany}</label
-          >
-          <input
-            class="shrink"
-            type="range"
-            name="how_many"
-            min="0"
-            max="10"
-            bind:value={howMany}
-          />
-        </div>
         <ProbSlider text="No mutation" bind:val={probabilities.noop} />
         <ProbSlider text="Insertion" bind:val={probabilities.insertion} />
         <ProbSlider
@@ -116,6 +109,40 @@
         />
         <ProbSlider text="Inversion" bind:val={probabilities.inversion} />
       </div>
+      <div class="flex flex-col gap-2">
+        <div class="flex gap-2">
+          <label class="grow" for="how_many"
+            >Length of cancer theme: {howMany}</label
+          >
+          <input
+            class="shrink"
+            type="range"
+            name="how_many"
+            min="0"
+            max="10"
+            bind:value={howMany}
+          />
+        </div>
+        <div class="flex gap-2">
+          <label class="grow" for="numberOfParts"
+            >Maximum number of mutant parts: {maxParts}</label
+          >
+          <input
+            class="shrink"
+            type="range"
+            name="numberOfParts"
+            min="1"
+            max="20"
+            bind:value={maxParts}
+          />
+        </div>
+        <ProbSlider text="Reproduction" bind:val={reproductionProbability} />
+        <div class="flex gap-2">
+          <label class="grow" for="seed">Seed:</label>
+          <input class="shrink" type="number" name="seed" bind:value={seed} />
+        </div>
+      </div>
+
       <div class="flex flex-col gap-2">
         <div>
           <label for="therapyMode">Therapy type</label>

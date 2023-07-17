@@ -1,3 +1,5 @@
+import random
+import sys
 from zipfile import BadZipFile, ZipFile
 
 from fastapi import FastAPI, HTTPException, Response, UploadFile
@@ -32,6 +34,9 @@ def process_file(
     mode: int,
     start: float,
     resistance_probability: float,
+    maxParts: int,
+    reproductionProbability: float,
+    seed: int,
     file: UploadFile,
 ):
     # this should be handled by music21's archive manager
@@ -61,6 +66,7 @@ def process_file(
             resistance_probability=resistance_probability,
             start=start,
         ),
+        seed=seed,
     )
 
     gex = GeneralObjectExporter()

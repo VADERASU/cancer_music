@@ -27,7 +27,7 @@ def mutate(
     therapy_params: TherapyParameters = TherapyParameters(
         therapy_mode=Therapy.OFF, resistance_probability=0.0, start=0.0
     ),
-    seed: int = random.randrange(sys.maxsize)
+    seed: int = random.randrange(sys.maxsize),
 ):
     """
     Main method for mutating a file.
@@ -43,7 +43,6 @@ def mutate(
     treat_mutant = get_therapy(therapy_params["therapy_mode"])
     treated = [treat_mutant(mutant, therapy_params, rng) for mutant in mutants]
     [s.append(mutant) for mutant in treated]
-    s.show("text")
 
 
 def mutate_part(
