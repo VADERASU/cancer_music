@@ -104,8 +104,9 @@ def mutate_part(
                 dup.replace(dm, mutant)  # replace in duplicate part
 
         # go through each measure and see if it should reproduce
-        # if rng.random() < params["reproduction"]:
-        mutate_part(dup, mutants, rng, params, start)
+        for dm in dpm:
+            if rng.random() < params["reproduction"]:
+                mutate_part(dup, mutants, rng, params, start)
 
         dup.makeBeams(inPlace=True)
     return mutants
