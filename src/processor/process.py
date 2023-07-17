@@ -59,6 +59,10 @@ def mutate_part(
         start = rng.randint(prev_start, len(measures) - params["how_many"])
         tumors = measures[start : start + params["how_many"]]
 
+        # early exit if we're at the end
+        if len(tumors) < params["how_many"]:
+            return mutants
+
         dup = Stream.template(
             p,
             removeClasses=[
@@ -73,7 +77,6 @@ def mutate_part(
         ins = Instrument(p.getInstrument().instrumentName)
         ins.partId = f"mutant_{len(mutants)}"
         dup.insert(0, ins)
-        mutants.append(dup)
         # start adding mutant measures at the first measure
         dpm = dup.getElementsByClass("Measure")[start:]
 
@@ -103,6 +106,7 @@ def mutate_part(
                 mutant.makeBeams(inPlace=True)
                 dup.replace(dm, mutant)  # replace in duplicate part
 
+        mutants.append(dup)
         # go through each measure and see if it should reproduce
         for dm in dpm:
             if rng.random() < params["reproduction"]:
@@ -197,14 +201,17 @@ def transposition(measure: Measure, rng: random.Random, _: Stream) -> Measure:
     :param _: Stream, unused, do not remove.
     :returns: A tranposed copy of the measure.
     """
-    options = [-1, 1]
+    options = [i for i in range(-12, 13)]
     choice = rng.choice(options)
+    offsets = utils.random_offsets(measure, rng)
 
-    return transpose_measure(measure, choice)
+    return transpose_measure(measure, offsets, choice)
 
 
 @typechecked
-def transpose_measure(measure: Measure, degree: int) -> Measure:
+def transpose_measure(
+    measure: Measure, offsets: List[float], degree: int
+) -> Measure:
     """
     Transposes a measure by the provided number of steps.
 
@@ -213,10 +220,15 @@ def transpose_measure(measure: Measure, degree: int) -> Measure:
     :return: A tranposed copy of the measure.
     :raises ValueError: Raised if measure does not exist.
     """
-    transposed = measure.transpose(degree, classFilterList=GeneralNote)
+    transposed = utils.copy_measure(measure)
+    notes = transposed.getElementsByClass("Note")
+    for n in notes:
+        if n.offset in offsets:
+            n.transpose(degree, inPlace=True)
+            utils.add_lyric_for_note(n, "t")
     if transposed is None:
         raise ValueError("Measure does not exist.")
-    utils.add_lyric_for_measure(transposed, "t")
+    # utils.add_lyric_for_measure(transposed, "t")
     return transposed
 
 

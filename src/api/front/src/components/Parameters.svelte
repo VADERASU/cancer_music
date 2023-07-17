@@ -25,7 +25,6 @@
 
   let sum = 1;
   $: sum = Object.values(probabilities)
-
     .reduce((a, b) => a + b)
     .toFixed(2);
 
