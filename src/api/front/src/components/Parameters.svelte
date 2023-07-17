@@ -20,7 +20,7 @@
   const therapy = {
     mode: 0, // OFF, CURE
     start: 0.5,
-    resistance_probability: 0.0,
+    mutant_survival: 0.5,
   };
 
   let sum = 1;
@@ -153,8 +153,8 @@
         {#if therapy.mode !== 0}
           <ProbSlider text="Therapy start" bind:val={therapy.start} />
           <ProbSlider
-            text="Mutant survival"
-            bind:val={therapy.resistance_probability}
+            text="Mutant survival rate"
+            bind:val={therapy.mutant_survival}
           />
         {/if}
       </div>

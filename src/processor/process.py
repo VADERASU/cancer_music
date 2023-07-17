@@ -1,15 +1,16 @@
+import math
 import random
 import sys
 from typing import List, Optional
 
 from music21.instrument import Instrument
 from music21.note import GeneralNote, Rest
-from music21.stream.base import Measure, Stream
+from music21.stream.base import Measure, Part, Stream
 from typeguard import typechecked
 
 from processor import utils
 from processor.parameters import Parameters, Therapy, TherapyParameters
-from processor.therapy import get_therapy
+from processor.therapy import cure
 
 
 @typechecked
@@ -26,8 +27,8 @@ def mutate(
         translocation=0.05,
         inversion=0.2,
     ),
-    therapy_params: TherapyParameters = TherapyParameters(
-        therapy_mode=Therapy.OFF, resistance_probability=0.0, start=0.0
+    t_params: TherapyParameters = TherapyParameters(
+        therapy_mode=Therapy.OFF, mutant_survival=0.0, start=0.0
     ),
     seed: int = random.randrange(sys.maxsize),
 ):
@@ -37,23 +38,38 @@ def mutate(
     :param s: Music21 stream for a file.
     """
     parts = s.getElementsByClass("Part")
-
+    # each part needs to mutate
+    t_start = utils.get_percentile_measure_number(parts[0], t_params["start"])
     rng = utils.reseed(seed)
-    p = rng.choice(list(parts))
 
-    mutants = mutate_part(p, [], rng, params)
-    treat_mutant = get_therapy(therapy_params["therapy_mode"])
-    treated = [treat_mutant(mutant, therapy_params, rng) for mutant in mutants]
-    [s.append(mutant) for mutant in treated]
+    mutants = []
+    for p in parts:
+        mutants = mutate_part(p, [], rng, params)
+
+        if t_params["therapy_mode"] == Therapy.CURE:
+            dead = rng.sample(
+                mutants,
+                int(len(mutants) * (1 - t_params["mutant_survival"])),
+            )
+            deadIDs = list(map(lambda e: e.partId, dead))
+            # don't apply treatment to mutants not in dead
+            treated = [
+                mutant for mutant in mutants if mutant.partId not in deadIDs
+            ]
+            for mutant in dead:
+                treated.append(cure(mutant, t_start))
+            [s.append(mutant) for mutant in treated]
+        else:
+            [s.append(mutant) for mutant in mutants]
 
 
 def mutate_part(
-    p: Stream,
+    p: Part,
     mutants: List[Stream],
     rng: random.Random,
     params: Parameters,
     prev_start: int = 0,
-):
+) -> List[Part]:
     if len(mutants) < params["max_parts"]:
         measures = p.getElementsByClass("Measure")
         start = rng.randint(prev_start, len(measures) - params["how_many"])
@@ -102,15 +118,13 @@ def mutate_part(
                     mutation = noop
                 mutant = mutation(t, rng, p)  # mutate it
                 mutant.number = dm.number
-                mutant.partId = f"mutant_{len(mutants)}"
                 mutant.makeBeams(inPlace=True)
                 dup.replace(dm, mutant)  # replace in duplicate part
-
+        dup.partId = f"mutant_{rng.randrange(sys.maxsize)}"
         mutants.append(dup)
-        # go through each measure and see if it should reproduce
-        for dm in dpm:
-            if rng.random() < params["reproduction"]:
-                mutate_part(dup, mutants, rng, params, start)
+
+        if rng.random() < params["reproduction"]:
+            mutate_part(dup, mutants, rng, params, start)
 
         dup.makeBeams(inPlace=True)
     return mutants

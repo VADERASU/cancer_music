@@ -8,36 +8,25 @@ from processor.constants import mutation_markers
 from processor.parameters import Therapy, TherapyParameters
 
 
-def no_therapy(s: Stream, _: TherapyParameters, __: random.Random):
-    return s
-
-
-def _cure(s: Stream, tp: TherapyParameters, rng: random.Random):
+def _cure(
+    s: Stream,
+):
     notes = s.getElementsByClass("GeneralNote")
     for n in notes:
-        if rng.random() >= tp["resistance_probability"]:
-            offset = n.offset
-            s.remove(n)
+        offset = n.offset
+        s.remove(n)
 
-            rest = Rest(length=n.duration.quarterLength)
-            rest.addLyric("c")
-            s.insert(offset, rest)
+        rest = Rest(length=n.duration.quarterLength)
+        rest.addLyric("c")
+        s.insert(offset, rest)
 
 
-def cure(s: Stream, tp: TherapyParameters, rng: random.Random):
-    start = utils.get_percentile_measure_number(s, tp["start"])
+def cure(s: Stream, start: int):
     measures = s.measures(start, None).getElementsByClass("Measure")
-
     for m in measures:
         if len(m.voices) > 0:
             for nv in m.voices:
-                _cure(nv, tp, rng)
+                _cure(nv)
         else:
-            _cure(m, tp, rng)
+            _cure(m)
     return s
-
-
-def get_therapy(t: Therapy):
-    if t.value == 0:
-        return no_therapy
-    return cure

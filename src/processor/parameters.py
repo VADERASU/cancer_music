@@ -9,7 +9,7 @@ class Therapy(Enum):
 
 class TherapyParameters(TypedDict):
     therapy_mode: Therapy
-    resistance_probability: float
+    mutant_survival: float
     start: float
 
 

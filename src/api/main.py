@@ -33,7 +33,7 @@ def process_file(
     inversion: float,
     mode: int,
     start: float,
-    resistance_probability: float,
+    mutant_survival: float,
     maxParts: int,
     reproductionProbability: float,
     seed: int,
@@ -65,7 +65,7 @@ def process_file(
         ),
         TherapyParameters(
             therapy_mode=Therapy(mode),
-            resistance_probability=resistance_probability,
+            mutant_survival=mutant_survival,
             start=start,
         ),
         seed=seed,
