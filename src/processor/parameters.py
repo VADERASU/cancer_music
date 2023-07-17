@@ -15,6 +15,8 @@ class TherapyParameters(TypedDict):
 
 class Parameters(TypedDict):
     how_many: int
+    max_parts: int
+    reproduction: float
     noop: float
     insertion: float
     transposition: float

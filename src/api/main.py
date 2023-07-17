@@ -53,6 +53,8 @@ def process_file(
     mutate(
         s,
         Parameters(
+            max_parts=maxParts,
+            reproduction=reproductionProbability,
             how_many=how_many,
             noop=noop,
             insertion=insertion,

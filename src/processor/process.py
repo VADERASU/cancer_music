@@ -17,6 +17,8 @@ def mutate(
     s: Stream,
     params: Parameters = Parameters(
         how_many=4,
+        max_parts=4,
+        reproduction=0.1,
         noop=0.2,
         insertion=0.2,
         transposition=0.1,
@@ -49,18 +51,10 @@ def mutate_part(
     p: Stream,
     mutants: List[Stream],
     rng: random.Random,
-    params: Parameters = Parameters(
-        how_many=4,
-        noop=0.2,
-        insertion=0.2,
-        transposition=0.1,
-        deletion=0.25,
-        translocation=0.05,
-        inversion=0.2,
-    ),
+    params: Parameters,
     prev_start: int = 0,
 ):
-    if len(mutants) < 4:
+    if len(mutants) < params["max_parts"]:
         measures = p.getElementsByClass("Measure")
         start = rng.randint(prev_start, len(measures) - params["how_many"])
         tumors = measures[start : start + params["how_many"]]
@@ -79,33 +73,41 @@ def mutate_part(
         ins = Instrument(p.getInstrument().instrumentName)
         ins.partId = f"mutant_{len(mutants)}"
         dup.insert(0, ins)
-
+        mutants.append(dup)
         # start adding mutant measures at the first measure
         dpm = dup.getElementsByClass("Measure")[start:]
 
-        for i, dm in enumerate(dpm):
-            t = tumors[i % len(tumors)]  # pick tumor measure
-            # each mutation should be equal length to its original measure
-            mutation = choose_mutation(
-                rng,
-                [
-                    params["noop"],
-                    params["insertion"],
-                    params["transposition"],
-                    params["deletion"],
-                    params["translocation"],
-                    params["inversion"],
-                ],
-            )
-            mutant = mutation(t, rng, p)  # mutate it
-            mutant.number = dm.number
-            mutant.partId = f"mutant_{len(mutants)}"
-            mutant.makeBeams(inPlace=True)
-            dup.replace(dm, mutant)  # replace in duplicate part
+        for i in range(0, len(dpm), params["how_many"]):
+            dms = dpm[i : i + 4]
+            # choose one of how_many to be the mutant
+            candidate = rng.choice([i for i in range(0, params["how_many"])])
+            for j, dm in enumerate(dms):
+                t = tumors[(i + j) % len(tumors)]
+                if j == candidate:
+                    mutation = choose_mutation(
+                        rng,
+                        [
+                            params["noop"],
+                            params["insertion"],
+                            params["transposition"],
+                            params["deletion"],
+                            params["translocation"],
+                            params["inversion"],
+                        ],
+                    )
+                else:
+                    mutation = noop
+                mutant = mutation(t, rng, p)  # mutate it
+                mutant.number = dm.number
+                mutant.partId = f"mutant_{len(mutants)}"
+                mutant.makeBeams(inPlace=True)
+                dup.replace(dm, mutant)  # replace in duplicate part
+
+        # go through each measure and see if it should reproduce
+        # if rng.random() < params["reproduction"]:
+        mutate_part(dup, mutants, rng, params, start)
 
         dup.makeBeams(inPlace=True)
-        mutants.append(dup)
-        mutate_part(dup, mutants, rng, params, start)
     return mutants
 
 
