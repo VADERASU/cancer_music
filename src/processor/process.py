@@ -97,7 +97,7 @@ def mutate_part(
         dpm = dup.getElementsByClass("Measure")[start:]
 
         for i in range(0, len(dpm), params["how_many"]):
-            dms = dpm[i : i + 4]
+            dms = dpm[i : i + params["how_many"]]
             # choose one of how_many to be the mutant
             candidate = rng.choice([i for i in range(0, params["how_many"])])
             for j, dm in enumerate(dms):
@@ -135,7 +135,7 @@ def noop(m: Measure, __: random.Random, _: Stream):
 
 
 @typechecked
-def insertion(measure: Measure, rng: random.Random, _: Stream):
+def insertion(measure: Measure, rng: random.Random, _: Optional[Stream]):
     """
     Inserts a note into the measure, either by replacing a rest
     or subdividing an already existing note.
@@ -147,8 +147,8 @@ def insertion(measure: Measure, rng: random.Random, _: Stream):
     m = utils.copy_inverse(measure, offsets)
 
     subdivide_stream(m, measure, offsets)
-    n = utils.get_first_element(m)
-    n.addLyric("ins")
+    # n = utils.get_first_element(m)
+    # n.addLyric("ins")
 
     return m
 
@@ -188,7 +188,7 @@ def subdivide_stream(s: Stream, og: Stream, offsets: List[float]):
                     off = el.offset
 
                 s.insert(off, new_el)
-                new_el.addLyric("i")
+                # new_el.addLyric("i")
                 off += new_el.duration.quarterLength
 
         # the copy appended after
@@ -261,8 +261,8 @@ def deletion(measure: Measure, rng: random.Random, _: Stream):
     m = utils.copy_inverse(measure, offsets)
 
     delete_substring(m, measure, offsets)
-    n = utils.get_first_element(m)
-    n.addLyric("del")
+    # n = utils.get_first_element(m)
+    # n.addLyric("del")
 
     return m
 
@@ -321,10 +321,10 @@ def inversion(measure: Measure, rng: random.Random, _: Optional[Stream]):
     if len(offsets) > 1:
         m = utils.copy_inverse(measure, offsets)
         invert_stream(m, measure, offsets)
-        n = utils.get_first_element(m)
-        n.addLyric("inv")
+        # n = utils.get_first_element(m)
+        # n.addLyric("inv")
     else:
-        m = utils.copy_measure(measure)
+        m = noop(measure, rng, _)
     return m
 
 
