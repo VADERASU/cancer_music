@@ -134,7 +134,24 @@ def mutate_part(
                 empty.removeByClass([GeneralNote])
                 empty.append(Rest(duration=measure.duration))
                 p.replace(measure, empty)
-
+        else:
+            # mutate original
+            tumors = measures[prev_start : prev_start + params["how_many"]]
+            candidate = rng.choice(tumors)
+            mutation = choose_mutation(
+                rng,
+                [
+                    params["noop"],
+                    params["insertion"],
+                    params["transposition"],
+                    params["deletion"],
+                    params["translocation"],
+                    params["inversion"],
+                ],
+            )
+            mutant = mutation(candidate, rng, p)  # mutate it
+            mutant.makeBeams(inPlace=True)
+            p.replace(candidate, mutant)
     return mutants
 
 

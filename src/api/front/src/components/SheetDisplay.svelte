@@ -10,6 +10,10 @@
 
   onMount(() => {
     osmd = new OpenSheetMusicDisplay(container);
+    osmd.setOptions({
+      drawingParameters: "compacttight",
+    });
+
     osmd.load(musicxml).then(() => {
       osmd.render();
     });
@@ -19,7 +23,10 @@
     Object.keys(vis).forEach((mutation) => {
       const marker = mutationMarkers[mutation];
       const fx = vis[mutation];
-      osmd.graphic.measureList.forEach((m) => {
+      const measureList = osmd.graphic.measureList.filter(
+        (d) => d.every((e) => e !== undefined)
+      );
+      measureList.forEach((m) => {
         m.forEach((part) => {
           if (part.parentStaff.parentInstrument.idString.includes("mutant")) {
             part.staffEntries.forEach((s) => {
