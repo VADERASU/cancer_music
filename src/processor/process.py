@@ -3,7 +3,6 @@ import random
 import sys
 from typing import List, Optional
 
-from music21.instrument import Instrument
 from music21.note import GeneralNote, Rest
 from music21.stream.base import Measure, Part, Stream
 from typeguard import typechecked
@@ -38,68 +37,67 @@ def mutate(
     :param s: Music21 stream for a file.
     """
     parts = s.getElementsByClass("Part")
-    # each part needs to mutate
+
     t_start = utils.get_percentile_measure_number(parts[0], t_params["start"])
     rng = utils.reseed(seed)
 
     mutants = []
     for p in parts:
-        mutants = mutate_part(p, [], rng, params)
+        mutants.extend(mutate_part(p, [], rng, params))
 
-        if t_params["therapy_mode"] == Therapy.CURE:
-            dead = rng.sample(
-                mutants,
-                int(len(mutants) * (1 - t_params["mutant_survival"])),
-            )
-            deadIDs = list(map(lambda e: e.partId, dead))
-            # don't apply treatment to mutants not in dead
-            treated = [
-                mutant for mutant in mutants if mutant.partId not in deadIDs
-            ]
-            for mutant in dead:
-                treated.append(cure(mutant, t_start))
-            [s.append(mutant) for mutant in treated]
-        else:
-            [s.append(mutant) for mutant in mutants]
+    if t_params["therapy_mode"] == Therapy.CURE:
+        dead = rng.sample(
+            mutants,
+            int(len(mutants) * (1 - t_params["mutant_survival"])),
+        )
+        deadIDs = list(map(lambda e: e.partId, dead))
+        # don't apply treatment to mutants not in dead
+        treated = [
+            mutant for mutant in mutants if mutant.partId not in deadIDs
+        ]
+        for mutant in dead:
+            treated.append(cure(mutant, t_start))
+        [s.append(mutant) for mutant in treated]
+    else:
+        [s.append(mutant) for mutant in mutants]
 
 
 def mutate_part(
     p: Part,
-    mutants: List[Stream],
+    mutants: List[Part],
     rng: random.Random,
     params: Parameters,
     prev_start: int = 0,
 ) -> List[Part]:
     if len(mutants) < params["max_parts"]:
         measures = p.getElementsByClass("Measure")
-        start = rng.randint(prev_start, len(measures) - params["how_many"])
-        tumors = measures[start : start + params["how_many"]]
+
+        tumors = list(
+            map(
+                lambda m: utils.copy_measure(
+                    m,
+                    ["Clef", "KeySignature", "TimeSignature"],
+                    removeLyrics=True,
+                ),
+                measures[prev_start : prev_start + params["how_many"]],
+            )
+        )
 
         # early exit if we're at the end
         if len(tumors) < params["how_many"]:
             return mutants
 
-        dup = Stream.template(
-            p,
-            removeClasses=[
-                Instrument,
-                GeneralNote,
-                "Dynamic",
-                "Expression",
-                "Lyric",
-            ],
-            fillWithRests=True,
-        )
-        ins = Instrument(p.getInstrument().instrumentName)
-        ins.partId = f"mutant_{len(mutants)}"
-        dup.insert(0, ins)
+        dup = utils.duplicate_part(p)
         # start adding mutant measures at the first measure
-        dpm = dup.getElementsByClass("Measure")[start:]
+        dpm = dup.getElementsByClass("Measure")[
+            prev_start + params["how_many"] :
+        ]
 
+        to_duplicate = []
         for i in range(0, len(dpm), params["how_many"]):
             dms = dpm[i : i + params["how_many"]]
             # choose one of how_many to be the mutant
-            candidate = rng.choice([i for i in range(0, params["how_many"])])
+            candidate = rng.choice([k for k in range(0, params["how_many"])])
             for j, dm in enumerate(dms):
                 t = tumors[(i + j) % len(tumors)]
                 if j == candidate:
@@ -120,13 +118,23 @@ def mutate_part(
                 mutant.number = dm.number
                 mutant.makeBeams(inPlace=True)
                 dup.replace(dm, mutant)  # replace in duplicate part
-        dup.partId = f"mutant_{rng.randrange(sys.maxsize)}"
+                # check if we will reproduce this measure or not
+                if rng.random() < params["reproduction"]:
+                    to_duplicate.append(prev_start + params["how_many"] + i)
+
         mutants.append(dup)
-
-        if rng.random() < params["reproduction"]:
-            mutate_part(dup, mutants, rng, params, start)
-
+        for child in to_duplicate:
+            mutate_part(dup, mutants, rng, params, child)
         dup.makeBeams(inPlace=True)
+        # modify original
+        if prev_start == 0:
+            tumors = measures[prev_start : prev_start + params["how_many"]]
+            for measure in tumors:
+                empty = utils.copy_measure(measure)
+                empty.removeByClass([GeneralNote])
+                empty.append(Rest(duration=measure.duration))
+                p.replace(measure, empty)
+
     return mutants
 
 

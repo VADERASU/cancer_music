@@ -3,15 +3,17 @@ import math
 import os
 import random
 import sys
+import uuid
 from pathlib import Path
 from typing import List, Optional, Union
 
 from music21.chord import Chord
 from music21.duration import Duration
+from music21.instrument import Instrument
 from music21.key import Key
 from music21.meter.base import TimeSignature
-from music21.note import GeneralNote, Note, Rest
-from music21.stream.base import Measure, Stream, Voice
+from music21.note import GeneralNote, Lyric, Note, Rest
+from music21.stream.base import Measure, Part, Stream, Voice
 from typeguard import typechecked
 
 
@@ -211,7 +213,9 @@ def get_percentile_measure_number(s: Stream, percentile: float):
     return math.floor(percentile * length)
 
 
-def copy_measure(measure: Measure):
+def copy_measure(
+    measure: Measure, dropList: Optional[List[str]] = [], removeLyrics=False
+):
     """
     Copies a measure and drops all extraneous information.
     TODO: detect if clef / key signature is necessary when copying.
@@ -222,8 +226,37 @@ def copy_measure(measure: Measure):
     :returns: Measure without unnecessary information.
     """
     cloned = copy.deepcopy(measure)
-    cloned.removeByClass("Barline")
+    cloned.removeByClass(["Barline"] + dropList)
+    if removeLyrics:
+        notes = cloned.flat.notesAndRests
+        for n in notes:
+            n.lyric = ""
     return cloned
+
+
+def duplicate_part(p: Part) -> Part:
+    dup = Stream.template(
+        p,
+        removeClasses=[
+            Instrument,
+            GeneralNote,
+            "Dynamic",
+            "Expression",
+            Lyric,
+        ],
+        fillWithRests=True,
+    )
+
+    p_ins = p.getInstrument()
+    if p_ins is not None:
+        ins = Instrument(p_ins.instrumentName)
+        id = uuid.uuid4()
+        ins.partId = f"mutant_{id}"
+        dup.partId = f"mutant_{id}"
+        dup.insert(0, ins)
+    else:
+        raise ValueError(f"Part {p.partId} missing an instrument!")
+    return dup
 
 
 def consolidate_rests(s: Stream):
