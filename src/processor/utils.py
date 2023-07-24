@@ -251,7 +251,7 @@ def duplicate_part(p: Part) -> Part:
     if p_ins is not None:
         ins = Instrument(p_ins.instrumentName)
         id = uuid.uuid4()
-        ins.id = f"mutant_{id}"
+        ins.partId = f"mutant_{id}"
         dup.partId = f"mutant_{id}"
         dup.insert(0, ins)
     else:

@@ -23,8 +23,8 @@
     Object.keys(vis).forEach((mutation) => {
       const marker = mutationMarkers[mutation];
       const fx = vis[mutation];
-      const measureList = osmd.graphic.measureList.filter(
-        (d) => d.every((e) => e !== undefined)
+      const measureList = osmd.graphic.measureList.filter((d) =>
+        d.every((e) => e !== undefined)
       );
       measureList.forEach((m) => {
         m.forEach((part) => {

@@ -73,7 +73,6 @@ def process_file(
 
     gex = GeneralObjectExporter()
     content = gex.parse(s)
-    # may be a bug where the stream doesn't get read entirely
     return Response(
         content=content, media_type="application/vnd.recordare.musicxml"
     )

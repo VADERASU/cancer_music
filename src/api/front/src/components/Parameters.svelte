@@ -32,28 +32,6 @@
     [file] = e.target.files;
   };
 
-  async function readStream(stream) {
-    const reader = stream.getReader();
-
-    let bytes = new Uint8Array(0);
-    const process = ({ done, value }) => {
-      if (done) {
-        return;
-      }
-
-      // copy old array
-      const b = new Uint8Array(bytes.length + value.length);
-      b.set(bytes);
-      b.set(value, bytes.length);
-      bytes = b;
-
-      reader.read().then(process);
-    };
-
-    await reader.read().then(process);
-    return bytes;
-  }
-
   async function startMutate() {
     const fd = new FormData();
     fd.append("file", file, file.name);
@@ -72,7 +50,7 @@
         body: fd,
       }
     );
-    readStream(response.body).then((bytes) => {
+    response.arrayBuffer().then((bytes) => {
       mutant = new TextDecoder().decode(bytes);
     });
   }
