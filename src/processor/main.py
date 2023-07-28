@@ -35,6 +35,7 @@ def main():
         raise ValueError(f"{fp} could not be parsed.")
     process.mutate(s)
     s.write("musicxml", args.output)
+    s.write("midi", args.output + ".mid")
 
     print(f"Wrote output to {args.output}")
 

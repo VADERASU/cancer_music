@@ -4,6 +4,7 @@ import os
 import random
 import sys
 import uuid
+from fractions import Fraction
 from pathlib import Path
 from typing import List, Optional, Union
 
@@ -87,7 +88,9 @@ def add_lyric_for_note(n: GeneralNote, annotation: str):
 
 
 @typechecked
-def random_offsets(m: Measure, rng: random.Random) -> List[float]:
+def random_offsets(
+    m: Measure, rng: random.Random
+) -> List[Union[Fraction, float]]:
     """
     Picks a subset of offsets from the measure.
 
@@ -172,7 +175,9 @@ def subdivide_element(el: GeneralNote) -> GeneralNote:
 
 
 @typechecked
-def copy_stream_inverse(s: Stream, og: Stream, offsets: List[float]):
+def copy_stream_inverse(
+    s: Stream, og: Stream, offsets: List[Union[Fraction, float]]
+):
     """
     Recursive helper method for copy_inverse.
 
@@ -187,7 +192,7 @@ def copy_stream_inverse(s: Stream, og: Stream, offsets: List[float]):
 
 
 @typechecked
-def copy_inverse(measure: Measure, offsets: List[float]):
+def copy_inverse(measure: Measure, offsets: List[Union[Fraction, float]]):
     """
     Given a measure and a list of offsets, copies over all notes
     NOT in the offsets list.

@@ -1,7 +1,8 @@
 import math
 import random
 import sys
-from typing import List, Optional
+from fractions import Fraction
+from typing import List, Optional, Union
 
 from music21.note import GeneralNote, Rest
 from music21.stream.base import Measure, Part, Stream
@@ -90,7 +91,7 @@ def mutate_part(
         dup = utils.duplicate_part(p)
         # start adding mutant measures at the first measure
         dpm = dup.getElementsByClass("Measure")[
-            prev_start + params["how_many"] :
+            prev_start + rng.randint(1, params["how_many"]) :
         ]
 
         to_duplicate = []
@@ -126,15 +127,7 @@ def mutate_part(
         for child in to_duplicate:
             mutate_part(dup, mutants, rng, params, child)
         dup.makeBeams(inPlace=True)
-        # modify original
-        if prev_start == 0:
-            tumors = measures[prev_start : prev_start + params["how_many"]]
-            for measure in tumors:
-                empty = utils.copy_measure(measure)
-                empty.removeByClass([GeneralNote])
-                empty.append(Rest(duration=measure.duration))
-                p.replace(measure, empty)
-        else:
+        if prev_start != 0:
             # mutate original
             tumors = measures[prev_start : prev_start + params["how_many"]]
             candidate = rng.choice(tumors)
@@ -179,7 +172,9 @@ def insertion(measure: Measure, rng: random.Random, _: Optional[Stream]):
 
 
 @typechecked
-def subdivide_stream(s: Stream, og: Stream, offsets: List[float]):
+def subdivide_stream(
+    s: Stream, og: Stream, offsets: List[Union[Fraction, float]]
+):
     """
     Takes a stream to modify, a stream containing the relevant info,
     and a list of offsets. Subdivides the elements specifed in
@@ -249,7 +244,7 @@ def transposition(measure: Measure, rng: random.Random, _: Stream) -> Measure:
 
 @typechecked
 def transpose_measure(
-    measure: Measure, offsets: List[float], degree: int
+    measure: Measure, offsets: List[Union[Fraction, float]], degree: int
 ) -> Measure:
     """
     Transposes a measure by the provided number of steps.
@@ -293,7 +288,9 @@ def deletion(measure: Measure, rng: random.Random, _: Stream):
 
 
 @typechecked
-def delete_substring(s: Stream, og: Stream, offsets: List[float]):
+def delete_substring(
+    s: Stream, og: Stream, offsets: List[Union[Fraction, float]]
+):
     """
     Recursively deletes the offsets provided by the offsets parameter.
     The entire substring is replaced with a rest.
@@ -354,7 +351,9 @@ def inversion(measure: Measure, rng: random.Random, _: Optional[Stream]):
 
 
 @typechecked
-def invert_stream(s: Stream, og: Stream, offsets: List[float]):
+def invert_stream(
+    s: Stream, og: Stream, offsets: List[Union[Fraction, float]]
+):
     """
     Recursively inverts a stream at the given offsets.
 

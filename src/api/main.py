@@ -1,11 +1,13 @@
 import random
 import sys
+from typing import Annotated
 from zipfile import BadZipFile, ZipFile
 
-from fastapi import FastAPI, HTTPException, Response, UploadFile
+from fastapi import Body, FastAPI, HTTPException, Response, UploadFile
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from music21 import converter
+from music21.midi.translate import streamToMidiFile
 from music21.musicxml.m21ToXml import GeneralObjectExporter
 
 from processor.parameters import Parameters, Therapy, TherapyParameters
@@ -41,6 +43,8 @@ def process_file(
 ):
     # this should be handled by music21's archive manager
     # but it doesn't support byte objects
+
+    # https://pypi.org/project/defusedxml/
     try:
         z = ZipFile(file.file)
     except BadZipFile:
@@ -76,6 +80,14 @@ def process_file(
     return Response(
         content=content, media_type="application/vnd.recordare.musicxml"
     )
+
+
+@app.post("/playback")
+def playback(file: Annotated[str, Body()]):
+    s = converter.parse(contents, format="musicxml")
+    mf = streamToMidiFile(s)
+
+    return Response(content=content)
 
 
 app.mount(
