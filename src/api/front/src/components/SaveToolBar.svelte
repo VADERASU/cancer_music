@@ -21,6 +21,20 @@
     });
     return midi;
   }
+
+  async function synthesize() {
+    const response = await fetch(`${API_URL}/synthesize`, {
+      method: "POST",
+      body: musicxml,
+    });
+
+    const bytes = await response.arrayBuffer();
+    const audio = new Blob([bytes], {
+      type: "audio/wav",
+    });
+
+    return audio;
+  }
 </script>
 
 <div class="sticky flex flex-col gap-1 w-max">
@@ -28,6 +42,6 @@
   <div class="sticky flex flex-row gap-1 w-max">
     <SaveButton onClick={playback} text="MIDI" />
     <a href={sheetURL} download="mutant.musicxml">MusicXML</a>
-    <button on:click={() => playback()}>MP3</button>
+    <SaveButton onClick={synthesize} text="WAV" />
   </div>
 </div>

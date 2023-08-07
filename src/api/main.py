@@ -1,8 +1,11 @@
-import random
-import sys
+import io
+import wave
 from typing import Annotated
 from zipfile import BadZipFile, ZipFile
 
+import fluidsynth
+import numpy as np
+import pyaudio
 from fastapi import Body, FastAPI, HTTPException, Response, UploadFile
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -82,11 +85,50 @@ def process_file(
     )
 
 
-@app.post("/playback")
-def playback(file: Annotated[str, Body()]):
+def toMidi(file):
     s = converter.parse(file, format="musicxml")
     mf = streamToMidiFile(s)
+    return mf
+
+
+@app.post("/playback")
+def playback(file: Annotated[str, Body()]):
+    mf = toMidi(file)
     return Response(content=mf.writestr())
+
+
+@app.post("/synthesize")
+def synthesize(file: Annotated[str, Body()]):
+    mf = toMidi(file)
+    midi = mf.writestr()
+
+    fs = fluidsynth.Synth()
+    sfid = fs.sfload("example.sf2")
+    fs.program_select(0, sfid, 0, 0)
+    # TODO: add patch for play_from_mem
+    fs.play_from_mem(midi)
+
+    data = []
+
+    s = fs.get_samples(44100)
+    # will break on silence!
+    while np.any(s > 1):
+        data = np.append(data, s)
+        s = fs.get_samples(44100)
+
+    samples = fluidsynth.raw_audio_string(data)
+
+    fs.delete()
+
+    with io.BytesIO() as wav:
+        wav_writer = wave.open(wav, "wb")
+        wav_writer.setframerate(44100)
+        wav_writer.setnchannels(2)
+        wav_writer.setsampwidth(2)
+        wav_writer.writeframes(samples)
+        wav_data = wav.getvalue()
+
+    return Response(content=wav_data)
 
 
 app.mount(
