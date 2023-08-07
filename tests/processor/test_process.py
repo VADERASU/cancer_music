@@ -181,9 +181,23 @@ def test_cure(streams):
         mutate(
             stream,
             therapy_params=TherapyParameters(
-                therapy_mode=Therapy.CURED,
-                resistance_probability=0.2,
+                therapy_mode=Therapy.CURE,
+                resistance_probability=0.0,
                 start=0.5,
             ),
         )
         stream.write("musicxml", f"cured_{filename}")
+
+
+@pytest.mark.usefixtures("streams")
+def test_partial(streams):
+    for filename, stream in streams:
+        mutate(
+            stream,
+            therapy_params=TherapyParameters(
+                therapy_mode=Therapy.CURE,
+                resistance_probability=0.2,
+                start=0.5,
+            ),
+        )
+        stream.write("musicxml", f"partial_cured_{filename}")

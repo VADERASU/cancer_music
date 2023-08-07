@@ -1,8 +1,8 @@
 <script>
   import "./app.css";
   import Parameters from "./components/Parameters.svelte";
+  import SaveToolBar from "./components/SaveToolBar.svelte";
   import SheetDisplay from "./components/SheetDisplay.svelte";
-  import VisualParameters from "./components/VisualParameters.svelte";
 
   let mutant;
   let showParams = true;
@@ -35,7 +35,7 @@
   {/if}
   {#if mutant}
     {#key mutant}
-      <VisualParameters bind:vis />
+      <SaveToolBar musicxml={mutant} />
     {/key}
   {/if}
 </div>

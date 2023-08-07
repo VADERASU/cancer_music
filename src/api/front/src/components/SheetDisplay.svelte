@@ -1,22 +1,12 @@
 <script>
   import { OpenSheetMusicDisplay } from "opensheetmusicdisplay";
   import { onMount } from "svelte";
-  import { mutationMarkers, API_URL } from "../api/constants";
+  import { mutationMarkers } from "../api/constants";
 
   export let vis;
   export let musicxml;
   let container;
   let osmd;
-
-  async function playback() {
-    // const encoder = new TextEncoder();
-    // const file = encoder.encode(musicxml);
-
-    fetch(`${API_URL}/playback`, {
-      method: "POST",
-      body: musicxml,
-    });
-  }
 
   onMount(() => {
     osmd = new OpenSheetMusicDisplay(container);
@@ -52,10 +42,6 @@
     });
   }
 </script>
-
-{#if false}
-  <button on:click={() => playback()}>MIDI</button>
-{/if}
 
 <div class="w-full" id="sheet" bind:this={container} />
 
