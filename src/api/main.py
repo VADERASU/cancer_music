@@ -84,10 +84,9 @@ def process_file(
 
 @app.post("/playback")
 def playback(file: Annotated[str, Body()]):
-    s = converter.parse(contents, format="musicxml")
+    s = converter.parse(file, format="musicxml")
     mf = streamToMidiFile(s)
-
-    return Response(content=content)
+    return Response(content=mf.writestr())
 
 
 app.mount(
