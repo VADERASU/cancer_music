@@ -42,6 +42,7 @@ def process_file(
     maxParts: int,
     reproductionProbability: float,
     seed: int,
+    cancerStart: float,
     file: UploadFile,
 ):
     # this should be handled by music21's archive manager
@@ -71,6 +72,7 @@ def process_file(
             deletion=deletion,
             translocation=translocation,
             inversion=inversion,
+            start=cancerStart,
         ),
         TherapyParameters(
             therapy_mode=Therapy(mode),

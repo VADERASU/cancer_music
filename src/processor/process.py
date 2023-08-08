@@ -26,6 +26,7 @@ def mutate(
         deletion=0.25,
         translocation=0.05,
         inversion=0.2,
+        start=0.1,
     ),
     t_params: TherapyParameters = TherapyParameters(
         therapy_mode=Therapy.OFF, mutant_survival=0.0, start=0.0
@@ -44,14 +45,15 @@ def mutate(
     # possibility of multiple parts being chosen
     candidates = rng.choices(parts, k=rng.randint(1, len(parts)))
     for candidate in candidates:
-        t_start = utils.get_percentile_measure_number(
-            candidate, t_params["start"]
-        )
-        mutants.extend(mutate_part(candidate, [], rng, params, t_start, 0))
-        cleared = utils.clear_part(candidate, t_start)
+        start = utils.get_percentile_measure_number(candidate, params["start"])
+        mutants.extend(mutate_part(candidate, [], rng, params, start, 0))
+        cleared = utils.clear_part(candidate, start)
         s.replace(candidate, cleared)
 
     if t_params["therapy_mode"] == Therapy.CURE:
+        t_start = utils.get_percentile_measure_number(
+            parts[0], t_params["start"]
+        )
         dead = rng.sample(
             mutants,
             int(len(mutants) * (1 - t_params["mutant_survival"])),

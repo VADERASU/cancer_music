@@ -7,6 +7,7 @@
   let howMany = 4;
   let maxParts = 1;
   let reproductionProbability = 0.1;
+  let cancerStart = 0.1;
   let seed = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
   const probabilities = {
     noop: 0.05,
@@ -43,6 +44,7 @@
         maxParts,
         reproductionProbability,
         seed,
+        cancerStart,
       })}`,
       {
         contentType: "multipart/form-data",
@@ -114,6 +116,7 @@
           />
         </div>
         <ProbSlider text="Reproduction" bind:val={reproductionProbability} />
+        <ProbSlider text="Cancer Start" bind:val={cancerStart} />
         <div class="flex gap-2">
           <label class="grow" for="seed">Seed:</label>
           <input class="shrink" type="number" name="seed" bind:value={seed} />
