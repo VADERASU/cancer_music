@@ -15,6 +15,7 @@ from music21.key import Key
 from music21.meter.base import TimeSignature
 from music21.note import GeneralNote, Lyric, Note, Rest
 from music21.stream.base import Measure, Part, Stream, Voice
+from music21.volume import Volume
 from typeguard import typechecked
 
 
@@ -135,7 +136,20 @@ def duplicate_note(n: Note) -> Note:
     """
     dn = Note(nameWithOctave=n.nameWithOctave)
     dn.duration = Duration(n.quarterLength)
+    dn.volume = duplicate_volume(n)
     return dn
+
+
+def duplicate_volume(n: Union[Chord, Note]) -> Volume:
+    if n.volume.velocity is not None:
+        return Volume(
+            velocity=n.volume.velocity,
+            velocityScalar=n.volume.velocityScalar,
+            velocityIsRelative=n.volume.velocityIsRelative,
+        )
+    else:
+        # else assume max velocity
+        return Volume(velocity=127)
 
 
 @typechecked
@@ -152,6 +166,7 @@ def duplicate_element(el: GeneralNote) -> GeneralNote:
         for n in el.notes:
             c.add(duplicate_note(n))
         c.duration.quarterLength = el.duration.quarterLength
+        c.volume = duplicate_volume(c)
         return c
     elif isinstance(el, Note):
         return duplicate_note(el)
@@ -245,8 +260,6 @@ def duplicate_part(p: Part) -> Part:
         removeClasses=[
             Instrument,
             GeneralNote,
-            "Dynamic",
-            "Expression",
             Lyric,
         ],
         fillWithRests=True,

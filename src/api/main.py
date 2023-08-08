@@ -47,6 +47,7 @@ def process_file(
     # this should be handled by music21's archive manager
     # but it doesn't support byte objects
 
+    # TODO: midi files?
     # https://pypi.org/project/defusedxml/
     try:
         z = ZipFile(file.file)
@@ -57,6 +58,7 @@ def process_file(
     contents = z.read(files[0])
     s = converter.parse(contents, format="musicxml")
 
+    # TODO: error handling
     mutate(
         s,
         Parameters(
