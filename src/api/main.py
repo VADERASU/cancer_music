@@ -104,6 +104,8 @@ def synthesize(file: Annotated[str, Body()]):
     midi = mf.writestr()
 
     fs = PatchedSynth()
+
+    # need to provide example soundfont, or have user provide it
     sfid = fs.sfload("piano.sf2")
     fs.program_select(0, sfid, 0, 0)
     fs.play_from_mem(midi)

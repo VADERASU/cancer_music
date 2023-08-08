@@ -6,6 +6,10 @@ button {
     @apply text-white bg-gray-500 rounded-md px-1;
 }
 
+a {
+    @apply text-white bg-blue-500 rounded-md px-1;
+}
+
 input[type="range"] {
     @apply accent-gray-500;
 }
