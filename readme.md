@@ -15,5 +15,6 @@ Move to the `front` directory in `api` and run `npm install && npm run dev` to s
 
 ## Deploying the server
 Install python-poetry, then run `poetry install`. 
-Move into `api/front` and run `npm install && npm build`.
-In the top-level directory, `poetry run uvicorn api.main:app --host 0.0.0.0 --port [PORT]`.
+`fluidsynth` and `portaudio` must be installed for the back-end server to run.
+Move into `api/front` and run `npm install && npm run build`.
+In the top-level directory, `poetry run uvicorn src.api.main:app --host 0.0.0.0 --port [PORT]`.
