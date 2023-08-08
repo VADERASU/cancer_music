@@ -5,7 +5,6 @@ from zipfile import BadZipFile, ZipFile
 
 import fluidsynth
 import numpy as np
-
 from fastapi import Body, FastAPI, HTTPException, Response, UploadFile
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -112,10 +111,15 @@ def synthesize(file: Annotated[str, Body()]):
 
     data = []
     s = fs.get_samples(44100)
-    # will break on silence!
-    while np.any(s > 1):
+    # counts seconds of silence
+    empty_frames = 0
+    while empty_frames < 5:
         data = np.append(data, s)
         s = fs.get_samples(44100)
+        if np.all(s < 2):
+            empty_frames += 1
+        else:
+            empty_frames = 0
 
     samples = fluidsynth.raw_audio_string(data)
     fs.delete()
