@@ -277,6 +277,17 @@ def duplicate_part(p: Part) -> Part:
     return dup
 
 
+def clear_part(p: Part, start) -> Part:
+    dup = duplicate_part(p)
+
+    measures = p.getElementsByClass("Measure")
+    dup_measures = dup.getElementsByClass("Measure")
+
+    for i in range(0, start):
+        dup.replace(dup_measures[i], measures[i])
+    return dup
+
+
 def consolidate_rests(s: Stream):
     # tricky, need to see what the measures look like with voices
     pass

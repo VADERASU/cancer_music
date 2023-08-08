@@ -38,13 +38,18 @@ def mutate(
     :param s: Music21 stream for a file.
     """
     parts = s.getElementsByClass("Part")
-
-    t_start = utils.get_percentile_measure_number(parts[0], t_params["start"])
     rng = utils.reseed(seed)
 
     mutants = []
-    for p in parts:
-        mutants.extend(mutate_part(p, [], rng, params))
+    # possibility of multiple parts being chosen
+    candidates = rng.choices(parts, k=rng.randint(1, len(parts)))
+    for candidate in candidates:
+        t_start = utils.get_percentile_measure_number(
+            candidate, t_params["start"]
+        )
+        mutants.extend(mutate_part(candidate, [], rng, params, t_start, 0))
+        cleared = utils.clear_part(candidate, t_start)
+        s.replace(candidate, cleared)
 
     if t_params["therapy_mode"] == Therapy.CURE:
         dead = rng.sample(
@@ -68,7 +73,9 @@ def mutate_part(
     mutants: List[Part],
     rng: random.Random,
     params: Parameters,
-    prev_start: int = 0,
+    prev_start: int,
+    offset: int,
+    mutate_parent: bool = False,
 ) -> List[Part]:
     if len(mutants) < params["max_parts"]:
         measures = p.getElementsByClass("Measure")
@@ -89,10 +96,7 @@ def mutate_part(
             return mutants
 
         dup = utils.duplicate_part(p)
-        # start adding mutant measures at the first measure
-        dpm = dup.getElementsByClass("Measure")[
-            prev_start + rng.randint(1, params["how_many"]) :
-        ]
+        dpm = dup.getElementsByClass("Measure")[prev_start + offset :]
 
         to_duplicate = []
         for i in range(0, len(dpm), params["how_many"]):
@@ -125,10 +129,18 @@ def mutate_part(
 
         mutants.append(dup)
         for child in to_duplicate:
-            mutate_part(dup, mutants, rng, params, child)
+            mutate_part(
+                dup,
+                mutants,
+                rng,
+                params,
+                child,
+                rng.randint(1, params["how_many"]),
+                True,
+            )
         dup.makeBeams(inPlace=True)
-        if prev_start != 0:
-            # mutate original
+
+        if mutate_parent:
             tumors = measures[prev_start : prev_start + params["how_many"]]
             candidate = rng.choice(tumors)
             mutation = choose_mutation(
@@ -145,6 +157,7 @@ def mutate_part(
             mutant = mutation(candidate, rng, p)  # mutate it
             mutant.makeBeams(inPlace=True)
             p.replace(candidate, mutant)
+
     return mutants
 
 
