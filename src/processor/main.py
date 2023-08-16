@@ -31,8 +31,9 @@ def main():
     s = None
     try:
         s = converter.parseFile(fp, storePickle=False, quantizePost=False)
-    except:
-        raise ValueError(f"{fp} could not be parsed.")
+    except Exception as e:
+        raise ValueError(f"{fp} could not be parsed: {str(e)}.")
+
     process.mutate(s)
     s.write("musicxml", args.output)
     s.write("midi", args.output + ".mid")

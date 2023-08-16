@@ -52,9 +52,15 @@
         body: fd,
       }
     );
-    response.arrayBuffer().then((bytes) => {
-      mutant = new TextDecoder().decode(bytes);
-    });
+
+    if (!response.ok) {
+      const content = await response.json();
+      alert(`An error occurred: ${content.message}`);
+    } else {
+      response.arrayBuffer().then((bytes) => {
+        mutant = new TextDecoder().decode(bytes);
+      });
+    }
   }
 </script>
 

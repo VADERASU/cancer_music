@@ -69,6 +69,7 @@ def mutate(
             mutant for mutant in mutants if mutant.partId not in deadIDs
         ]
         for mutant in dead:
+            # can throw this in a function
             cured = utils.clear_part(mutant, t_start)
             f = utils.get_first_element(cured.getElementsByClass("Measure")[0])
             f.addLyric("c")
@@ -144,7 +145,8 @@ def mutate_part(
                     to_duplicate.append(prev_start + params["how_many"] + i)
 
         id = f"{parentID}.{thisID}"
-        # mark ancestry
+
+        # mark ancestry - can throw this into a function as well
         f = utils.get_first_element(dup.getElementsByClass("Measure")[0])
         f.addLyric(id)
 

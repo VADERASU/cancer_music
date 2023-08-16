@@ -6,7 +6,7 @@ from zipfile import BadZipFile, ZipFile
 import fluidsynth
 import numpy as np
 from fastapi import Body, FastAPI, HTTPException, Response, UploadFile
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from music21 import converter
 from music21.midi.translate import streamToMidiFile
@@ -53,37 +53,45 @@ def process_file(
     try:
         z = ZipFile(file.file)
     except BadZipFile:
-        raise HTTPException(422, "File corrupt")
+        return JSONResponse(
+            status_code=422, content={"message": "File corrupt"}
+        )
 
     files = [n for n in list(z.namelist()) if "META-INF" not in n]
     contents = z.read(files[0])
     s = converter.parse(contents, format="musicxml")
 
-    # TODO: error handling
-    mutate(
-        s,
-        Parameters(
-            max_parts=maxParts,
-            reproduction=reproductionProbability,
-            how_many=how_many,
-            noop=noop,
-            insertion=insertion,
-            transposition=transposition,
-            deletion=deletion,
-            translocation=translocation,
-            inversion=inversion,
-            start=cancerStart,
-        ),
-        TherapyParameters(
-            therapy_mode=Therapy(mode),
-            mutant_survival=mutant_survival,
-            start=start,
-        ),
-        seed=seed,
-    )
+    try:
+        mutate(
+            s,
+            Parameters(
+                max_parts=maxParts,
+                reproduction=reproductionProbability,
+                how_many=how_many,
+                noop=noop,
+                insertion=insertion,
+                transposition=transposition,
+                deletion=deletion,
+                translocation=translocation,
+                inversion=inversion,
+                start=cancerStart,
+            ),
+            TherapyParameters(
+                therapy_mode=Therapy(mode),
+                mutant_survival=mutant_survival,
+                start=start,
+            ),
+            seed=seed,
+        )
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"message": str(e)})
 
     gex = GeneralObjectExporter()
-    content = gex.parse(s)
+    try:
+        content = gex.parse(s)
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"message": str(e)})
+
     return Response(
         content=content, media_type="application/vnd.recordare.musicxml"
     )
