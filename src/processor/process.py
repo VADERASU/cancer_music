@@ -43,7 +43,7 @@ def mutate(
 
     mutants = []
     # possibility of multiple parts being chosen
-    candidates = rng.choices(parts, k=rng.randint(1, len(parts)))
+    candidates = rng.sample(parts, rng.randint(1, len(parts)))
     for i, candidate in enumerate(candidates):
         start = utils.get_percentile_measure_number(candidate, params["start"])
         mutants.extend(
