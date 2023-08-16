@@ -3,6 +3,7 @@
   import SaveButton from "./SaveButton.svelte";
 
   export let musicxml;
+  const timestamp = new Date().getTime();
 
   const sheet = new Blob([musicxml], {
     type: "application/vnd.recordare.musicxml",
@@ -40,8 +41,8 @@
 <div class="sticky flex flex-col gap-1 w-max">
   <h2>Download</h2>
   <div class="sticky flex flex-row gap-1 w-max">
-    <SaveButton onClick={playback} text="MIDI" />
-    <a href={sheetURL} download="mutant.musicxml">MusicXML</a>
-    <SaveButton onClick={synthesize} text="WAV" />
+    <SaveButton onClick={playback} filename={`${timestamp}.mid`} text="MIDI" />
+    <a href={sheetURL} download={`${timestamp}.musicxml`}>MusicXML</a>
+    <SaveButton onClick={synthesize} filename={`${timestamp}.wav`} text="WAV" />
   </div>
 </div>

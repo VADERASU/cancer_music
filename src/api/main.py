@@ -5,7 +5,7 @@ from zipfile import BadZipFile, ZipFile
 
 import fluidsynth
 import numpy as np
-from fastapi import Body, FastAPI, HTTPException, Response, UploadFile
+from fastapi import Body, FastAPI, Response, UploadFile
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from music21 import converter

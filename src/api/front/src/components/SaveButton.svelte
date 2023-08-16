@@ -2,6 +2,7 @@
   // onClick must return a blob
   export let onClick;
   export let text;
+  export let filename;
   let url;
 
   async function runClick() {
@@ -13,7 +14,7 @@
 {#if !url}
   <button on:click={() => runClick()}>{text}</button>
 {:else}
-  <a href={url}>{text}</a>
+  <a href={url} download={filename}>{text}</a>
 {/if}
 
 <style>
