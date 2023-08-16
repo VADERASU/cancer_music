@@ -1,4 +1,3 @@
-import math
 import random
 import sys
 from fractions import Fraction
@@ -10,7 +9,6 @@ from typeguard import typechecked
 
 from processor import utils
 from processor.parameters import Parameters, Therapy, TherapyParameters
-from processor.therapy import cure
 
 
 @typechecked
@@ -59,7 +57,7 @@ def mutate(
 
     if t_params["therapy_mode"] == Therapy.CURE:
         t_start = utils.get_percentile_measure_number(
-            parts[0], t_params["start"]
+            mutants[0], t_params["start"]
         )
         dead = rng.sample(
             mutants,
@@ -71,7 +69,11 @@ def mutate(
             mutant for mutant in mutants if mutant.partId not in deadIDs
         ]
         for mutant in dead:
-            treated.append(cure(mutant, t_start))
+            cured = utils.clear_part(mutant, t_start)
+            f = utils.get_first_element(cured.getElementsByClass("Measure")[0])
+            f.addLyric("c")
+            treated.append(cured)
+
         [s.append(mutant) for mutant in treated]
     else:
         [s.append(mutant) for mutant in mutants]
@@ -443,4 +445,4 @@ def choose_mutation(
         inversion,
     ]
     # need to return 0th element because random.choices() returns a list
-    return rng.choices(mutations, weights)[0]
+    return rng.choices(mutations, weights, k=1)[0]
