@@ -1,4 +1,5 @@
 <script>
+  import { Circle } from "svelte-loading-spinners";
   import ProbSlider from "./ProbSlider.svelte";
   import { API_URL } from "../api/constants";
 
@@ -24,6 +25,8 @@
     mutant_survival: 0.5,
   };
 
+  let isLoading = false;
+
   let sum = 1;
   $: sum = Object.values(probabilities)
     .reduce((a, b) => a + b)
@@ -36,6 +39,7 @@
   async function startMutate() {
     const fd = new FormData();
     fd.append("file", file, file.name);
+    isLoading = true;
     const response = await fetch(
       `${API_URL}/process_file?${new URLSearchParams({
         ...probabilities,
@@ -52,13 +56,14 @@
         body: fd,
       }
     );
-
     if (!response.ok) {
       const content = await response.json();
       alert(`An error occurred: ${content.message}`);
+      isLoading = false;
     } else {
       response.arrayBuffer().then((bytes) => {
         mutant = new TextDecoder().decode(bytes);
+        isLoading = false;
       });
     }
   }
@@ -151,6 +156,9 @@
         <button on:click={startMutate}>Submit</button>
       </div>
     {/if}
+  {/if}
+  {#if isLoading}
+    <Circle color="#000000"/>
   {/if}
 </div>
 
