@@ -47,11 +47,11 @@ def mutate(
     for i, candidate in enumerate(candidates):
         start = utils.get_percentile_measure_number(candidate, params["start"])
         mutants.extend(
-            mutate_part(candidate, [], rng, params, start, 0, str(i))
+            mutate_part(candidate, [], rng, params, start, 0, str(i + 1))
         )
 
         f = utils.get_first_element(candidate.getElementsByClass("Measure")[0])
-        f.addLyric(i)
+        f.addLyric(i + 1)
 
         # clear the rest of the part
         cleared = utils.clear_part(candidate, start)
@@ -85,7 +85,7 @@ def mutate_part(
     prev_start: int,
     offset: int,
     parentID: str,
-    thisID: str = "0",
+    thisID: str = "1",
     mutate_parent: bool = False,
 ) -> List[Part]:
     if len(mutants) < params["max_parts"]:
@@ -156,7 +156,7 @@ def mutate_part(
                 child,
                 rng.randint(1, params["how_many"]),
                 id,
-                str(i),
+                str(i + 1),
                 True,
             )
         dup.makeBeams(inPlace=True)
