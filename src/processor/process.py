@@ -44,9 +44,16 @@ def mutate(
     mutants = []
     # possibility of multiple parts being chosen
     candidates = rng.choices(parts, k=rng.randint(1, len(parts)))
-    for candidate in candidates:
+    for i, candidate in enumerate(candidates):
         start = utils.get_percentile_measure_number(candidate, params["start"])
-        mutants.extend(mutate_part(candidate, [], rng, params, start, 0))
+        mutants.extend(
+            mutate_part(candidate, [], rng, params, start, 0, str(i))
+        )
+
+        f = utils.get_first_element(candidate.getElementsByClass("Measure")[0])
+        f.addLyric(i)
+
+        # clear the rest of the part
         cleared = utils.clear_part(candidate, start)
         s.replace(candidate, cleared)
 
@@ -77,6 +84,8 @@ def mutate_part(
     params: Parameters,
     prev_start: int,
     offset: int,
+    parentID: str,
+    thisID: str = "0",
     mutate_parent: bool = False,
 ) -> List[Part]:
     if len(mutants) < params["max_parts"]:
@@ -125,12 +134,20 @@ def mutate_part(
                 mutant.number = dm.number
                 mutant.makeBeams(inPlace=True)
                 dup.replace(dm, mutant)  # replace in duplicate part
+
+                # update tumor
+                tumors[(i + j) % len(tumors)] = mutant
                 # check if we will reproduce this measure or not
                 if rng.random() < params["reproduction"]:
                     to_duplicate.append(prev_start + params["how_many"] + i)
 
+        id = f"{parentID}.{thisID}"
+        # mark ancestry
+        f = utils.get_first_element(dup.getElementsByClass("Measure")[0])
+        f.addLyric(id)
+
         mutants.append(dup)
-        for child in to_duplicate:
+        for i, child in enumerate(to_duplicate):
             mutate_part(
                 dup,
                 mutants,
@@ -138,6 +155,8 @@ def mutate_part(
                 params,
                 child,
                 rng.randint(1, params["how_many"]),
+                id,
+                str(i),
                 True,
             )
         dup.makeBeams(inPlace=True)
