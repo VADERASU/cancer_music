@@ -65,16 +65,15 @@ def mutate(
         )
         deadIDs = list(map(lambda e: e.partId, dead))
         # don't apply treatment to mutants not in dead
-        treated = [
-            mutant for mutant in mutants if mutant.partId not in deadIDs
-        ]
-        for mutant in dead:
-            # can throw this in a function
-            cured = utils.clear_part(mutant, t_start)
-            f = utils.get_first_element(cured.getElementsByClass("Measure")[0])
-            f.addLyric("c")
-            treated.append(cured)
-
+        treated = []
+        for mutant in mutants:
+            if mutant.partId in deadIDs:
+                mutant = utils.clear_part(mutant, t_start)
+                f = utils.get_first_element(
+                    mutant.getElementsByClass("Measure")[0]
+                )
+                f.addLyric("c")
+            treated.append(mutant)
         [s.append(mutant) for mutant in treated]
     else:
         [s.append(mutant) for mutant in mutants]
@@ -364,7 +363,7 @@ def translocation(_: Measure, rng: random.Random, s: Stream):
     # filter out empty measures
     measures = list(
         filter(
-            lambda m: all(
+            lambda m: not all(
                 map(lambda n: n.isRest, m.getElementsByClass("GeneralNote"))
             ),
             list(s.getElementsByClass("Measure")),
