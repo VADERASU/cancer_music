@@ -360,7 +360,17 @@ def translocation(_: Measure, rng: random.Random, s: Stream):
     :param s: The stream to pick a new measure from.
     :returns: A random measure from the stream.
     """
-    measures = list(s.getElementsByClass("Measure"))
+
+    # filter out empty measures
+    measures = list(
+        filter(
+            lambda m: all(
+                map(lambda n: n.isRest, m.getElementsByClass("GeneralNote"))
+            ),
+            list(s.getElementsByClass("Measure")),
+        )
+    )
+
     choice = utils.copy_measure(rng.choice(measures))
     utils.add_lyric_for_measure(choice, "tl")
     return choice

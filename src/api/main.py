@@ -1,4 +1,5 @@
 import io
+import math
 import wave
 from typing import Annotated
 from zipfile import BadZipFile, ZipFile
