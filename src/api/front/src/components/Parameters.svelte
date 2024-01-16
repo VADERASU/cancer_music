@@ -4,7 +4,7 @@
   import { API_URL } from "../api/constants";
 
   export let mutant;
-  let file;
+  export let file;
   let howMany = 4;
   let maxParts = 1;
   let reproductionProbability = 0.1;
@@ -31,10 +31,6 @@
   $: sum = Object.values(probabilities)
     .reduce((a, b) => a + b)
     .toFixed(2);
-
-  const readFile = (e) => {
-    [file] = e.target.files;
-  };
 
   async function startMutate() {
     const fd = new FormData();
@@ -70,7 +66,6 @@
 </script>
 
 <div class="flex flex-col gap-2">
-  <input on:change={readFile} type="file" />
   {#if file}
     <h2 class="text-2xl">
       Sum of probabilities:

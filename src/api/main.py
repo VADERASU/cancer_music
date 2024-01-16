@@ -7,6 +7,7 @@ from zipfile import BadZipFile, ZipFile
 import fluidsynth
 import numpy as np
 from fastapi import Body, FastAPI, Response, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from music21 import converter
@@ -21,6 +22,14 @@ from .utils import get_this_dir
 
 app = FastAPI()
 this_dir = get_this_dir()
+origins = ["http://localhost:5173"]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/")
