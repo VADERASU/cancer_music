@@ -25,3 +25,11 @@ select, input[type="number"] {
 body {
     @apply bg-neutral-200
 }
+
+.mutationSpan {
+    @apply text-red-900
+}
+
+.mutationSpan:hover {
+    @apply font-bold cursor-pointer
+}

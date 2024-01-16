@@ -3,9 +3,18 @@
   import Parameters from "./components/Parameters.svelte";
   import SaveToolBar from "./components/SaveToolBar.svelte";
   import SheetDisplay from "./components/SheetDisplay.svelte";
+  import analogy from "./images/analogy.svg";
+  import original from "./images/original.svg";
+  import therapy from "./images/therapy.svg";
 
   let mutant;
   let choice = "Canon_in_D.mxl";
+
+  let mutationSVG = original;
+
+  function setMutSVG(name) {
+    mutationSVG = new URL(`./images/${name}.svg`, import.meta.url).href;
+  }
 
   async function loadMXL(fname) {
     if (fname.includes(".mxl")) {
@@ -52,121 +61,165 @@
   const readFile = (e) => {
     [file] = e.target.files;
   };
+
+  const mouseLeave = () => {
+    setMutSVG("original");
+  };
 </script>
 
-<div class="container flex flex-col px-5 gap-2">
-  <h1 class="text-3xl">Capturing Cancer with Music</h1>
-  <p>
-    This is an application for hearing how cancer (and cancer therapy) works.
-    While there is an overwhelming complexity in the science and medicine of
-    cancer, the essence of the disease can be heard and understood when it is
-    translated into music. Here you can upload any piece of music in musicXML
-    format. We will simulate the evolution of cancer (and the effects of therapy
-    if you want), and give you back an mp3 sound file, a midi file and/or a pdf
-    of the sheet music.
-  </p>
+<div class="container gap-2 mx-auto">
+  <div class="h-screen gap-2 mx-auto space-y-5">
+    <div class="w-1/2 mx-auto space-y-2">
+      <h1 class="text-3xl text-center">Capturing Cancer with Music</h1>
+      <p>
+        While the science and treatment of cancer is complex, the essence of the
+        disease can be elegantly expressed as music. Like musicians in a group,
+        working together to produce a piece of music, different cells in our
+        body work together to produce a living, breathing person. When cancer
+        starts to develop, cells stop doing the work of their organ and start
+        replicating out of control. Imagine watching a performance where your a
+        few members of your favorite band started repeating themselves endlessly
+        and started inviting random people to join them on-stage! Eventually, a
+        growing, dissonant, relentless cacophony slowly takes over the rest of
+        the performance.
+      </p>
+      <p>
+        We took this analogy and wrote some code that takes sheet music in the
+        form of musicXML files as input and returns a "mutated" version of the
+        piece. The code is based on a few simple rules, all inspired by the way
+        cancer works on a cellular level.
+      </p>
+    </div>
+    <div class="container flex gap-5">
+      <div class="flex-1 space-y-2">
+        <h2 class="text-2xl text-center">The Analogy</h2>
+        <img class="mx-auto h-48" src={analogy} alt="analogy" />
+        <p>
+          We consider each part in a piece as an organ in the body. Each part
+          contains measures (cells) and notes (DNA). The code randomly selects
+          one or more parts to give cancer to and then starts repeating
+          (replicating) a number of measures at a certain point.
+        </p>
+      </div>
 
-  <p>
-    Our software simulates an analogy between the cell types in a body and the
-    parts of a piece of music. Like musicians in a symphony, working together to
-    produce a piece of music, different cells in our body work together to
-    produce a living, breathing person. In this analogy, cancer starts with a
-    musician ceasing to play her assigned part, and starting to repeat her last
-    few measures, replicating that motif, generating another part, with some
-    probability, every time she repeats. We call that probability of generating
-    a new part, the reproductive rate of that part. Cancer cells stop doing the
-    work of their organ, and start replicating out of control. As they
-    reproduce, they also mutate, and sometimes a mutation gives that cancer cell
-    an additional advantage, replicating faster or surviving better than the
-    other cells. It is a microcosm of natural selection at the cell level. In
-    music, we can hear this as mutations and variations in the cancer motif, and
-    in the rate at which the cancer motif replicates itself. A growing,
-    dissonant, monotonous and yet relentless cacophony slowly take over the
-    symphony.
-  </p>
+      <div class="flex-1 space-y-2">
+        <h2 class="text-2xl text-center">Mutations</h2>
+        <img class="mx-auto h-48" src={mutationSVG} alt="original" />
+        When a measure is repeated, the notes that make up the measure have a chance
+        to be mutated, just like the way DNA changes within mutated cells. Each mutation
+        adds dissonance as different cancer parts randomly diverge. We defined several
+        types of mutations (hover over its name to see how it affects the music):
 
-  <p>
-    Even the genetic details of the kinds of mutations that occur in cancer can
-    be translated into music. Single nucleotide mutations (single letters of the
-    DNA) have a natural analogy in single note changes. Small insertions or
-    deletions in the DNA can be represented by small repetitions and deletions
-    in the motif. Sequences of letters can be reversed in DNA, just as portions
-    of the motif could be reversed, and so on. Cancers often fuse part of one
-    chromosome to part of another chromosome (called a “translocation”). We can
-    model this by taking a part of the cancer motif and fusing it to a randomly
-    selected part of some other motif in the original piece. We also allow
-    mutations that transpose the cancer motif up or down by one half-step. Each
-    mutation adds dissonance as different cancer parts randomly diverge. If a
-    mutation changes the reproduction rate of the part, we note this by
-    selecting a new timber for the part with the new rate.
-  </p>
+        <ul class="list-disc list-inside">
+          <li>
+            <span
+              class="mutationSpan"
+              on:mouseenter={() => setMutSVG("insertion")}
+              on:mouseleave={mouseLeave}>Insertion</span
+            > - a sequence of notes repeat.
+          </li>
+          <li>
+            <span
+              class="mutationSpan"
+              on:mouseenter={() => setMutSVG("deletion")}
+              on:mouseleave={mouseLeave}>Deletion</span
+            > - a sequence of notes are removed.
+          </li>
+          <li>
+            <span
+              class="mutationSpan"
+              on:mouseenter={() => setMutSVG("inversion")}
+              on:mouseleave={mouseLeave}>Inversion</span
+            >- a sequence of notes are reversed.
+          </li>
+          <li>
+            <span
+              class="mutationSpan"
+              on:mouseenter={() => setMutSVG("translocation")}
+              on:mouseleave={mouseLeave}>Translocation</span
+            > - the entire measure is replaced by another.
+          </li>
+          <li>
+            <span
+              class="mutationSpan"
+              on:mouseenter={() => setMutSVG("transposition")}
+              on:mouseleave={mouseLeave}>Transposition</span
+            > - a single note's pitch changes.
+          </li>
+        </ul>
+      </div>
 
-  <p>
-    Cancer therapy can also be represented in music. Most therapies are able to
-    kill the vast majority of cancer cells, but it is often the case that some
-    mutant cells, by bad luck, have a mutation that makes them resistant to the
-    therapy. They survive and replicate, eventually regrowing a tumor that is
-    entirely composed of resistant cells. This could be heard in music, as most
-    of the cancerous, repeating parts are silenced, but some parts, resistant to
-    the therapy, are left behind to replicate again. Because there is often a
-    tradeoff between reproduction and survival, we set the chance that a part is
-    killed by therapy to be equal to its reproduction rate (signified by the
-    timbers).
-  </p>
+      <div class="flex-1 space-y-2">
+        <h2 class="text-2xl text-center">Therapy</h2>
+        <img src={therapy} alt="therapy" class="h-48 mx-auto" />
+        <p>
+          There is an option to simulate chemotherapy on the piece. Most
+          therapies are able to kill the vast majority of cancer cells, but
+          often some mutant cells have a mutation that makes them resistant to
+          therapy. They survive and replicate, eventually regrowing as a tumor
+          of resistant cells. This can be heard in the music, as most of the
+          cancerous, repeating parts are silenced, but some parts, resistant to
+          the therapy, are left behind to replicate again.
+        </p>
+      </div>
+    </div>
+  </div>
+  <hr />
+  <div class="h-screen">
+    <p>Select a song to mutate or choose your own.</p>
+    <input
+      bind:group={choice}
+      type="radio"
+      id="choice1"
+      name="file_choice"
+      value="Canon_in_D.mxl"
+    />
+    <label for="choice1">Canon in D</label>
+    <input
+      bind:group={choice}
+      type="radio"
+      id="choice2"
+      name="file_choice"
+      value="Frere_Jacques_Flute_Round.mxl"
+    />
+    <label for="choice2">Frere Jacques</label>
+    <input
+      bind:group={choice}
+      type="radio"
+      id="choice3"
+      name="file_choice"
+      value="Happy_Birthday_To_You_Piano.mxl"
+    />
+    <label for="choice3">Happy Birthday</label>
+    <input
+      bind:group={choice}
+      type="radio"
+      id="choice4"
+      name="file_choice"
+      value="Mary_Had_A_Little_Lamb_Beginner_Piano.mxl"
+    />
+    <label for="choice4">Mary Had a Little Lamb</label>
+    <input
+      bind:group={choice}
+      type="radio"
+      id="choice5"
+      name="file_choice"
+      value="user_selected"
+    />
+    <label for="choice5">Choose your own file</label>
+    {#if choice === "user_selected"}
+      <input on:change={readFile} type="file" />
+    {/if}
 
-  <input
-    bind:group={choice}
-    type="radio"
-    id="choice1"
-    name="file_choice"
-    value="Canon_in_D.mxl"
-  />
-  <label for="choice1">Canon in D</label>
-  <input
-    bind:group={choice}
-    type="radio"
-    id="choice2"
-    name="file_choice"
-    value="Frere_Jacques_Flute_Round.mxl"
-  />
-  <label for="choice2">Frere Jacques</label>
-  <input
-    bind:group={choice}
-    type="radio"
-    id="choice3"
-    name="file_choice"
-    value="Happy_Birthday_To_You_Piano.mxl"
-  />
-  <label for="choice3">Happy Birthday</label>
-  <input
-    bind:group={choice}
-    type="radio"
-    id="choice4"
-    name="file_choice"
-    value="Mary_Had_A_Little_Lamb_Beginner_Piano.mxl"
-  />
-  <label for="choice4">Mary Had a Little Lamb</label>
-  <input
-    bind:group={choice}
-    type="radio"
-    id="choice5"
-    name="file_choice"
-    value="user_selected"
-  />
-  <label for="choice5">Choose your own file</label>
-
-  {#if choice === "user_selected"}
-    <input on:change={readFile} type="file" />
-  {/if}
-
-  {#if showParams}
-    <Parameters bind:mutant bind:file />
-  {/if}
-  {#if mutant}
-    {#key mutant}
-      <SaveToolBar musicxml={mutant} />
-    {/key}
-  {/if}
+    {#if showParams}
+      <Parameters bind:mutant bind:file />
+    {/if}
+    {#if mutant}
+      {#key mutant}
+        <SaveToolBar musicxml={mutant} />
+      {/key}
+    {/if}
+  </div>
 </div>
 {#if mutant}
   {#key mutant}
