@@ -121,7 +121,6 @@ def process_file(
         mf = streamToMidiFile(s)
         files.append((f"{fname}.mid", mf.writestr()))
 
-    print("past midi")
     if wav:
         mf = streamToMidiFile(s) if mf is None else mf
         files.append((f"{fname}.wav", midiToWav(mf)))

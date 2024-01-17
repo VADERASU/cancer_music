@@ -11,6 +11,11 @@ from processor import utils
 from processor.parameters import Parameters, Therapy, TherapyParameters
 
 
+def repair_stream(s):
+    for el in s.flatten().notes:
+        el.volume = utils.duplicate_volume(el)
+
+
 @typechecked
 def mutate(
     s: Stream,
@@ -36,6 +41,8 @@ def mutate(
 
     :param s: Music21 stream for a file.
     """
+    repair_stream(s)
+
     parts = s.getElementsByClass("Part")
     rng = utils.reseed(seed)
 

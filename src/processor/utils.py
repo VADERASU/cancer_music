@@ -166,7 +166,7 @@ def duplicate_element(el: GeneralNote) -> GeneralNote:
         for n in el.notes:
             c.add(duplicate_note(n))
         c.duration.quarterLength = el.duration.quarterLength
-        c.volume = duplicate_volume(c)
+        c.volume = duplicate_volume(el)
         return c
     elif isinstance(el, Note):
         return duplicate_note(el)
