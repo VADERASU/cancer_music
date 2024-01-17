@@ -39,10 +39,15 @@
 </script>
 
 <div class="sticky flex flex-col gap-1 w-max">
-  <h2>Download</h2>
+  <p>
+    Use these buttons to download the mutated piece in a format of your choice.
+    If a button has a gray background, you will have to press it twice - once to
+    generate the content, and then again to download it.
+  </p>
   <div class="sticky flex flex-row gap-1 w-max">
     <SaveButton onClick={playback} filename={`${timestamp}.mid`} text="MIDI" />
     <a href={sheetURL} download={`${timestamp}.musicxml`}>MusicXML</a>
     <SaveButton onClick={synthesize} filename={`${timestamp}.wav`} text="WAV" />
+    <slot />
   </div>
 </div>

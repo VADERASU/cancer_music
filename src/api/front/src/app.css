@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 button {
-    @apply text-white bg-gray-500 rounded-md; 
+    @apply text-white bg-gray-500 rounded-md px-1;
 }
 
 a {

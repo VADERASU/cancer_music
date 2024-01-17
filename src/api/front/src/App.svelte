@@ -178,6 +178,7 @@
     </div>
   </div>
   <div class="px-5 gap-2">
+    <hr/>
     <h2 class="text-2xl text-center">Try it out!</h2>
     {#if !hideParams}
       <FilePicker bind:file />
@@ -187,8 +188,9 @@
     {/if}
     {#if mutant}
       {#key mutant}
-        <SaveToolBar musicxml={mutant} />
-        <button on:click={resetToDefaults}>reset</button>
+        <SaveToolBar musicxml={mutant}>
+            <button on:click={resetToDefaults}>Reset</button>
+        </SaveToolBar>
       {/key}
     {/if}
   </div>
