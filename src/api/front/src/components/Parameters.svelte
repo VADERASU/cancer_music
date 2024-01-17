@@ -1,15 +1,16 @@
 <script>
-  import { Circle } from "svelte-loading-spinners";
   import ProbSlider from "./ProbSlider.svelte";
-  import { API_URL } from "../api/constants";
 
-  export let mutant;
-  export let file;
+  export let onSubmit;
+
+  let showAdvancedParams = false;
+
   let howMany = 4;
   let maxParts = 1;
   let reproductionProbability = 0.1;
   let cancerStart = 0.1;
   let seed = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
+
   const probabilities = {
     noop: 0.05,
     insertion: 0.25,
@@ -25,48 +26,35 @@
     mutant_survival: 0.5,
   };
 
-  let isLoading = false;
-
   let sum = 1;
   $: sum = Object.values(probabilities)
     .reduce((a, b) => a + b)
     .toFixed(2);
 
-  async function startMutate() {
-    const fd = new FormData();
-    fd.append("file", file, file.name);
-    isLoading = true;
-    const response = await fetch(
-      `${API_URL}/process_file?${new URLSearchParams({
-        ...probabilities,
-        ...therapy,
-        how_many: howMany,
-        maxParts,
-        reproductionProbability,
-        seed,
-        cancerStart,
-      })}`,
-      {
-        contentType: "multipart/form-data",
-        method: "POST",
-        body: fd,
-      }
-    );
-    if (!response.ok) {
-      const content = await response.json();
-      alert(`An error occurred: ${content.message}`);
-      isLoading = false;
-    } else {
-      response.arrayBuffer().then((bytes) => {
-        mutant = new TextDecoder().decode(bytes);
-        isLoading = false;
-      });
-    }
-  }
+  const submit = () => {
+    onSubmit({
+      ...probabilities,
+      ...therapy,
+      how_many: howMany,
+      maxParts,
+      reproductionProbability,
+      seed,
+      cancerStart,
+    });
+  };
 </script>
 
-<div class="flex flex-col gap-2">
-  {#if file}
+<div>
+  <div>
+    <input
+      id="showParams"
+      type="checkbox"
+      bind:value={showAdvancedParams}
+      bind:checked={showAdvancedParams}
+    />
+    <label for="showParams">Show advanced options</label>
+  </div>
+  {#if showAdvancedParams}
     <h2 class="text-2xl">
       Sum of probabilities:
       {#if parseFloat(sum) !== 1.0}
@@ -146,15 +134,12 @@
         {/if}
       </div>
     </div>
+  {/if}
+  <div class="flex justify-center">
     {#if parseFloat(sum) === 1.0}
-      <div>
-        <button on:click={startMutate}>Submit</button>
-      </div>
+      <button class="w-1/2" on:click={submit}>Submit</button>
     {/if}
-  {/if}
-  {#if isLoading}
-    <Circle color="#000000"/>
-  {/if}
+  </div>
 </div>
 
 <style lang="postcss">

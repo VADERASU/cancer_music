@@ -1,42 +1,33 @@
 <script>
   import "./app.css";
+  import { Stretch } from "svelte-loading-spinners";
+  import FilePicker from "./components/FilePicker.svelte";
   import Parameters from "./components/Parameters.svelte";
   import SaveToolBar from "./components/SaveToolBar.svelte";
   import SheetDisplay from "./components/SheetDisplay.svelte";
+  import { API_URL } from "./api/constants";
+
   import analogy from "./images/analogy.svg";
   import original from "./images/original.svg";
   import therapy from "./images/therapy.svg";
 
   let mutant;
-  let choice = "Canon_in_D.mxl";
+  let file;
+  let isLoading = false;
 
+  let hideParams = false;
   let mutationSVG = original;
 
   function setMutSVG(name) {
     mutationSVG = new URL(`./images/${name}.svg`, import.meta.url).href;
   }
 
-  async function loadMXL(fname) {
-    if (fname.includes(".mxl")) {
-      const url = new URL(`./samples/${choice}`, import.meta.url).href;
-      const md = {
-        type: "application/vnd.recordare.musicxml",
-      };
-
-      const f = await fetch(url)
-        .then((res) => res.blob())
-        .then((blob) => new File([blob], choice, md));
-      return f;
-    }
-    return null;
+  function resetToDefaults() {
+    file = null;
+    mutant = null;
+    hideParams = false;
   }
 
-  let file;
-  $: loadMXL(choice).then((res) => {
-    file = res;
-  });
-
-  let showParams = true;
   let vis = {
     insertion: {},
     transposition: {},
@@ -55,20 +46,42 @@
       translocation: {},
       cure: {},
     };
-    showParams = false;
   }
-
-  const readFile = (e) => {
-    [file] = e.target.files;
-  };
 
   const mouseLeave = () => {
     setMutSVG("original");
   };
+
+  async function startMutate(params) {
+    const fd = new FormData();
+    fd.append("file", file, file.name);
+    isLoading = true;
+    hideParams = true;
+
+    const response = await fetch(
+      `${API_URL}/process_file?${new URLSearchParams(params)}`,
+      {
+        contentType: "multipart/form-data",
+        method: "POST",
+        body: fd,
+      }
+    );
+    if (!response.ok) {
+      const content = await response.json();
+      alert(`An error occurred: ${content.message}`);
+      hideParams = false;
+      isLoading = false;
+    } else {
+      response.arrayBuffer().then((bytes) => {
+        mutant = new TextDecoder().decode(bytes);
+        isLoading = false;
+      });
+    }
+  }
 </script>
 
 <div class="container gap-2 mx-auto">
-  <div class="h-screen gap-2 mx-auto space-y-5">
+  <div class="min-h-screen gap-2 mx-auto space-y-5">
     <div class="w-1/2 mx-auto space-y-2">
       <h1 class="text-3xl text-center">Capturing Cancer with Music</h1>
       <p>
@@ -164,68 +177,34 @@
       </div>
     </div>
   </div>
-  <hr />
-  <div class="h-screen">
-    <p>Select a song to mutate or choose your own.</p>
-    <input
-      bind:group={choice}
-      type="radio"
-      id="choice1"
-      name="file_choice"
-      value="Canon_in_D.mxl"
-    />
-    <label for="choice1">Canon in D</label>
-    <input
-      bind:group={choice}
-      type="radio"
-      id="choice2"
-      name="file_choice"
-      value="Frere_Jacques_Flute_Round.mxl"
-    />
-    <label for="choice2">Frere Jacques</label>
-    <input
-      bind:group={choice}
-      type="radio"
-      id="choice3"
-      name="file_choice"
-      value="Happy_Birthday_To_You_Piano.mxl"
-    />
-    <label for="choice3">Happy Birthday</label>
-    <input
-      bind:group={choice}
-      type="radio"
-      id="choice4"
-      name="file_choice"
-      value="Mary_Had_A_Little_Lamb_Beginner_Piano.mxl"
-    />
-    <label for="choice4">Mary Had a Little Lamb</label>
-    <input
-      bind:group={choice}
-      type="radio"
-      id="choice5"
-      name="file_choice"
-      value="user_selected"
-    />
-    <label for="choice5">Choose your own file</label>
-    {#if choice === "user_selected"}
-      <input on:change={readFile} type="file" />
-    {/if}
-
-    {#if showParams}
-      <Parameters bind:mutant bind:file />
+  <div class="px-5 gap-2">
+    <h2 class="text-2xl text-center">Try it out!</h2>
+    {#if !hideParams}
+      <FilePicker bind:file />
+      {#if file !== null}
+        <Parameters onSubmit={startMutate} />
+      {/if}
     {/if}
     {#if mutant}
       {#key mutant}
         <SaveToolBar musicxml={mutant} />
+        <button on:click={resetToDefaults}>reset</button>
       {/key}
     {/if}
   </div>
+  {#if isLoading}
+    <div class="flex justify-center">
+      <Stretch color="#000000" />
+    </div>
+  {/if}
 </div>
-{#if mutant}
-  {#key mutant}
-    <SheetDisplay musicxml={mutant} {vis} />
-  {/key}
-{/if}
+<div class="min-h-48">
+  {#if mutant}
+    {#key mutant}
+      <SheetDisplay musicxml={mutant} {vis} />
+    {/key}
+  {/if}
+</div>
 
 <style lang="postcss">
 </style>

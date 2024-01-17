@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 button {
-    @apply text-white bg-gray-500 rounded-md px-1;
+    @apply text-white bg-gray-500 rounded-md; 
 }
 
 a {
@@ -23,7 +23,7 @@ select, input[type="number"] {
 }
 
 body {
-    @apply bg-neutral-200
+    @appy bg-[#FAF5E9]
 }
 
 .mutationSpan {
