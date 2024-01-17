@@ -88,6 +88,7 @@
             if (e.filename.endsWith(".mxl")) {
               e.getData(new zip.TextWriter()).then((res) => {
                 mutant = res;
+                isLoading = false;
               });
             }
 
@@ -103,7 +104,6 @@
               });
             }
           });
-          isLoading = false;
         });
     }
   }
@@ -215,7 +215,7 @@
         <Parameters onSubmit={startMutate} />
       {/if}
     {/if}
-    {#if (mutant && wav && midi)}
+    {#if mutant || wav || midi}
       {#key mutant}
         <SaveToolBar musicxml={mutant} {wav} {midi}>
           <button on:click={resetToDefaults}>Reset</button>

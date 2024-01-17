@@ -1,4 +1,6 @@
 <script>
+  import { Stretch } from "svelte-loading-spinners";
+
   export let musicxml;
   export let midi;
   export let wav;
@@ -9,20 +11,35 @@
     type: "application/vnd.recordare.musicxml",
   });
 
-  const sheetURL = window.URL.createObjectURL(sheet);
-  const midiURL = window.URL.createObjectURL(midi);
-  const wavURL = window.URL.createObjectURL(wav);
+  let sheetURL;
 
+  $: sheetURL = sheet ? window.URL.createObjectURL(sheet) : null;
+
+  let midiURL;
+  $: midiURL = midi ? window.URL.createObjectURL(midi) : null;
+
+  let wavURL;
+  $: wavURL = wav ? window.URL.createObjectURL(wav) : null;
 </script>
 
 <div class="sticky flex flex-col gap-1 w-max">
   <p>
     Use these buttons to download the mutated piece in a format of your choice.
   </p>
-  <div class="sticky flex flex-row gap-1 w-max">
-    <a href={midiURL} download={`${timestamp}.mid`}>MIDI</a>
-    <a href={sheetURL} download={`${timestamp}.mxl`}>MusicXML</a>
-    <a href={wavURL} download={`${timestamp}.wav`}>WAV</a>
+  <div>
+    {#if midiURL}
+      <a href={midiURL} download={`${timestamp}.mid`}>MIDI</a>
+    {:else}
+      <Stretch color="#000000" size="20" />
+    {/if}
+    {#if sheetURL}
+      <a href={sheetURL} download={`${timestamp}.mxl`}>MusicXML</a>
+    {/if}
+    {#if wavURL}
+      <a href={wavURL} download={`${timestamp}.wav`}>WAV</a>
+    {:else}
+      <Stretch color="#000000" size="20"/>
+    {/if}
     <slot />
   </div>
 </div>
