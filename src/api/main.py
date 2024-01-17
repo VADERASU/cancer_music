@@ -1,6 +1,7 @@
 import io
 import math
 import wave
+import zipfile
 from typing import Annotated
 from zipfile import BadZipFile, ZipFile
 
@@ -37,6 +38,29 @@ def redirect_to_index():
     return RedirectResponse(url="/index.html", status_code=303)
 
 
+def toStream(file: UploadFile):
+    if file.filename is None:
+        raise ValueError("File corrupt.")
+
+    if not file.filename.endswith(".mxl"):
+        raise ValueError("Wrong file type. Please provide a .mxl file.")
+
+    try:
+        z = ZipFile(file.file)
+    except BadZipFile:
+        return ValueError("File corrupt.")
+
+    files = [n for n in list(z.namelist()) if "META-INF" not in n]
+    contents = z.read(files[0])
+    s = converter.parse(contents, format="musicxml")
+
+    return s
+
+
+def mutant_filename(fname: str):
+    return f"mutant_{fname.split('.')[0]}"
+
+
 @app.post("/process_file")
 def process_file(
     how_many: int,
@@ -54,22 +78,15 @@ def process_file(
     seed: int,
     cancerStart: float,
     file: UploadFile,
+    midi: bool = False,
+    wav: bool = False,
 ):
-    # this should be handled by music21's archive manager
-    # but it doesn't support byte objects
+    # MIDI? https://pypi.org/project/defusedxml/
 
-    # TODO: midi files?
-    # https://pypi.org/project/defusedxml/
     try:
-        z = ZipFile(file.file)
-    except BadZipFile:
-        return JSONResponse(
-            status_code=422, content={"message": "File corrupt"}
-        )
-
-    files = [n for n in list(z.namelist()) if "META-INF" not in n]
-    contents = z.read(files[0])
-    s = converter.parse(contents, format="musicxml")
+        s = toStream(file)
+    except ValueError as e:
+        return JSONResponse(status_code=422, content={"message": str(e)})
 
     try:
         mutate(
@@ -96,15 +113,45 @@ def process_file(
     except Exception as e:
         return JSONResponse(status_code=500, content={"message": str(e)})
 
+    fname = mutant_filename(file.filename)
+    files = []
+
+    mf = None
+    if midi:
+        mf = streamToMidiFile(s)
+        files.append((f"{fname}.mid", mf.writestr()))
+
+    print("past midi")
+    if wav:
+        mf = streamToMidiFile(s) if mf is None else mf
+        files.append((f"{fname}.wav", midiToWav(mf)))
+
     gex = GeneralObjectExporter()
     try:
         content = gex.parse(s)
+        files.append((f"{fname}.mxl", content))
     except Exception as e:
         return JSONResponse(status_code=500, content={"message": str(e)})
 
-    return Response(
-        content=content, media_type="application/vnd.recordare.musicxml"
-    )
+    if len(files) == 1:
+        return Response(
+            content=content, media_type="application/vnd.recordare.musicxml"
+        )
+
+    zf = toZip(files)
+
+    return Response(content=zf.getvalue(), media_type="application/zip",
+                    headers={'Content-Disposition': f'attachment;filename={mutant_filename}.zip'})
+
+
+def toZip(files):
+    buf = io.BytesIO()
+
+    with ZipFile(buf, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
+        for fname, data in files:
+            zip_file.writestr(fname, data)
+
+    return buf
 
 
 def toMidi(file):
@@ -119,11 +166,8 @@ def playback(file: Annotated[str, Body()]):
     return Response(content=mf.writestr())
 
 
-@app.post("/synthesize")
-def synthesize(file: Annotated[str, Body()]):
-    mf = toMidi(file)
+def midiToWav(mf):
     midi = mf.writestr()
-
     fs = PatchedSynth()
 
     # need to provide example soundfont, or have user provide it
@@ -146,14 +190,20 @@ def synthesize(file: Annotated[str, Body()]):
     samples = fluidsynth.raw_audio_string(data)
     fs.delete()
 
-    with io.BytesIO() as wav:
-        wav_writer = wave.open(wav, "wb")
-        wav_writer.setframerate(44100)
-        wav_writer.setnchannels(2)
-        wav_writer.setsampwidth(2)
-        wav_writer.writeframes(samples)
-        wav_data = wav.getvalue()
+    wav = io.BytesIO()
+    with wave.open(wav, "wb") as wr:
+        wr.setframerate(44100)
+        wr.setnchannels(2)
+        wr.setsampwidth(2)
+        wr.writeframes(samples)
 
+    return wav.getvalue()
+
+
+@app.post("/synthesize")
+def synthesize(file: Annotated[str, Body()]):
+    mf = toMidi(file)
+    wav_data = midiToWav(mf)
     return Response(content=wav_data)
 
 
