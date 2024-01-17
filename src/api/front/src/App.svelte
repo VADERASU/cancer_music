@@ -1,6 +1,7 @@
 <script>
   import "./app.css";
   import { Stretch } from "svelte-loading-spinners";
+  import * as zip from "@zip.js/zip.js";
   import FilePicker from "./components/FilePicker.svelte";
   import Parameters from "./components/Parameters.svelte";
   import SaveToolBar from "./components/SaveToolBar.svelte";
@@ -12,6 +13,8 @@
   import therapy from "./images/therapy.svg";
 
   let mutant;
+  let midi;
+  let wav;
   let file;
   let isLoading = false;
 
@@ -25,6 +28,8 @@
   function resetToDefaults() {
     file = null;
     mutant = null;
+    midi = null;
+    wav = null;
     hideParams = false;
   }
 
@@ -72,10 +77,34 @@
       hideParams = false;
       isLoading = false;
     } else {
-      response.arrayBuffer().then((bytes) => {
-        mutant = new TextDecoder().decode(bytes);
-        isLoading = false;
-      });
+      response
+        .blob()
+        .then((blob) => {
+          const reader = new zip.ZipReader(new zip.BlobReader(blob));
+          return reader.getEntries();
+        })
+        .then((entries) => {
+          entries.forEach((e) => {
+            if (e.filename.endsWith(".mxl")) {
+              e.getData(new zip.TextWriter()).then((res) => {
+                mutant = res;
+              });
+            }
+
+            if (e.filename.endsWith(".mid")) {
+              e.getData(new zip.BlobWriter("audio/midi")).then((res) => {
+                midi = res;
+              });
+            }
+
+            if (e.filename.endsWith(".wav")) {
+              e.getData(new zip.BlobWriter("audio/wav")).then((res) => {
+                wav = res;
+              });
+            }
+          });
+          isLoading = false;
+        });
     }
   }
 </script>
@@ -178,7 +207,7 @@
     </div>
   </div>
   <div class="px-5 gap-2">
-    <hr/>
+    <hr />
     <h2 class="text-2xl text-center">Try it out!</h2>
     {#if !hideParams}
       <FilePicker bind:file />
@@ -186,10 +215,10 @@
         <Parameters onSubmit={startMutate} />
       {/if}
     {/if}
-    {#if mutant}
+    {#if (mutant && wav && midi)}
       {#key mutant}
-        <SaveToolBar musicxml={mutant}>
-            <button on:click={resetToDefaults}>Reset</button>
+        <SaveToolBar musicxml={mutant} {wav} {midi}>
+          <button on:click={resetToDefaults}>Reset</button>
         </SaveToolBar>
       {/key}
     {/if}

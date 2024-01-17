@@ -40,6 +40,8 @@
       reproductionProbability,
       seed,
       cancerStart,
+      midi: true,
+      wav: true
     });
   };
 </script>

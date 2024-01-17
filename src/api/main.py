@@ -140,8 +140,13 @@ def process_file(
 
     zf = toZip(files)
 
-    return Response(content=zf.getvalue(), media_type="application/zip",
-                    headers={'Content-Disposition': f'attachment;filename={mutant_filename}.zip'})
+    return Response(
+        content=zf.getvalue(),
+        media_type="application/zip",
+        headers={
+            "Content-Disposition": f"attachment;filename={mutant_filename}.zip"
+        },
+    )
 
 
 def toZip(files):

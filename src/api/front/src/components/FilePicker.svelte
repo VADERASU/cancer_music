@@ -27,7 +27,7 @@
   };
 </script>
 
-<div >
+<div>
   <p>
     <b>Select a song to mutate or choose your own. </b>
   </p>
@@ -83,7 +83,7 @@
       />
       <label for="choice5">Choose your own file</label>
       {#if choice === "user_selected"}
-        <input on:change={readFile} type="file" />
+        <input on:change={readFile} type="file" accept=".mxl" />
       {/if}
     </div>
   </div>
