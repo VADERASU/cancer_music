@@ -46,7 +46,7 @@
   };
 </script>
 
-<div>
+<div class="space-y-2">
   <div>
     <input
       id="showParams"
@@ -139,7 +139,7 @@
   {/if}
   <div class="flex justify-center">
     {#if parseFloat(sum) === 1.0}
-      <button class="w-1/2" on:click={submit}>Submit</button>
+      <button class="w-1/2 lg:w-1/3" on:click={submit}>Submit</button>
     {/if}
   </div>
 </div>

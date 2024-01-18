@@ -111,19 +111,19 @@
 
 <div class="container gap-2 mx-auto">
   <div class="min-h-screen gap-2 mx-auto space-y-5">
-    <div class="w-1/2 mx-auto space-y-2">
-      <h1 class="text-3xl text-center">Capturing Cancer with Music</h1>
+    <div class="lg:w-1/2 mx-auto space-y-2">
+      <h1 class="text-4xl text-center">Capturing Cancer with Music</h1>
       <p>
-        While the science and treatment of cancer is complex, the essence of the
-        disease can be elegantly expressed as music. Like musicians in a group,
-        working together to produce a piece of music, different cells in our
-        body work together to produce a living, breathing person. When cancer
-        starts to develop, cells stop doing the work of their organ and start
-        replicating out of control. Imagine watching a performance where your a
-        few members of your favorite band started repeating themselves endlessly
-        and started inviting random people to join them on-stage! Eventually, a
-        growing, dissonant, relentless cacophony slowly takes over the rest of
-        the performance.
+        While the science behind cancer is complex, the essence of the disease
+        can be elegantly expressed as music. Like musicians in a group, working
+        together to produce a piece of music, different cells in our body work
+        together to produce a living, breathing person. When cancer starts to
+        develop, cells stop doing the work of their organ and start replicating
+        out of control. Imagine watching a performance where your a few members
+        of your favorite band started repeating themselves endlessly and started
+        inviting random people to join them on-stage! Eventually, a growing,
+        dissonant, relentless cacophony slowly takes over the rest of the
+        performance.
       </p>
       <p>
         We took this analogy and wrote some code that takes sheet music in the
@@ -132,9 +132,9 @@
         cancer works on a cellular level.
       </p>
     </div>
-    <div class="container flex gap-5">
+    <div class="container lg:flex gap-5">
       <div class="flex-1 space-y-2">
-        <h2 class="text-2xl text-center">The Analogy</h2>
+        <h2 class="text-3xl text-center">The Analogy</h2>
         <img class="mx-auto h-48" src={analogy} alt="analogy" />
         <p>
           We consider each part in a piece as an organ in the body. Each part
@@ -145,13 +145,15 @@
       </div>
 
       <div class="flex-1 space-y-2">
-        <h2 class="text-2xl text-center">Mutations</h2>
+        <h2 class="text-3xl text-center">Mutations</h2>
         <img class="mx-auto h-48" src={mutationSVG} alt="original" />
-        When a measure is repeated, the notes that make up the measure have a chance
-        to be mutated, just like the way DNA changes within mutated cells. Each mutation
-        adds dissonance as different cancer parts randomly diverge. We defined several
-        types of mutations (hover over its name to see how it affects the music):
-
+        <p>
+          When a measure is repeated, the notes that make up the measure have a
+          chance to be mutated, just like the way DNA changes within mutated
+          cells. Each mutation adds dissonance as different cancer parts
+          randomly diverge. We defined several types of mutations (hover over
+          its name to see how it affects the music):
+        </p>
         <ul class="list-disc list-inside">
           <li>
             <span
@@ -192,23 +194,21 @@
       </div>
 
       <div class="flex-1 space-y-2">
-        <h2 class="text-2xl text-center">Therapy</h2>
-        <img src={therapy} alt="therapy" class="h-48 mx-auto" />
+        <h2 class="text-3xl text-center">Therapy</h2>
+        <img src={therapy} alt="therapy" class="h-48 w-48 mx-auto" />
         <p>
-          There is an option to simulate chemotherapy on the piece. Most
-          therapies are able to kill the vast majority of cancer cells, but
+          Most therapies are able to kill the vast majority of cancer cells, but
           often some mutant cells have a mutation that makes them resistant to
           therapy. They survive and replicate, eventually regrowing as a tumor
-          of resistant cells. This can be heard in the music, as most of the
-          cancerous, repeating parts are silenced, but some parts, resistant to
-          the therapy, are left behind to replicate again.
+          of resistant cells. Our program simulates this by silencing only a
+          portion of the cancerous parts, leaving others to continue growing.
         </p>
       </div>
     </div>
   </div>
-  <div class="px-5 gap-2">
+  <div class="gap-2">
     <hr />
-    <h2 class="text-2xl text-center">Try it out!</h2>
+    <h2 class="text-3xl text-center">Try it out!</h2>
     {#if !hideParams}
       <FilePicker bind:file />
       {#if file !== null}
@@ -236,6 +236,15 @@
     {/key}
   {/if}
 </div>
+<footer>
+  <hr />
+  <div class="text-gray-500 text-center">
+    <p>
+      © Authors 2023-2024 Rostyslav Hnatyshyn, Jiayi Hong, Chris Norby, Ross
+      Maciejewski, Carlo Maley
+    </p>
+  </div>
+</footer>
 
 <style lang="postcss">
 </style>
