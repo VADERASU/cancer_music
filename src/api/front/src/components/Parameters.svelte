@@ -69,7 +69,7 @@
         </span>
       {/if}
     </h2>
-    <div class="flex flex-row gap-3">
+    <div class="lg:flex lg:flex-row gap-3">
       <div class="flex flex-col gap-2">
         <ProbSlider text="No mutation" bind:val={probabilities.noop} />
         <ProbSlider text="Insertion" bind:val={probabilities.insertion} />
@@ -121,7 +121,7 @@
 
       <div class="flex flex-col gap-2">
         <div>
-          <label for="therapyMode">Therapy type</label>
+          <label for="therapyMode">Therapy</label>
           <select name="therapyMode" bind:value={therapy.mode}>
             <option value={0}>Off</option>
             <option value={1}>On</option>

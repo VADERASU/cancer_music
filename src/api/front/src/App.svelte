@@ -110,8 +110,8 @@
 </script>
 
 <div class="container gap-2 mx-auto">
-  <div class="min-h-screen gap-2 mx-auto space-y-5">
-    <div class="lg:w-1/2 mx-auto space-y-2">
+  <div class="min-h-screen gap-2 mx-auto space-y-2">
+    <div class="lg:w-1/2 mx-auto">
       <h1 class="text-4xl text-center">Capturing Cancer with Music</h1>
       <p>
         While the science behind cancer is complex, the essence of the disease
@@ -218,7 +218,7 @@
     {#if mutant || wav || midi}
       {#key mutant}
         <SaveToolBar musicxml={mutant} {wav} {midi}>
-          <button on:click={resetToDefaults}>Reset</button>
+          <button class="bg-red-800" on:click={resetToDefaults}>Reset</button>
         </SaveToolBar>
       {/key}
     {/if}

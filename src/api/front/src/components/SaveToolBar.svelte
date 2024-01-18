@@ -12,7 +12,6 @@
   });
 
   let sheetURL;
-
   $: sheetURL = sheet ? window.URL.createObjectURL(sheet) : null;
 
   let midiURL;
@@ -24,7 +23,7 @@
 
 <div class="sticky flex flex-col gap-1 w-max">
   <p>
-    Use these buttons to download the mutated piece in a format of your choice.
+  Download as...
   </p>
   <div>
     {#if midiURL}
