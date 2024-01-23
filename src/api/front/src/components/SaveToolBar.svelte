@@ -22,10 +22,17 @@
 </script>
 
 <div class="sticky flex flex-col gap-1 w-max">
-  <p>
-  Download as...
-  </p>
   <div>
+    {#if wavURL}
+      <div>
+        <audio controls>
+          <source src={wavURL} type="audio/wav" />
+          Your browser does not support the audio element.
+        </audio>
+      </div>
+    {/if}
+    <p>Download as...</p>
+
     {#if midiURL}
       <a href={midiURL} download={`${timestamp}.mid`}>MIDI</a>
     {:else}
@@ -37,8 +44,9 @@
     {#if wavURL}
       <a href={wavURL} download={`${timestamp}.wav`}>WAV</a>
     {:else}
-      <Stretch color="#000000" size="20"/>
+      <Stretch color="#000000" size="20" />
     {/if}
+
     <slot />
   </div>
 </div>
