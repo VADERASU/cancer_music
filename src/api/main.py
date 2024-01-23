@@ -89,7 +89,7 @@ def process_file(
         return JSONResponse(status_code=422, content={"message": str(e)})
 
     try:
-        mutate(
+        s = mutate(
             s,
             Parameters(
                 max_parts=maxParts,
@@ -111,7 +111,10 @@ def process_file(
             seed=seed,
         )
     except Exception as e:
-        return JSONResponse(status_code=500, content={"message": str(e)})
+        return JSONResponse(
+            status_code=500,
+            content={"message": f"Seed: {str(seed)} " + str(e)},
+        )
 
     fname = mutant_filename(file.filename)
     files = []

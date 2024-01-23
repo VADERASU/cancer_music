@@ -15,6 +15,14 @@ def repair_stream(s):
     for el in s.flatten().notes:
         el.volume = utils.duplicate_volume(el)
 
+    # make sure all parts have the same number of measures
+    parts = s.getElementsByClass("Part")
+    part_lengths = [len(p.getElementsByClass("Measures")) for p in parts]
+    length = max(part_lengths)
+    if any([pl != length for pl in part_lengths]):
+        raise ValueError(
+            "Not all part lengths are equal. Please modify your input file."
+        )
 
 @typechecked
 def mutate(
@@ -41,6 +49,7 @@ def mutate(
 
     :param s: Music21 stream for a file.
     """
+    s = s.expandRepeats()
     repair_stream(s)
 
     parts = s.getElementsByClass("Part")
@@ -84,6 +93,8 @@ def mutate(
         [s.append(mutant) for mutant in treated]
     else:
         [s.append(mutant) for mutant in mutants]
+
+    return s
 
 
 def mutate_part(

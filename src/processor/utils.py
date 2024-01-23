@@ -229,7 +229,7 @@ def copy_inverse(measure: Measure, offsets: List[Union[Fraction, float]]):
 
 
 def get_percentile_measure_number(s: Stream, percentile: float):
-    length = len(s)
+    length = len(s.getElementsByClass("Measure"))
     return math.floor(percentile * length)
 
 
