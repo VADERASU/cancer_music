@@ -4,7 +4,7 @@
 </script>
 
 <div class="flex gap-2">
-  <label class="grow" for="slider"> {text}: {Math.round(val * 100)}%</label>
+  <label class="grow" for="slider"> {text}: <b>{Math.round(val * 100)}%</b></label>
   <input
     type="range"
     name="slider"

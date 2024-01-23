@@ -31,7 +31,6 @@
   <p>
     <b>Select a song to mutate or choose your own. </b>
   </p>
-  <p><em>Note: The file must have a .mxl extension.</em></p>
   <div>
     <select bind:value={choice} name="file_choice">
       <option value="twinkle.mxl">Twinkle Twinkle Little Star</option>
@@ -46,6 +45,11 @@
 
     {#if choice === "user_selected"}
       <input on:change={readFile} type="file" accept=".mxl" />
+      {#if file === null}
+        <p class="text-gray-400">
+          <em>Note: The file must have a .mxl extension.</em>
+        </p>
+      {/if}
     {/if}
   </div>
 </div>

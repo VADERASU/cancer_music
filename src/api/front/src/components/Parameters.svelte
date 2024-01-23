@@ -41,7 +41,7 @@
       seed,
       cancerStart,
       midi: true,
-      wav: true
+      wav: true,
     });
   };
 </script>
@@ -57,8 +57,8 @@
     <label for="showParams">Show advanced options</label>
   </div>
   {#if showAdvancedParams}
-    <h2 class="text-2xl">
-      Sum of probabilities:
+    <p>
+      <b> Sum of probabilities: </b>
       {#if parseFloat(sum) !== 1.0}
         <span class="text-red-700">
           {Math.round(sum * 100)}%
@@ -68,8 +68,9 @@
           {Math.round(sum * 100)}%
         </span>
       {/if}
-    </h2>
-    <div class="lg:flex lg:flex-row gap-3">
+    </p>
+    <div class="space-y-3 lg:space-y-0 lg:flex lg:flex-row gap-3">
+      <hr class="lg:hidden" />
       <div class="flex flex-col gap-2">
         <ProbSlider text="No mutation" bind:val={probabilities.noop} />
         <ProbSlider text="Insertion" bind:val={probabilities.insertion} />
@@ -84,10 +85,12 @@
         />
         <ProbSlider text="Inversion" bind:val={probabilities.inversion} />
       </div>
+      <hr class="lg:hidden" />
+
       <div class="flex flex-col gap-2">
         <div class="flex gap-2">
           <label class="grow" for="how_many"
-            >Length of cancer theme: {howMany}</label
+            >Length of cancer theme: <b>{howMany}</b></label
           >
           <input
             class="shrink"
@@ -100,7 +103,7 @@
         </div>
         <div class="flex gap-2">
           <label class="grow" for="numberOfParts"
-            >Maximum number of mutant parts: {maxParts}</label
+            >Maximum number of mutant parts: <b>{maxParts}</b></label
           >
           <input
             class="shrink"
@@ -118,10 +121,10 @@
           <input class="shrink" type="number" name="seed" bind:value={seed} />
         </div>
       </div>
-
+      <hr class="lg:hidden" />
       <div class="flex flex-col gap-2">
-        <div>
-          <label for="therapyMode">Therapy</label>
+        <div class="flex gap-2">
+          <label class="grow" for="therapyMode">Therapy</label>
           <select name="therapyMode" bind:value={therapy.mode}>
             <option value={0}>Off</option>
             <option value={1}>On</option>
@@ -139,7 +142,7 @@
   {/if}
   <div class="flex justify-center">
     {#if parseFloat(sum) === 1.0}
-      <button class="w-1/2 lg:w-1/3" on:click={submit}>Submit</button>
+      <button class="" on:click={submit}>Mutate</button>
     {/if}
   </div>
 </div>

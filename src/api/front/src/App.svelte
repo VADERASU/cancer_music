@@ -11,6 +11,7 @@
   import analogy from "./images/analogy.svg";
   import original from "./images/original.svg";
   import therapy from "./images/therapy.svg";
+  import header from "./images/chaos_music.png";
 
   let mutant;
   let midi;
@@ -109,35 +110,41 @@
   }
 </script>
 
-<div class="container gap-2 mx-auto px-2 space-y-2">
-  <div class="min-h-screen gap-2 mx-auto space-y-3">
-    <div class="lg:w-1/2 mx-auto">
-      <h1 class="text-4xl text-center">Capturing Cancer with Music</h1>
-      <p>
-        While the science behind cancer is complex, the essence of the disease
-        can be elegantly expressed as music. Like musicians in a group, working
-        together to produce a piece of music, different cells in our body work
-        together to produce a living, breathing person. When cancer starts to
-        develop, cells stop doing the work of their organ and start replicating
-        out of control. Imagine watching a performance where your a few members
-        of your favorite band started repeating themselves endlessly and started
-        inviting random people to join them on-stage! Eventually, a growing,
-        dissonant, relentless cacophony slowly takes over the rest of the
-        performance.
-      </p>
-      <p>
-        We took this analogy and wrote some code that takes sheet music in the
-        form of musicXML files as input and returns a "mutated" version of the
-        piece. The code is based on a few simple rules, all inspired by the way
-        cancer works on a cellular level.
-      </p>
+<div class="container mx-auto px-2">
+  <div class="gap-2 mx-auto space-y-3">
+    <div class="mx-auto gap-2">
+      <div class="space-y-2">
+        <h1 class="text-4xl text-center">Capturing Cancer with Music</h1>
+        <img class="object-cover w-full max-h-96" src={header} alt="header" />
+      </div>
+      <div class="lg:w-3/4 mx-auto text-pretty space-y-2">
+        <p>
+          While the science behind cancer is complex, the essence of the disease
+          can be elegantly expressed as music. Like musicians in a group,
+          working together to produce a piece of music, different cells in our
+          body work together to produce a living, breathing person. When cancer
+          starts to develop, cells stop doing the work of their organ and start
+          replicating out of control. Imagine watching a performance where your
+          a few members of your favorite band started repeating themselves
+          endlessly and started inviting random people to join them on-stage!
+          Eventually, a growing, dissonant, relentless cacophony slowly takes
+          over the rest of the performance.
+        </p>
+        <p>
+          We took this analogy and wrote some code that takes sheet music in the
+          form of <a href="https://musescore.com/">musicXML</a> files as input and
+          returns a "mutated" version of the piece. The code is based on a few simple
+          rules, all inspired by the way cancer works on a cellular level.
+        </p>
+      </div>
     </div>
     <hr />
-    <div class="container lg:flex gap-5">
+    <h2 class="mx-auto text-center text-3xl">Background</h2>
+    <div class="container space-y-2 lg:flex gap-5">
       <div class="flex-1 space-y-2">
-        <h2 class="text-3xl text-center">The Analogy</h2>
+        <h2 class="text-2xl text-center">The Analogy</h2>
         <img class="mx-auto h-48" src={analogy} alt="analogy" />
-        <p>
+        <p class="text-pretty">
           We consider each part in a piece as an organ in the body. Each part
           contains measures (cells) and notes (DNA). The code randomly selects
           one or more parts to give cancer to and then starts repeating
@@ -146,9 +153,9 @@
       </div>
 
       <div class="flex-1 space-y-2">
-        <h2 class="text-3xl text-center">Mutations</h2>
+        <h2 class="text-2xl text-center">Mutations</h2>
         <img class="mx-auto h-48" src={mutationSVG} alt="original" />
-        <p>
+        <p class="text-pretty">
           When a measure is repeated, the notes that make up the measure have a
           chance to be mutated, just like the way DNA changes within mutated
           cells. Each mutation adds dissonance as different cancer parts
@@ -195,9 +202,9 @@
       </div>
 
       <div class="flex-1 space-y-2">
-        <h2 class="text-3xl text-center">Therapy</h2>
+        <h2 class="text-2xl text-center">Therapy</h2>
         <img src={therapy} alt="therapy" class="h-48 w-48 mx-auto" />
-        <p>
+        <p class="text-pretty">
           Most therapies are able to kill the vast majority of cancer cells, but
           often some mutant cells have a mutation that makes them resistant to
           therapy. They survive and replicate, eventually regrowing as a tumor
@@ -219,7 +226,7 @@
     {#if mutant || wav || midi}
       {#key mutant}
         <SaveToolBar musicxml={mutant} {wav} {midi}>
-          <button class="bg-red-800" on:click={resetToDefaults}>Reset</button>
+          <button class="red-button" on:click={resetToDefaults}>Reset</button>
         </SaveToolBar>
       {/key}
     {/if}

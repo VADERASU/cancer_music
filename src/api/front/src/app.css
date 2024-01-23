@@ -6,29 +6,34 @@ html {
     @apply text-lg
 }
 
-button {
-    @apply text-white bg-gray-500 rounded-md px-1;
+button, .link-button {
+    @apply py-1 px-1 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-md border border-gray-400 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 mb-1 focus:ring-gray-200 no-underline;
 }
 
 a {
-    @apply text-white bg-blue-500 rounded-md px-1;
+    @apply underline text-blue-400 hover:text-blue-700;
 }
 
-input[type="range"] {
-    @apply accent-gray-500;
-}
-
-input[type="file"] {
-    @apply file:text-white file:bg-gray-500 file:rounded-md file:px-1 file:border-0;
+.red-button {
+    @apply focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-md text-sm px-1 py-1 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900 hover:text-white border-gray-200;
 }
 
 select, input[type="number"] {
-    @apply border rounded-md border-gray-500 px-1;
+    @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-md focus:ring-blue-500 focus:border-blue-500 block p-1;
 }
 
-body {
-    @appy bg-[#FAF5E9]
+input[type="checkbox"] {
+    @apply w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-2;
 }
+
+input[type="range"] {
+    @apply cursor-pointer;
+}
+
+input[type="file"] {
+    @apply file:text-sm file:font-medium file:text-gray-900 file:focus:outline-none file:bg-white file:rounded-lg file:border file:border-gray-400 file:hover:bg-gray-100 file:hover:text-blue-700 file:focus:z-10 file:focus:ring-4 file:my-1 file:focus:ring-gray-200 text-gray-500 ; 
+}
+
 
 .mutationSpan {
     @apply text-red-900
