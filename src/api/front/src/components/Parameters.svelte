@@ -6,9 +6,9 @@
   let showAdvancedParams = false;
 
   let howMany = 4;
-  let maxParts = 1;
-  let reproductionProbability = 0.1;
-  let cancerStart = 0.1;
+  let maxParts = 4;
+  let reproductionProbability = 0.3;
+  let cancerStart = 0.25;
   let seed = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
 
   const probabilities = {
@@ -21,8 +21,8 @@
   };
 
   const therapy = {
-    mode: 0, // OFF, CURE
-    start: 0.5,
+    mode: 1, // OFF, CURE
+    start: 0.75,
     mutant_survival: 0.5,
   };
 
