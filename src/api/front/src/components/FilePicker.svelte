@@ -1,7 +1,7 @@
 <script>
   export let file;
 
-  let choice = "Canon_in_D.mxl";
+  let choice = "twinkle.mxl";
 
   async function loadMXL(fname) {
     if (fname.includes(".mxl")) {
@@ -33,58 +33,19 @@
   </p>
   <p><em>Note: The file must have a .mxl extension.</em></p>
   <div>
-    <div>
-      <input
-        bind:group={choice}
-        type="radio"
-        id="choice1"
-        name="file_choice"
-        value="Canon_in_D.mxl"
-      />
-      <label for="choice1">Canon in D</label>
-    </div>
-    <div>
-      <input
-        bind:group={choice}
-        type="radio"
-        id="choice2"
-        name="file_choice"
-        value="Frere_Jacques_Flute_Round.mxl"
-      />
-      <label for="choice2">Frere Jacques</label>
-    </div>
-    <div>
-      <input
-        bind:group={choice}
-        type="radio"
-        id="choice3"
-        name="file_choice"
-        value="Happy_Birthday_To_You_Piano.mxl"
-      />
-      <label for="choice3">Happy Birthday</label>
-    </div>
-    <div>
-      <input
-        bind:group={choice}
-        type="radio"
-        id="choice4"
-        name="file_choice"
-        value="Mary_Had_A_Little_Lamb_Beginner_Piano.mxl"
-      />
-      <label for="choice4">Mary Had a Little Lamb</label>
-    </div>
-    <div>
-      <input
-        bind:group={choice}
-        type="radio"
-        id="choice5"
-        name="file_choice"
-        value="user_selected"
-      />
-      <label for="choice5">Choose your own file</label>
-      {#if choice === "user_selected"}
-        <input on:change={readFile} type="file" accept=".mxl" />
-      {/if}
-    </div>
+    <select bind:value={choice} name="file_choice">
+      <option value="twinkle.mxl">Twinkle Twinkle Little Star</option>
+      <option value="Canon_in_D.mxl">Canon in D</option>
+      <option value="Frere_Jacques_Flute_Round.mxl">Frere Jacques</option>
+      <option value="Happy_Birthday_To_You_Piano.mxl">Happy Birthday</option>
+      <option value="Mary_Had_A_Little_Lamb_Beginner_Piano.mxl"
+        >Mary Had a Little Lamb</option
+      >
+      <option value="user_selected">Choose your own file</option>
+    </select>
+
+    {#if choice === "user_selected"}
+      <input on:change={readFile} type="file" accept=".mxl" />
+    {/if}
   </div>
 </div>

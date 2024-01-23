@@ -109,8 +109,8 @@
   }
 </script>
 
-<div class="container gap-2 mx-auto">
-  <div class="min-h-screen gap-2 mx-auto space-y-2">
+<div class="container gap-2 mx-auto px-2 space-y-2">
+  <div class="min-h-screen gap-2 mx-auto space-y-3">
     <div class="lg:w-1/2 mx-auto">
       <h1 class="text-4xl text-center">Capturing Cancer with Music</h1>
       <p>
@@ -132,6 +132,7 @@
         cancer works on a cellular level.
       </p>
     </div>
+    <hr />
     <div class="container lg:flex gap-5">
       <div class="flex-1 space-y-2">
         <h2 class="text-3xl text-center">The Analogy</h2>
