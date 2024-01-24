@@ -24,6 +24,7 @@ def repair_stream(s):
             "Not all part lengths are equal. Please modify your input file."
         )
 
+
 @typechecked
 def mutate(
     s: Stream,
