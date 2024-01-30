@@ -43,7 +43,7 @@
   }
 </script>
 
-<div class="w-full" id="sheet" bind:this={container} />
+<div class="w-11/12 mx-auto max-h-screen overflow-auto mb-2" id="sheet" bind:this={container} />
 
 <style>
 </style>

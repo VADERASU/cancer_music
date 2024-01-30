@@ -1,15 +1,16 @@
 <script>
-  import { Circle } from "svelte-loading-spinners";
   import ProbSlider from "./ProbSlider.svelte";
-  import { API_URL } from "../api/constants";
 
-  export let mutant;
-  let file;
+  export let onSubmit;
+
+  let showAdvancedParams = false;
+
   let howMany = 4;
-  let maxParts = 1;
-  let reproductionProbability = 0.1;
-  let cancerStart = 0.1;
+  let maxParts = 4;
+  let reproductionProbability = 0.3;
+  let cancerStart = 0.25;
   let seed = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
+
   const probabilities = {
     noop: 0.05,
     insertion: 0.25,
@@ -20,60 +21,44 @@
   };
 
   const therapy = {
-    mode: 0, // OFF, CURE
-    start: 0.5,
+    mode: 1, // OFF, CURE
+    start: 0.75,
     mutant_survival: 0.5,
   };
-
-  let isLoading = false;
 
   let sum = 1;
   $: sum = Object.values(probabilities)
     .reduce((a, b) => a + b)
     .toFixed(2);
 
-  const readFile = (e) => {
-    [file] = e.target.files;
+  const submit = () => {
+    onSubmit({
+      ...probabilities,
+      ...therapy,
+      how_many: howMany,
+      maxParts,
+      reproductionProbability,
+      seed,
+      cancerStart,
+      midi: true,
+      wav: true,
+    });
   };
-
-  async function startMutate() {
-    const fd = new FormData();
-    fd.append("file", file, file.name);
-    isLoading = true;
-    const response = await fetch(
-      `${API_URL}/process_file?${new URLSearchParams({
-        ...probabilities,
-        ...therapy,
-        how_many: howMany,
-        maxParts,
-        reproductionProbability,
-        seed,
-        cancerStart,
-      })}`,
-      {
-        contentType: "multipart/form-data",
-        method: "POST",
-        body: fd,
-      }
-    );
-    if (!response.ok) {
-      const content = await response.json();
-      alert(`An error occurred: ${content.message}`);
-      isLoading = false;
-    } else {
-      response.arrayBuffer().then((bytes) => {
-        mutant = new TextDecoder().decode(bytes);
-        isLoading = false;
-      });
-    }
-  }
 </script>
 
-<div class="flex flex-col gap-2">
-  <input on:change={readFile} type="file" />
-  {#if file}
-    <h2 class="text-2xl">
-      Sum of probabilities:
+<div class="space-y-2">
+  <div>
+    <input
+      id="showParams"
+      type="checkbox"
+      bind:value={showAdvancedParams}
+      bind:checked={showAdvancedParams}
+    />
+    <label for="showParams">Show advanced options</label>
+  </div>
+  {#if showAdvancedParams}
+    <p>
+      <b> Sum of probabilities: </b>
       {#if parseFloat(sum) !== 1.0}
         <span class="text-red-700">
           {Math.round(sum * 100)}%
@@ -83,8 +68,9 @@
           {Math.round(sum * 100)}%
         </span>
       {/if}
-    </h2>
-    <div class="flex flex-row gap-3">
+    </p>
+    <div class="space-y-3 lg:space-y-0 lg:flex lg:flex-row gap-3">
+      <hr class="lg:hidden" />
       <div class="flex flex-col gap-2">
         <ProbSlider text="No mutation" bind:val={probabilities.noop} />
         <ProbSlider text="Insertion" bind:val={probabilities.insertion} />
@@ -99,10 +85,12 @@
         />
         <ProbSlider text="Inversion" bind:val={probabilities.inversion} />
       </div>
+      <hr class="lg:hidden" />
+
       <div class="flex flex-col gap-2">
         <div class="flex gap-2">
           <label class="grow" for="how_many"
-            >Length of cancer theme: {howMany}</label
+            >Length of cancer theme: <b>{howMany}</b></label
           >
           <input
             class="shrink"
@@ -115,7 +103,7 @@
         </div>
         <div class="flex gap-2">
           <label class="grow" for="numberOfParts"
-            >Maximum number of mutant parts: {maxParts}</label
+            >Maximum number of mutant parts: <b>{maxParts}</b></label
           >
           <input
             class="shrink"
@@ -133,10 +121,10 @@
           <input class="shrink" type="number" name="seed" bind:value={seed} />
         </div>
       </div>
-
+      <hr class="lg:hidden" />
       <div class="flex flex-col gap-2">
-        <div>
-          <label for="therapyMode">Therapy type</label>
+        <div class="flex gap-2">
+          <label class="grow" for="therapyMode">Therapy</label>
           <select name="therapyMode" bind:value={therapy.mode}>
             <option value={0}>Off</option>
             <option value={1}>On</option>
@@ -151,15 +139,12 @@
         {/if}
       </div>
     </div>
+  {/if}
+  <div class="flex justify-center">
     {#if parseFloat(sum) === 1.0}
-      <div>
-        <button on:click={startMutate}>Submit</button>
-      </div>
+      <button class="" on:click={submit}>Mutate</button>
     {/if}
-  {/if}
-  {#if isLoading}
-    <Circle color="#000000"/>
-  {/if}
+  </div>
 </div>
 
 <style lang="postcss">
