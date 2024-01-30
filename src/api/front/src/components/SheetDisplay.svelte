@@ -1,49 +1,25 @@
 <script>
-  import { OpenSheetMusicDisplay } from "opensheetmusicdisplay";
   import { onMount } from "svelte";
-  import { mutationMarkers } from "../api/constants";
+  import { parseMXL } from "../api/parser";
 
-  export let vis;
   export let musicxml;
   let container;
-  let osmd;
 
   onMount(() => {
-    osmd = new OpenSheetMusicDisplay(container);
-    osmd.setOptions({
-      drawingParameters: "compacttight",
-    });
-
-    osmd.load(musicxml).then(() => {
-      osmd.render();
+    parseMXL(musicxml).then((sheet) => {
+      console.log(sheet);
+      // sourcemeasures gives you # measures
+      // in each sourceMeasure there is activeTimeSignature giving you time
+      // vertical measure list gives you each part
+      // vf voices is voices per measure
+      // tickables.keys & .duration is the note value
     });
   });
-
-  $: if (osmd) {
-    Object.keys(vis).forEach((mutation) => {
-      const marker = mutationMarkers[mutation];
-      const fx = vis[mutation];
-      const measureList = osmd.graphic.measureList.filter((d) =>
-        d.every((e) => e !== undefined)
-      );
-      measureList.forEach((m) => {
-        m.forEach((part) => {
-          if (part.parentStaff.parentInstrument.idString.includes("mutant")) {
-            part.staffEntries.forEach((s) => {
-              s.lyricsEntries.forEach((lyric) => {
-                if (lyric.lyricsEntry.text === marker) {
-                  Object.values(fx).forEach((effect) => effect(s));
-                }
-              });
-            });
-          }
-        });
-      });
-    });
-  }
 </script>
 
-<div class="w-11/12 mx-auto max-h-screen overflow-auto mb-2" id="sheet" bind:this={container} />
+<svg class="w-11/12 mx-auto max-h-screen" bind:this={container} >
+  <rect width="100" height="100" />
+</svg>
 
 <style>
 </style>
