@@ -8,7 +8,7 @@
   const timestamp = new Date().getTime();
 
   const sheet = new Blob([musicxml], {
-    type: "application/vnd.recordare.musicxml",
+    type: "application/vnd.recordare.musicxml+xml",
   });
 
   let sheetURL;
@@ -32,7 +32,7 @@
       <Stretch color="#000000" size="20" />
     {/if}
     {#if sheetURL}
-      <a href={sheetURL} class="link-button" download={`${timestamp}.mxl`}
+      <a href={sheetURL} class="link-button" download={`${timestamp}.musicxml`}
         >MusicXML</a
       >
     {/if}
