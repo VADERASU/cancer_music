@@ -57,6 +57,7 @@
             .range([0, height])
             .paddingInner(0.1);
 
+            console.log(ml);
           // each vertical measure, corresponding to a part
           d3.select(this)
             .selectAll("svg")
@@ -68,7 +69,12 @@
             .attr("x", 0)
             .attr("y", (_, i) => measureYScale(i))
             .each(function (m) {
-              const voices = Object.values(m.vfVoices);
+              const voices = Object.values(m.vfVoices).filter(
+                (v) =>
+                  v.totalTicks.numerator / v.totalTicks.denominator >=
+                  v.ticksUsed.numerator / v.ticksUsed.denominator
+              );
+
               const totalLength = Math.max(
                 ...voices.map(
                   (v) => v.totalTicks.numerator / v.totalTicks.denominator
@@ -101,10 +107,18 @@
                     .domain([0, totalLength])
                     .range([0, bw]);
 
-                  let currentTime = 0;
+                  const notes = tickables.filter(
+                    (n) => n.attrs.type !== "GhostNote"
+                  );
+
+                  // https://ericjknapp.com/2019/09/26/midi-measures/
+                  // shifts pickups correctly
+                  let currentTime =
+                    totalLength -
+                    v.ticksUsed.numerator / v.ticksUsed.denominator;
                   d3.select(this)
                     .selectAll("rect")
-                    .data(tickables)
+                    .data(notes)
                     .enter()
                     .append("rect")
                     .attr("height", vbw)
@@ -119,7 +133,7 @@
                       // deal with chords later
                       // don't show rests
                       if (note.noteType === "r") {
-                        return "none";
+                        return "gray";
                       }
                       const keyProp = note.keyProps[0];
                       const { accidental, key } = keyProp;
@@ -132,7 +146,7 @@
                         colorIdx += 12;
                       }
                       return colors[colorIdx % colors.length];
-                    });
+                    })
                 });
             });
         });
