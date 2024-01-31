@@ -1,7 +1,7 @@
-import { MXLHelper, IXmlElement, MusicSheetReader } from "opensheetmusicdisplay";
+import { MXLHelper, IXmlElement, MusicSheetReader, GraphicalMusicSheet, VexFlowMusicSheetCalculator, EngravingRules } from "opensheetmusicdisplay";
 
 // graciously stolen from opensheetmusicdisplay
-// https://github.com/opensheetmusicdisplayexport
+// https://github.com/opensheetmusicdisplay
 /* eslint-disable */ 
 export const parseMXL = (content, tempTitle = "Untitled Score") => {
     // Warning! This function is asynchronous! No error handling is done here.
@@ -62,6 +62,9 @@ export const parseMXL = (content, tempTitle = "Untitled Score") => {
         // error loading sheet, probably already logged, do nothing
         return Promise.reject(new Error("given music sheet was incomplete or could not be loaded."));
     }
+    // apparently more information is captured by the calculator but not caught by the reader..
+    const calc  = new VexFlowMusicSheetCalculator(new EngravingRules());
+    const graphic = new GraphicalMusicSheet(sheet, calc);
     // if (this.sheet.TitleString === "osmd.Version") {
     //     this.sheet.TitleString = "OSMD version: " + this.Version; // useful for debug e.g. when console not available
     // }
