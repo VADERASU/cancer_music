@@ -44,7 +44,11 @@
     </select>
 
     {#if choice === "user_selected"}
-      <input on:change={readFile} type="file" accept=".mxl" />
+      <input
+        on:change={readFile}
+        type="file"
+        accept=".mxl,.musicxml"
+      />
       {#if file === null}
         <p class="text-gray-400">
           <em>Note: The file must have a .mxl extension.</em>

@@ -46,16 +46,19 @@ def toStream(file: UploadFile):
     if file.filename is None:
         raise ValueError("File corrupt.")
 
-    if not file.filename.endswith(".mxl"):
-        raise ValueError("Wrong file type. Please provide a .mxl file.")
+    contents = None
+    if file.filename.endswith(".mxl"):
+        try:
+            z = ZipFile(file.file)
+        except BadZipFile:
+            return ValueError("File corrupt.")
+        files = [n for n in list(z.namelist()) if "META-INF" not in n]
+        contents = z.read(files[0])
+    if file.filename.endswith(".musicxml"):
+        contents = file.file.read()
+    else:
+        raise ValueError ("Invalid file type. Please provide either a .mxl or .musicxml file.")
 
-    try:
-        z = ZipFile(file.file)
-    except BadZipFile:
-        return ValueError("File corrupt.")
-
-    files = [n for n in list(z.namelist()) if "META-INF" not in n]
-    contents = z.read(files[0])
     s = converter.parse(contents, format="musicxml")
 
     return s
