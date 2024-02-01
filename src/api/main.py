@@ -54,7 +54,7 @@ def toStream(file: UploadFile):
             return ValueError("File corrupt.")
         files = [n for n in list(z.namelist()) if "META-INF" not in n]
         contents = z.read(files[0])
-    if file.filename.endswith(".musicxml"):
+    elif file.filename.endswith(".musicxml"):
         contents = file.file.read()
     else:
         raise ValueError ("Invalid file type. Please provide either a .mxl or .musicxml file.")
