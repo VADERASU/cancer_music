@@ -1,8 +1,28 @@
 import { MXLHelper, IXmlElement, MusicSheetReader, GraphicalMusicSheet, VexFlowMusicSheetCalculator, EngravingRules } from "opensheetmusicdisplay";
+import * as zip from "@zip.js/zip.js";
 
 // graciously stolen from opensheetmusicdisplay
 // https://github.com/opensheetmusicdisplay
-/* eslint-disable */ 
+/* eslint-disable */
+
+export const mxlToString = (file) => {
+    if (file.name.endsWith(".mxl")) {
+        const reader = new zip.ZipReader(new zip.BlobReader(file));
+        return reader.getEntries().then((entries) => {
+            const texts = entries.
+                filter((e) => e.filename.endsWith(".xml") && e.filename !== "META-INF/container.xml").
+                map((e) => e.getData(new zip.TextWriter()).then((res) => res));
+            if (texts.length != 1) {
+                return Promise.reject(new Error("MXL file which was provided is invalid."));
+            } else {
+                return texts[0];
+            }
+        })
+    } else {
+        return file.text();
+    }
+};
+
 export const parseMXL = (content, tempTitle = "Untitled Score") => {
     // Warning! This function is asynchronous! No error handling is done here.
     // console.log("typeof content: " + typeof content);
@@ -63,7 +83,7 @@ export const parseMXL = (content, tempTitle = "Untitled Score") => {
         return Promise.reject(new Error("given music sheet was incomplete or could not be loaded."));
     }
     // apparently more information is captured by the calculator but not caught by the reader..
-    const calc  = new VexFlowMusicSheetCalculator(new EngravingRules());
+    const calc = new VexFlowMusicSheetCalculator(new EngravingRules());
     const graphic = new GraphicalMusicSheet(sheet, calc);
     // if (this.sheet.TitleString === "osmd.Version") {
     //     this.sheet.TitleString = "OSMD version: " + this.Version; // useful for debug e.g. when console not available

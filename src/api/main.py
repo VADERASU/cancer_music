@@ -57,7 +57,9 @@ def toStream(file: UploadFile):
     elif file.filename.endswith(".musicxml"):
         contents = file.file.read()
     else:
-        raise ValueError ("Invalid file type. Please provide either a .mxl or .musicxml file.")
+        raise ValueError(
+            "Invalid file type. Please provide either a .mxl or .musicxml file."
+        )
 
     s = converter.parse(contents, format="musicxml")
 
@@ -177,7 +179,8 @@ def process_file(
 
     if len(files) == 1:
         return Response(
-            content=content, media_type="application/vnd.recordare.musicxml+xml"
+            content=content,
+            media_type="application/vnd.recordare.musicxml+xml",
         )
 
     zf = toZip(files)

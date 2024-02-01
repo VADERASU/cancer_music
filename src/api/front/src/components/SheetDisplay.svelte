@@ -28,9 +28,7 @@
     const width = container.clientWidth;
     const height = container.clientHeight;
     parseMXL(musicxml).then((sheet) => {
-      console.log(sheet);
-      console.log(sheet.sourceMeasures);
-
+    
       const measureXScale = d3
         .scaleBand()
         .domain([...Array(sheet.sourceMeasures.length).keys()])
@@ -57,7 +55,7 @@
             .range([0, height])
             .paddingInner(0.1);
 
-            console.log(ml);
+          console.log(ml);
           // each vertical measure, corresponding to a part
           d3.select(this)
             .selectAll("svg")
@@ -146,7 +144,7 @@
                         colorIdx += 12;
                       }
                       return colors[colorIdx % colors.length];
-                    })
+                    });
                 });
             });
         });
