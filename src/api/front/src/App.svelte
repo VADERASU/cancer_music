@@ -86,7 +86,7 @@
         })
         .then((entries) => {
           entries.forEach((e) => {
-            if (e.filename.endsWith(".mxl")) {
+            if (e.filename.endsWith(".musicxml")) {
               e.getData(new zip.TextWriter()).then((res) => {
                 mutant = res;
                 isLoading = false;
