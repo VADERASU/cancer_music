@@ -161,7 +161,7 @@ def process_file(
 
         gex = GeneralObjectExporter()
         content = gex.parse(s)
-        files.append((f"{fname}.mxl", content))
+        files.append((f"{fname}.musicxml", content))
 
     except Exception as e:
         error_str = str(e)
@@ -177,7 +177,7 @@ def process_file(
 
     if len(files) == 1:
         return Response(
-            content=content, media_type="application/vnd.recordare.musicxml"
+            content=content, media_type="application/vnd.recordare.musicxml+xml"
         )
 
     zf = toZip(files)
