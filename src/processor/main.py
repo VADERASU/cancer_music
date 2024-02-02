@@ -63,7 +63,7 @@ def main():
     mutant_survival = 0.5
     start = 0.75
 
-    s = process.mutate(
+    s, tree = process.mutate(
         s,
         Parameters(
             max_parts=maxParts,

@@ -4,6 +4,8 @@
   import { parseMXL } from "../api/parser";
 
   export let musicxml;
+  export let original;
+  export let mutationParams;
   let container;
 
   const colors = [
@@ -28,7 +30,10 @@
     const width = container.clientWidth;
     const height = container.clientHeight;
     parseMXL(musicxml).then((sheet) => {
-    
+      console.log(original);
+      console.log(sheet.Staves);
+      console.log(sheet.Parts);
+      console.log(mutationParams);
       const measureXScale = d3
         .scaleBand()
         .domain([...Array(sheet.sourceMeasures.length).keys()])

@@ -71,6 +71,7 @@ export const parseMXL = (content, tempTitle = "Untitled Score") => {
             break;
         }
     }
+    console.log(scorePartwiseElement);
     if (!scorePartwiseElement) {
         console.error("Could not parse MusicXML, no valid partwise element found");
         return Promise.reject(new Error("OpenSheetMusicDisplay: Document is not a valid 'partwise' MusicXML"));
@@ -85,6 +86,7 @@ export const parseMXL = (content, tempTitle = "Untitled Score") => {
     // apparently more information is captured by the calculator but not caught by the reader..
     const calc = new VexFlowMusicSheetCalculator(new EngravingRules());
     const graphic = new GraphicalMusicSheet(sheet, calc);
+    console.log(graphic);
     // if (this.sheet.TitleString === "osmd.Version") {
     //     this.sheet.TitleString = "OSMD version: " + this.Version; // useful for debug e.g. when console not available
     // }

@@ -2,6 +2,7 @@
   import { parseMXL, mxlToString } from "../api/parser";
 
   export let file;
+  export let fileSheet;
 
   let choice = "twinkle.mxl";
 
@@ -31,7 +32,9 @@
   $: if (file) {
     mxlToString(file)
       .then((text) => parseMXL(text))
-      .then((content) => console.log(content));
+      .then((content) => {
+        fileSheet = content;
+      });
   }
 </script>
 

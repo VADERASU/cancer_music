@@ -21,6 +21,7 @@ import api.utils as utils
 from processor.parameters import Parameters, Therapy, TherapyParameters
 from processor.process import mutate
 from processor.synth import PatchedSynth
+import json
 
 app = FastAPI()
 this_dir = utils.get_this_dir()
@@ -142,7 +143,7 @@ def process_file(
     )
 
     try:
-        s = mutate(
+        s, tree = mutate(
             s,
             mutation_parameters,
             therapy_parameters,
@@ -164,7 +165,8 @@ def process_file(
         gex = GeneralObjectExporter()
         content = gex.parse(s)
         files.append((f"{fname}.musicxml", content))
-
+        files.append(("metadata.json", json.dumps(tree)))
+        
     except Exception as e:
         error_str = str(e)
         log_error(
@@ -175,12 +177,6 @@ def process_file(
             content={
                 "message": f"Error: Mutation failed. Please try again. {error_str}."
             },
-        )
-
-    if len(files) == 1:
-        return Response(
-            content=content,
-            media_type="application/vnd.recordare.musicxml+xml",
         )
 
     zf = toZip(files)

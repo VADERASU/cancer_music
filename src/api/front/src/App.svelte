@@ -17,8 +17,9 @@
   let midi;
   let wav;
   let file;
+  let fileSheet;
+  let mutationMetadata;
   let isLoading = false;
-
   let hideParams = false;
   let mutationSVG = original;
 
@@ -28,38 +29,26 @@
 
   function resetToDefaults() {
     file = null;
+    fileSheet = null;
     mutant = null;
     midi = null;
     wav = null;
+    mutationMetadata = null;
     hideParams = false;
-  }
-
-  let vis = {
-    insertion: {},
-    transposition: {},
-    deletion: {},
-    inversion: {},
-    translocation: {},
-  };
-
-  // reset effects if sheet changes
-  $: if (mutant) {
-    vis = {
-      insertion: {},
-      transposition: {},
-      deletion: {},
-      inversion: {},
-      translocation: {},
-      cure: {},
-    };
   }
 
   const mouseLeave = () => {
     setMutSVG("original");
   };
 
+  $: if (mutant && mutationMetadata) {
+    isLoading = false;
+  }
+
   async function startMutate(params) {
     const fd = new FormData();
+    // we need howMany, cancer and therapy mode / start for the vis
+
     fd.append("file", file, file.name);
     isLoading = true;
     hideParams = true;
@@ -89,7 +78,13 @@
             if (e.filename.endsWith(".musicxml")) {
               e.getData(new zip.TextWriter()).then((res) => {
                 mutant = res;
-                isLoading = false;
+              });
+            }
+
+            if (e.filename.endsWith(".json")) {
+              e.getData(new zip.TextWriter()).then((res) => {
+                mutationMetadata = params;
+                mutationMetadata.tree = JSON.parse(res);
               });
             }
 
@@ -218,7 +213,7 @@
     <hr />
     <h2 class="text-3xl text-center">Try it out!</h2>
     {#if !hideParams}
-      <FilePicker bind:file />
+      <FilePicker bind:file bind:fileSheet />
       {#if file !== null}
         <Parameters onSubmit={startMutate} />
       {/if}
@@ -240,7 +235,11 @@
 <div class="min-h-48">
   {#if mutant}
     {#key mutant}
-      <SheetDisplay musicxml={mutant} {vis} />
+      <SheetDisplay
+        musicxml={mutant}
+        original={fileSheet}
+        mutationParams={mutationMetadata}
+      />
     {/key}
   {/if}
 </div>

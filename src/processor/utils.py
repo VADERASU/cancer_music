@@ -14,7 +14,7 @@ from music21.instrument import Instrument
 from music21.key import Key
 from music21.meter.base import TimeSignature
 from music21.note import GeneralNote, Lyric, Note, Rest
-from music21.stream.base import Measure, Part, Stream, Voice
+from music21.stream.base import Measure, Part, PartStaff, Stream, Voice
 from music21.volume import Volume
 from typeguard import typechecked
 
@@ -254,8 +254,8 @@ def copy_measure(
     return cloned
 
 
-def duplicate_part(p: Part) -> Part:
-    dup = Stream.template(
+def duplicate_part(p: Union[Part, PartStaff], id) -> Part:
+    dup = Part.template(
         p,
         removeClasses=[
             Instrument,
@@ -268,17 +268,16 @@ def duplicate_part(p: Part) -> Part:
     p_ins = p.getInstrument()
     if p_ins is not None:
         ins = Instrument(p_ins.instrumentName)
-        id = uuid.uuid4()
-        ins.partId = f"mutant_{id}"
-        dup.partId = f"mutant_{id}"
+        ins.partId = id
+        dup.id = id
         dup.insert(0, ins)
     else:
-        raise ValueError(f"Part {p.partId} missing an instrument!")
+        raise ValueError(f"Part {p.id} missing an instrument!")
     return dup
 
 
 def clear_part(p: Part, start) -> Part:
-    dup = duplicate_part(p)
+    dup = duplicate_part(p, p.id)
 
     measures = p.getElementsByClass("Measure")
     dup_measures = dup.getElementsByClass("Measure")
