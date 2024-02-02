@@ -30,125 +30,175 @@
     const width = container.clientWidth;
     const height = container.clientHeight;
     parseMXL(musicxml).then((sheet) => {
-      console.log(original);
-      console.log(sheet.Staves);
-      console.log(sheet.Parts);
-      console.log(mutationParams);
+      const ogMeasures = original.sourceMeasures;
+      const mutantMeasures = sheet.sourceMeasures;
+
+      const originalParts = Object.keys(mutationParams.tree);
+
+      const measures = [...Array(sheet.sourceMeasures.length).keys()];
+
       const measureXScale = d3
         .scaleBand()
-        .domain([...Array(sheet.sourceMeasures.length).keys()])
+        .domain(measures)
         .range([0, width])
         .paddingInner(0.1);
 
       const bw = measureXScale.bandwidth();
 
-      // all measures
+      const partDivisionScale = d3
+        .scaleBand()
+        .domain(originalParts)
+        .range([0, height])
+        .paddingInner(0.1);
+
+      const partContainerHeight = partDivisionScale.bandwidth();
+
       d3.select(container)
         .selectAll("svg")
-        .data(sheet.sourceMeasures)
+        .data(originalParts)
         .enter()
         .append("svg")
-        .attr("width", bw)
-        .attr("height", height)
-        .attr("x", (_, i) => measureXScale(i))
-        .attr("y", 20)
-        .each(function (d) {
-          const ml = d.verticalMeasureList;
-          const measureYScale = d3
-            .scaleBand()
-            .domain([...Array(ml.length).keys()])
-            .range([0, height])
-            .paddingInner(0.1);
+        .attr("width", width)
+        .attr("y", (_, i) => i * partContainerHeight)
+        .attr("height", partContainerHeight)
+        .each(function (partNumber) {
+          const ogStop =
+            mutationParams.cancerStart * measures.length +
+            mutationParams.how_many;
 
-          console.log(ml);
-          // each vertical measure, corresponding to a part
+          const childrenParts = mutationParams.tree[partNumber];
+
           d3.select(this)
             .selectAll("svg")
-            .data(ml)
+            .data(measures)
             .enter()
             .append("svg")
-            .attr("height", measureYScale.bandwidth())
+            .attr("x", (_, i) => i * bw)
             .attr("width", bw)
-            .attr("x", 0)
-            .attr("y", (_, i) => measureYScale(i))
-            .each(function (m) {
-              const voices = Object.values(m.vfVoices).filter(
-                (v) =>
-                  v.totalTicks.numerator / v.totalTicks.denominator >=
-                  v.ticksUsed.numerator / v.ticksUsed.denominator
-              );
+            .attr("height", partContainerHeight)
+            .each(function (measureNumber) {
+              const ml = [];
+              const ogML = ogMeasures[measureNumber].verticalMeasureList;
+              const mML = mutantMeasures[measureNumber].verticalMeasureList;
+              if (measureNumber <= ogStop) {
+                ml.push(ogML[partNumber]);
+              } else {
+                ml.push(mML[partNumber]);
+              }
 
-              const totalLength = Math.max(
-                ...voices.map(
-                  (v) => v.totalTicks.numerator / v.totalTicks.denominator
-                )
-              );
+              childrenParts.forEach((pn) => ml.push(mML[pn]));
 
-              // each measure has 1-N voices
-              const voiceHeightScale = d3
+              const measureYScale = d3
                 .scaleBand()
-                .domain([...Array(voices.length).keys()])
-                .range([0, measureYScale.bandwidth()])
+                .domain([...Array(ml.length).keys()])
+                .range([0, partContainerHeight])
                 .paddingInner(0.1);
 
-              const vbw = voiceHeightScale.bandwidth();
-
+              // each vertical measure, corresponding to a part
               d3.select(this)
                 .selectAll("svg")
-                .data(voices)
+                .data(ml)
                 .enter()
                 .append("svg")
-                .attr("height", vbw)
+                .attr("opacity", (_, i) => {
+                  if (
+                    i === 0 &&
+                    measureNumber >=
+                      Math.floor(
+                        mutationParams.cancerStart * measures.length
+                      ) &&
+                    childrenParts.length > 0
+                  ) {
+                    return 0.3;
+                  }
+                  return 1.0;
+                })
+                .attr("height", measureYScale.bandwidth())
                 .attr("width", bw)
                 .attr("x", 0)
-                .attr("y", (_, i) => voiceHeightScale(i))
-                .each(function (v) {
-                  // each voice has 1-N notes
-                  const { tickables } = v;
-                  const xScale = d3
-                    .scaleLinear()
-                    .domain([0, totalLength])
-                    .range([0, bw]);
-
-                  const notes = tickables.filter(
-                    (n) => n.attrs.type !== "GhostNote"
+                .attr("y", (_, i) => measureYScale(i))
+                .each(function (m) {
+                  const voices = Object.values(m.vfVoices).filter(
+                    (v) =>
+                      v.totalTicks.numerator / v.totalTicks.denominator >=
+                      v.ticksUsed.numerator / v.ticksUsed.denominator
                   );
 
-                  // https://ericjknapp.com/2019/09/26/midi-measures/
-                  // shifts pickups correctly
-                  let currentTime =
-                    totalLength -
-                    v.ticksUsed.numerator / v.ticksUsed.denominator;
+                  const totalLength = Math.max(
+                    ...voices.map(
+                      (v) => v.totalTicks.numerator / v.totalTicks.denominator
+                    )
+                  );
+
+                  // each measure has 1-N voices
+                  const voiceHeightScale = d3
+                    .scaleBand()
+                    .domain([...Array(voices.length).keys()])
+                    .range([0, measureYScale.bandwidth()])
+                    .paddingInner(0.1);
+
+                  const vbw = voiceHeightScale.bandwidth();
+
                   d3.select(this)
-                    .selectAll("rect")
-                    .data(notes)
+                    .selectAll("svg")
+                    .data(voices)
                     .enter()
-                    .append("rect")
+                    .append("svg")
                     .attr("height", vbw)
-                    .attr("y", 0)
-                    .attr("width", (note) => xScale(note.intrinsicTicks) - 1)
-                    .attr("x", (note) => {
-                      const time = currentTime;
-                      currentTime += note.intrinsicTicks;
-                      return xScale(time);
-                    })
-                    .attr("fill", (note) => {
-                      // deal with chords later
-                      // don't show rests
-                      if (note.noteType === "r") {
-                        return "gray";
-                      }
-                      const keyProp = note.keyProps[0];
-                      const { accidental, key } = keyProp;
-                      const pitch = key.charAt(0).toUpperCase();
+                    .attr("width", bw)
+                    .attr("x", 0)
+                    .attr("y", (_, i) => voiceHeightScale(i))
+                    .each(function (v) {
+                      // each voice has 1-N notes
+                      const { tickables } = v;
+                      const xScale = d3
+                        .scaleLinear()
+                        .domain([0, totalLength])
+                        .range([0, bw]);
 
-                      let colorIdx =
-                        keymap[pitch] + accidentalModifier[accidental];
+                      const notes = tickables.filter(
+                        (n) => n.attrs.type !== "GhostNote"
+                      );
 
-                      if (colorIdx < 0) {
-                        colorIdx += 12;
-                      }
-                      return colors[colorIdx % colors.length];
+                      // https://ericjknapp.com/2019/09/26/midi-measures/
+                      // shifts pickups correctly
+                      let currentTime =
+                        totalLength -
+                        v.ticksUsed.numerator / v.ticksUsed.denominator;
+                      d3.select(this)
+                        .selectAll("rect")
+                        .data(notes)
+                        .enter()
+                        .append("rect")
+                        .attr("height", vbw)
+                        .attr("y", 0)
+                        .attr(
+                          "width",
+                          (note) => xScale(note.intrinsicTicks) - 1
+                        )
+                        .attr("x", (note) => {
+                          const time = currentTime;
+                          currentTime += note.intrinsicTicks;
+                          return xScale(time);
+                        })
+                        .attr("fill", (note) => {
+                          // deal with chords later
+                          // don't show rests
+                          if (note.noteType === "r") {
+                            return "gray";
+                          }
+                          const keyProp = note.keyProps[0];
+                          const { accidental, key } = keyProp;
+                          const pitch = key.charAt(0).toUpperCase();
+
+                          let colorIdx =
+                            keymap[pitch] + accidentalModifier[accidental];
+
+                          if (colorIdx < 0) {
+                            colorIdx += 12;
+                          }
+                          return colors[colorIdx % colors.length];
+                        });
                     });
                 });
             });
