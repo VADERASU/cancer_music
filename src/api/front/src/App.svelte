@@ -16,6 +16,7 @@
   let mutant;
   let midi;
   let wav;
+  let originalWav;
   let file;
   let fileSheet;
   let mutationMetadata;
@@ -32,6 +33,7 @@
     fileSheet = null;
     mutant = null;
     midi = null;
+    originalWav = null;
     wav = null;
     mutationMetadata = null;
     hideParams = false;
@@ -88,16 +90,26 @@
               });
             }
 
+            // check if mutant or original, currently not doing anything with original midi
+            // need more foolproof way to check for mutant but this is fine for not
             if (e.filename.endsWith(".mid")) {
-              e.getData(new zip.BlobWriter("audio/midi")).then((res) => {
-                midi = res;
-              });
+              if (e.filename.startsWith("mutant_")) {
+                e.getData(new zip.BlobWriter("audio/midi")).then((res) => {
+                  midi = res;
+                });
+              }
             }
 
             if (e.filename.endsWith(".wav")) {
-              e.getData(new zip.BlobWriter("audio/wav")).then((res) => {
-                wav = res;
-              });
+              if (e.filename.startsWith("mutant_")) {
+                e.getData(new zip.BlobWriter("audio/wav")).then((res) => {
+                  wav = res;
+                });
+              } else {
+                e.getData(new zip.BlobWriter("audio/wav")).then((res) => {
+                  originalWav = res;
+                });
+              }
             }
           });
         });
@@ -220,7 +232,13 @@
     {/if}
     {#if mutant || wav || midi}
       {#key mutant}
-        <SaveToolBar musicxml={mutant} {wav} {midi}>
+        <SaveToolBar
+          musicxml={mutant}
+          {wav}
+          {midi}
+          {originalWav}
+          filename={file.name.split(".")[0]}
+        >
           <button class="red-button" on:click={resetToDefaults}>Reset</button>
         </SaveToolBar>
       {/key}

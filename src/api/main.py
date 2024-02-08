@@ -1,5 +1,4 @@
 import io
-import math
 import os
 import time
 import wave
@@ -67,9 +66,8 @@ def toStream(file: UploadFile):
     return s
 
 
-def mutant_filename(fname: str):
-    return f"mutant_{fname.split('.')[0]}"
-
+def drop_extension(fname: str):
+    return fname.split('.')[0]
 
 def log_error(
     file: UploadFile,
@@ -95,6 +93,22 @@ def log_error(
         f.write(f"{ts}: mutant parameters: {p}")
         f.write(f"{ts}: therapy parameters: {t}")
 
+def get_samples(fname: str):
+    utils.mkdir(os.path.join(this_dir, "music_samples"))
+    sample_dir = os.path.join(this_dir, "music_samples")
+
+    mfp = os.path.join(sample_dir, f"{fname}.mid")
+    wfp = os.path.join(sample_dir, f"{fname}.wav")
+
+    if os.path.isfile(wfp) and os.path.isfile(mfp):  
+        mf = open(mfp, mode="rb")
+        mfb = mf.read()
+
+        wf = open(wfp, mode="rb")
+        wfb = wf.read()
+
+        return (mfb, wfb) 
+    return None
 
 @app.post("/process_file")
 def process_file(
@@ -113,8 +127,6 @@ def process_file(
     seed: int,
     cancerStart: float,
     file: UploadFile,
-    midi: bool = False,
-    wav: bool = False,
 ):
     # MIDI? https://pypi.org/project/defusedxml/
 
@@ -142,7 +154,23 @@ def process_file(
         start=start,
     )
 
+    fname = drop_extension(file.filename)
+    files = []
     try:
+        # check if the hasn't already been saved
+
+        data = get_samples(fname)
+        mut_fname = f"mutant_{fname}"
+
+        if data is None:
+            mf = streamToMidiFile(s)
+            files.append((f"{fname}.mid", mf.writestr()))
+            files.append((f"{fname}.wav", midiToWav(mf)))
+        else:
+            mfb, wfb = data
+            files.append((f"{fname}.mid", mfb))
+            files.append((f"{fname}.wav", wfb))
+
         s, tree = mutate(
             s,
             mutation_parameters,
@@ -150,21 +178,13 @@ def process_file(
             seed=seed,
         )
 
-        fname = mutant_filename(file.filename)
-        files = []
-
-        mf = None
-        if midi:
-            mf = streamToMidiFile(s)
-            files.append((f"{fname}.mid", mf.writestr()))
-
-        if wav:
-            mf = streamToMidiFile(s) if mf is None else mf
-            files.append((f"{fname}.wav", midiToWav(mf)))
+        mf = streamToMidiFile(s)
+        files.append((f"{mut_fname}.mid", mf.writestr()))
+        files.append((f"{mut_fname}.wav", midiToWav(mf)))
 
         gex = GeneralObjectExporter()
         content = gex.parse(s)
-        files.append((f"{fname}.musicxml", content))
+        files.append((f"{mut_fname}.musicxml", content))
         files.append(("metadata.json", json.dumps(tree)))
         
     except Exception as e:
@@ -185,7 +205,7 @@ def process_file(
         content=zf.getvalue(),
         media_type="application/zip",
         headers={
-            "Content-Disposition": f"attachment;filename={mutant_filename}.zip"
+            "Content-Disposition": f"attachment;filename={mut_fname}.zip"
         },
     )
 
