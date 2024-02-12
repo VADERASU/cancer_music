@@ -1,4 +1,5 @@
 <script>
+  import "./api/init";
   import "./app.css";
   import { Stretch } from "svelte-loading-spinners";
   import * as zip from "@zip.js/zip.js";
@@ -258,7 +259,7 @@
 <div class="min-h-48">
   {#if mutant}
     {#key mutant}
-      <SheetDisplay musicxml={mutant} {vis} />
+      <SheetDisplay {midi} {vis} />
     {/key}
   {/if}
 </div>
