@@ -3,91 +3,118 @@
   import {
     blobToNoteSequence,
     Player,
-    StaffSVGVisualizer,
+    // StaffSVGVisualizer,
   } from "@magenta/music";
+
+  import { OpenSheetMusicDisplay } from "opensheetmusicdisplay";
+  // import { parseMXL } from "../api/parser";
 
   export let vis;
   export let midi;
-  let activeInstruments = [];
+  export let musicxml;
+  // let activeInstruments = [];
+  let osmd;
   let midiObject;
   let player;
   let container;
   let playState;
-  const staves = [];
+  let time = 0;
+  // const staves = [];
   // https://magenta.github.io/magenta-js/music/
 
-  function generateStaff(node, instrument) {
+  /* function generateStaff(node, instrument) {
     const staff = new StaffSVGVisualizer(midiObject, node, {
       instruments: [instrument],
-      pixelsPerTimeStep: 40,
-      scrollType: 2,
+      pixelsPerTimeStep: container.offsetWidth / 8,
     });
 
-    /* eslint-disable-next-line */
+    /* eslint-disable-next-line 
     staff.render.parentElement.lastChild.setAttribute("width", staff.width);
+    /* eslint-disable-next-line 
+    staff.render.clearSignatureOverlay();
+
     console.log(staff);
     staves.push(staff);
   }
 
   function setScrollPosition(pos) {
     staves.forEach((s) => {
-      /* eslint-disable-next-line */
+      /* eslint-disable-next-line 
       s.render.parentElement.scrollLeft = pos;
+      /* eslint-disable-next-line 
+      s.render.clearSignatureOverlay();
     });
-  }
+  } */
 
   onMount(() => {
-    console.log(vis, midi);
-    const width = container.offsetWidth;
-    console.log(container, width);
-    blobToNoteSequence(midi).then((res) => {
-      activeInstruments = [...new Set(res.notes.map((n) => n.instrument))];
-      midiObject = res;
-      let currentPos = 0;
-      let pages = 1;
-      player = new Player(false, {
-        run: (note) => {
-          const notePositions = staves.map((s) => s.redraw(note, false));
-          const sx = Math.max(...notePositions);
-          if (sx - currentPos > width) {
-            currentPos = pages * width;
-            pages += 1;
-            setScrollPosition(currentPos);
-          }
-        },
-        stop: () => {
-          playState = player.getPlayState();
-        },
+    osmd = new OpenSheetMusicDisplay(container, {
+      drawingParameters: "compacttight",
+      followCursor: false,
+      disableCursor: false,
+      renderSingleHorizontalStaffline: true,
+    });
+    osmd.load(musicxml).then(() => {
+      osmd.render();
+
+      const height = container.offsetHeight;
+      console.log(vis);
+      blobToNoteSequence(midi).then((res) => {
+        midiObject = res;
+        osmd.cursor.show();
+
+        player = new Player(false, {
+          run: (note) => {
+            // weird edge case where cursor will be thrown off if the rests have different durations
+            if (osmd.cursor.NotesUnderCursor().every((e) => e.isRestFlag)) {
+              osmd.cursor.next();
+            } else if (note.startTime > time) {
+              time = note.startTime;
+              osmd.cursor.next();
+              osmd.cursor.cursorElement.style.top = `0px`;
+              osmd.cursor.cursorElement.style.height = `${height}px`;
+              // const {left} = osmd.cursor.cursorElement.style;
+              // container.scrollLeft = left;
+            }
+          },
+          stop: () => {
+            playState = player.getPlayState();
+          },
+        });
+        osmd.cursor.cursorElement.style.height = `${height}px`;
+        osmd.cursor.cursorElement.style.top = `0px`;
+        playState = player.getPlayState();
       });
-      playState = player.getPlayState();
     });
   });
 
   function startPlayer() {
     if (playState === "stopped") {
+      osmd.cursor.reset();
+      time = 0;
       player.start(midiObject);
-      setScrollPosition(0);
     } else if (playState === "started") {
       player.pause();
     } else {
+      player.resumeContext();
       player.resume();
     }
     playState = player.getPlayState();
   }
 </script>
 
-<div
-  class="w-11/12 mx-auto max-h-screen overflow-auto mb-2"
-  bind:this={container}
->
+<div class="w-11/12 mx-auto">
   <div>
     <button on:click={startPlayer}>
       {playState === "started" ? "⏸ " : "▶"}
     </button>
   </div>
-  {#each activeInstruments as i}
-    <div use:generateStaff={i} />
-  {/each}
+
+  <div class="overflow-scroll max-h-screen">
+    <div
+      class="overflow-x-scroll overflow-y-hidden z-0"
+      bind:this={container}
+    />
+  </div>
 </div>
 
 <style>

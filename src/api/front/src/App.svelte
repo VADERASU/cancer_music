@@ -259,7 +259,7 @@
 <div class="min-h-48">
   {#if mutant}
     {#key mutant}
-      <SheetDisplay {midi} {vis} />
+      <SheetDisplay {midi} {vis} musicxml={mutant} />
     {/key}
   {/if}
 </div>
