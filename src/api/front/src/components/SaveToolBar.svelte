@@ -21,7 +21,7 @@
   $: wavURL = wav ? window.URL.createObjectURL(wav) : null;
 
   let originalWavURL;
-  $: originalWavURL = wav ? window.URL.createObjectURL(originalWav) : null;
+  $: originalWavURL = originalWav ? window.URL.createObjectURL(originalWav) : null;
 </script>
 
 <div class="sticky flex flex-col gap-1 w-full mb-2">
