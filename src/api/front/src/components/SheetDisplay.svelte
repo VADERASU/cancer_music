@@ -12,6 +12,7 @@
   let midiObject;
   let player;
   let container;
+  let playState;
   const staves = [];
   // https://magenta.github.io/magenta-js/music/
 
@@ -28,6 +29,13 @@
     staves.push(staff);
   }
 
+  function setScrollPosition(pos) {
+    staves.forEach((s) => {
+      /* eslint-disable-next-line */
+      s.render.parentElement.scrollLeft = pos;
+    });
+  }
+
   onMount(() => {
     console.log(vis, midi);
     const width = container.offsetWidth;
@@ -40,34 +48,43 @@
       player = new Player(false, {
         run: (note) => {
           const notePositions = staves.map((s) => s.redraw(note, false));
-          // absolute position
           const sx = Math.max(...notePositions);
           if (sx - currentPos > width) {
-            // need to scroll!
             currentPos = pages * width;
             pages += 1;
-
-            staves.forEach((s) => {
-              // staffOffset = 30
-              /* eslint-disable-next-line */
-              s.render.parentElement.scrollLeft = currentPos;
-            });
+            setScrollPosition(currentPos);
           }
         },
         stop: () => {
-          // staves.forEach((s) => s.redraw());
+          playState = player.getPlayState();
         },
       });
-      player.start(res);
-      console.log(player);
+      playState = player.getPlayState();
     });
   });
+
+  function startPlayer() {
+    if (playState === "stopped") {
+      player.start(midiObject);
+      setScrollPosition(0);
+    } else if (playState === "started") {
+      player.pause();
+    } else {
+      player.resume();
+    }
+    playState = player.getPlayState();
+  }
 </script>
 
 <div
   class="w-11/12 mx-auto max-h-screen overflow-auto mb-2"
   bind:this={container}
 >
+  <div>
+    <button on:click={startPlayer}>
+      {playState === "started" ? "⏸ " : "▶"}
+    </button>
+  </div>
   {#each activeInstruments as i}
     <div use:generateStaff={i} />
   {/each}
