@@ -12,39 +12,15 @@
   export let vis;
   export let midi;
   export let musicxml;
-  // let activeInstruments = [];
+
   let osmd;
   let midiObject;
   let player;
   let container;
   let playState;
   let time = 0;
-  // const staves = [];
+  let page = 0;
   // https://magenta.github.io/magenta-js/music/
-
-  /* function generateStaff(node, instrument) {
-    const staff = new StaffSVGVisualizer(midiObject, node, {
-      instruments: [instrument],
-      pixelsPerTimeStep: container.offsetWidth / 8,
-    });
-
-    /* eslint-disable-next-line 
-    staff.render.parentElement.lastChild.setAttribute("width", staff.width);
-    /* eslint-disable-next-line 
-    staff.render.clearSignatureOverlay();
-
-    console.log(staff);
-    staves.push(staff);
-  }
-
-  function setScrollPosition(pos) {
-    staves.forEach((s) => {
-      /* eslint-disable-next-line 
-      s.render.parentElement.scrollLeft = pos;
-      /* eslint-disable-next-line 
-      s.render.clearSignatureOverlay();
-    });
-  } */
 
   onMount(() => {
     osmd = new OpenSheetMusicDisplay(container, {
@@ -56,6 +32,7 @@
     osmd.load(musicxml).then(() => {
       osmd.render();
 
+      const width = container.offsetWidth;
       const height = container.offsetHeight;
       console.log(vis, container);
       blobToNoteSequence(midi).then((res) => {
@@ -72,8 +49,14 @@
               osmd.cursor.next();
               osmd.cursor.cursorElement.style.top = `0px`;
               osmd.cursor.cursorElement.style.height = `${height}px`;
-              const { left } = osmd.cursor.cursorElement.style;
-              container.scrollLeft = parseFloat(left.replace(/[^0-9.]/g, ""));
+
+              const left = parseFloat(
+                osmd.cursor.cursorElement.style.left.replace(/[^0-9.]/g, "")
+              );
+              if (left - container.scrollLeft > width) {
+                page += 1;
+                container.scrollLeft = page * width;
+              }
             }
           },
           stop: () => {
@@ -87,10 +70,16 @@
     });
   });
 
+  function resetPlayer() {
+    osmd.cursor.reset();
+    time = 0;
+    page = 0;
+    container.scrollLeft = 0;
+  }
+
   function startPlayer() {
     if (playState === "stopped") {
-      osmd.cursor.reset();
-      time = 0;
+      resetPlayer();
       player.start(midiObject);
     } else if (playState === "started") {
       player.pause();
