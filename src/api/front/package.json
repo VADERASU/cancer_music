@@ -27,6 +27,7 @@
     "opensheetmusicdisplay": "^1.7.5",
     "svelte": "^3.57.0",
     "svelte-loading-spinners": "^0.3.4",
+    "tone": "^14.7.77",
     "vite": "^4.3.2"
   }
 }

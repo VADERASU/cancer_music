@@ -1,13 +1,10 @@
 <script>
   import { onMount } from "svelte";
-  import {
-    blobToNoteSequence,
-    Player,
-    // StaffSVGVisualizer,
-  } from "@magenta/music";
+  import { blobToNoteSequence, SoundFontPlayer } from "@magenta/music";
 
   import { OpenSheetMusicDisplay } from "opensheetmusicdisplay";
   // import { parseMXL } from "../api/parser";
+  import * as Tone from "tone";
 
   export let vis;
   export let midi;
@@ -34,35 +31,48 @@
 
       const width = container.offsetWidth;
       const height = container.offsetHeight;
-      console.log(vis, container);
+      console.log(vis, container, osmd);
+
+      // https://dirk.net/2021/10/26/magenta-music-soundfontplayer-instrument-selection/
       blobToNoteSequence(midi).then((res) => {
         midiObject = res;
+        console.log(midiObject);
         osmd.cursor.show();
 
-        player = new Player(false, {
-          run: (note) => {
-            // weird edge case where cursor will be thrown off if the rests have different durations
-            if (osmd.cursor.NotesUnderCursor().every((e) => e.isRestFlag)) {
-              osmd.cursor.next();
-            } else if (note.startTime > time) {
-              time = note.startTime;
-              osmd.cursor.next();
-              osmd.cursor.cursorElement.style.top = `0px`;
-              osmd.cursor.cursorElement.style.height = `${height}px`;
-
-              const left = parseFloat(
-                osmd.cursor.cursorElement.style.left.replace(/[^0-9.]/g, "")
-              );
-              if (left - container.scrollLeft > width) {
-                page += 1;
-                container.scrollLeft = page * width;
+        player = new SoundFontPlayer(
+          "https://storage.googleapis.com/magentadata/js/soundfonts/sgm_plus",
+          Tone.Master,
+          new Map(),
+          new Map(),
+          {
+            run: (note) => {
+              // catch up if we're on rests
+              while(osmd.cursor.NotesUnderCursor().every((e) => e.isRestFlag)) { 
+                osmd.cursor.next();
               }
-            }
-          },
-          stop: () => {
-            playState = player.getPlayState();
-          },
-        });
+              if (note.startTime > time) {
+                time = note.startTime;
+                osmd.cursor.next();
+                osmd.cursor.cursorElement.style.top = `0px`;
+                osmd.cursor.cursorElement.style.height = `${height}px`;
+
+                const left = parseFloat(
+                  osmd.cursor.cursorElement.style.left.replace(/[^0-9.]/g, "")
+                );
+                if (left - container.scrollLeft > width) {
+                  page += 1;
+                  container.scrollLeft = page * width;
+                } else if (left - container.scrollLeft < 0) {
+                  page = 0;
+                  container.scrollLeft = 0;
+                }
+              }
+            },
+            stop: () => {
+              playState = player.getPlayState();
+            },
+          }
+        );
         osmd.cursor.cursorElement.style.height = `${height}px`;
         osmd.cursor.cursorElement.style.top = `0px`;
         playState = player.getPlayState();
