@@ -57,7 +57,7 @@
       osmd.render();
 
       const height = container.offsetHeight;
-      console.log(vis);
+      console.log(vis, container);
       blobToNoteSequence(midi).then((res) => {
         midiObject = res;
         osmd.cursor.show();
@@ -72,8 +72,8 @@
               osmd.cursor.next();
               osmd.cursor.cursorElement.style.top = `0px`;
               osmd.cursor.cursorElement.style.height = `${height}px`;
-              // const {left} = osmd.cursor.cursorElement.style;
-              // container.scrollLeft = left;
+              const { left } = osmd.cursor.cursorElement.style;
+              container.scrollLeft = parseFloat(left.replace(/[^0-9.]/g, ""));
             }
           },
           stop: () => {
