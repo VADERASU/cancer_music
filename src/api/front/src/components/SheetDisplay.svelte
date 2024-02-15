@@ -68,6 +68,13 @@
         playState = player.getPlayState();
       });
     });
+
+    // cleanup to avoid memory leak
+    return () => {
+      if (player) {
+        player.stop();
+      }
+    };
   });
 
   function resetPlayer() {

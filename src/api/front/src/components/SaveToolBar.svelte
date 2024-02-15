@@ -61,14 +61,4 @@
     </div>
   {/if}
 
-  {#if wavURL}
-    <div class="w-full justify-center">
-      Mutated
-
-      <audio class="mx-auto w-full" controls>
-        <source src={wavURL} type="audio/wav" />
-        Your browser does not support the audio element.
-      </audio>
-    </div>
-  {/if}
 </div>
