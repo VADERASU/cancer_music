@@ -1,7 +1,6 @@
 <script>
   export let onClick;
   export let label;
-
   export let toggled = false;
 
   $: css = toggled ? "selected" : "";
