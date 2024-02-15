@@ -31,12 +31,11 @@
 
       const width = container.offsetWidth;
       const height = container.offsetHeight;
-      console.log(vis, container, osmd);
+      console.log(vis);
 
       // https://dirk.net/2021/10/26/magenta-music-soundfontplayer-instrument-selection/
       blobToNoteSequence(midi).then((res) => {
         midiObject = res;
-        console.log(midiObject);
         osmd.cursor.show();
 
         player = new SoundFontPlayer(
@@ -47,7 +46,9 @@
           {
             run: (note) => {
               // catch up if we're on rests
-              while(osmd.cursor.NotesUnderCursor().every((e) => e.isRestFlag)) { 
+              while (
+                osmd.cursor.NotesUnderCursor().every((e) => e.isRestFlag)
+              ) {
                 osmd.cursor.next();
               }
               if (note.startTime > time) {
@@ -95,31 +96,33 @@
   }
 
   function startPlayer() {
+    // have to set playState manually -- the soundfont player seems to be bugged when setting state
     if (playState === "stopped") {
       resetPlayer();
       player.start(midiObject);
+      playState = "started";
     } else if (playState === "started") {
       player.pause();
+      playState = player.getPlayState();
     } else {
       player.resumeContext();
       player.resume();
+      playState = player.getPlayState();
     }
-    playState = player.getPlayState();
   }
 </script>
 
 <div class="w-11/12 mx-auto">
-  <div>
-    <button on:click={startPlayer}>
-      {playState === "started" ? "⏸ " : "▶"}
-    </button>
-  </div>
+  {#if player}
+    <div>
+      <button on:click={startPlayer}>
+        {playState === "started" ? "⏸ " : "▶"}
+      </button>
+    </div>
+  {/if}
 
   <div class="overflow-scroll max-h-screen">
-    <div
-      class="overflow-x-scroll overflow-y-hidden z-0"
-      bind:this={container}
-    />
+    <div class="overflow-x-scroll overflow-y-clip" bind:this={container} />
   </div>
 </div>
 
