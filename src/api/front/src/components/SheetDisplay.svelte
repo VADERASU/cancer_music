@@ -3,8 +3,8 @@
   import { blobToNoteSequence, SoundFontPlayer } from "@magenta/music";
 
   import { OpenSheetMusicDisplay } from "opensheetmusicdisplay";
-  // import { parseMXL } from "../api/parser";
   import * as Tone from "tone";
+  import { mutationMarkers } from "../api/constants";
 
   export let vis;
   export let midi;
@@ -36,7 +36,6 @@
 
       const width = container.offsetWidth;
       const height = container.offsetHeight;
-      console.log(vis);
 
       // https://dirk.net/2021/10/26/magenta-music-soundfontplayer-instrument-selection/
       blobToNoteSequence(midi).then((res) => {
@@ -115,6 +114,27 @@
       player.resume();
       playState = player.getPlayState();
     }
+  }
+
+  $: if (osmd) {
+    Object.keys(vis).forEach((mutation) => {
+      const marker = mutationMarkers[mutation];
+      const fx = vis[mutation];
+      const measureList = osmd.graphic.measureList.filter((d) =>
+        d.every((e) => e !== undefined)
+      );
+      measureList.forEach((m) => {
+        m.forEach((part) => {
+          part.staffEntries.forEach((s) => {
+            s.lyricsEntries.forEach((lyric) => {
+              if (lyric.lyricsEntry.text === marker) {
+                Object.values(fx).forEach((effect) => effect(s));
+              }
+            });
+          });
+        });
+      });
+    });
   }
 </script>
 

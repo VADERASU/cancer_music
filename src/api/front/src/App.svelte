@@ -13,6 +13,7 @@
   import original from "./images/original.svg";
   import therapy from "./images/therapy.svg";
   import header from "./images/chaos_music.png";
+    import VisualParameters from "./components/VisualParameters.svelte";
 
   let mutant;
   let midi;
@@ -247,6 +248,7 @@
         >
           <button class="red-button" on:click={resetToDefaults}>Reset</button>
         </SaveToolBar>
+        <VisualParameters bind:vis />
       {/key}
     {/if}
   </div>
