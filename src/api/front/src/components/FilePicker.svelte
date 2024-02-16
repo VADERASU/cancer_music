@@ -1,5 +1,8 @@
 <script>
   export let file;
+  export let fileSheet;
+
+  import { parseMXL, mxlToString } from "../api/parser";
 
   let choice = "twinkle.mxl";
 
@@ -25,6 +28,14 @@
   const readFile = (e) => {
     [file] = e.target.files;
   };
+
+  $: if (file) {
+    mxlToString(file)
+      .then((text) => parseMXL(text))
+      .then((content) => {
+        fileSheet = content;
+      });
+  }
 </script>
 
 <div>

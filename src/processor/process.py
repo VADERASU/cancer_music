@@ -56,20 +56,31 @@ def mutate(
     parts = s.getElementsByClass("Part")
     rng = utils.reseed(seed)
 
+    tree = {}
+    
+    for i, p in enumerate(parts):
+        p.id = i
+        tree[p.id] = []
+        
     mutants = []
     # possibility of multiple parts being chosen
     candidates = rng.sample(parts, rng.randint(1, len(parts)))
+    candidates.sort(key=lambda x: x.id)
+    child_id = len(parts)
     for i, candidate in enumerate(candidates):
         start = utils.get_percentile_measure_number(candidate, params["start"])
-        mutants.extend(
-            mutate_part(candidate, [], rng, params, start, 0, str(i + 1))
-        )
+        
+        # part ID is its staff number
+        children = mutate_part(candidate, [], rng, params, start, 0, child_id)  
+        child_id += len(children)
+        mutants.extend(children)
 
         f = utils.get_first_element(candidate.getElementsByClass("Measure")[0])
-        f.addLyric(i + 1)
+        f.addLyric(candidate.id)
 
         # clear the rest of the part
         cleared = utils.clear_part(candidate, start)
+        tree[candidate.id] = [c.id for c in children]
         s.replace(candidate, cleared)
 
     if t_params["therapy_mode"] == Therapy.CURE:
@@ -80,11 +91,11 @@ def mutate(
             mutants,
             int(len(mutants) * (1 - t_params["mutant_survival"])),
         )
-        deadIDs = list(map(lambda e: e.partId, dead))
+        deadIDs = list(map(lambda e: e.id, dead))
         # don't apply treatment to mutants not in dead
         treated = []
         for mutant in mutants:
-            if mutant.partId in deadIDs:
+            if mutant.id in deadIDs:
                 mutant = utils.clear_part(mutant, t_start)
                 f = utils.get_first_element(
                     mutant.getElementsByClass("Measure")[0]
@@ -95,7 +106,7 @@ def mutate(
     else:
         [s.append(mutant) for mutant in mutants]
 
-    return s
+    return s, tree
 
 
 def mutate_part(
@@ -105,8 +116,7 @@ def mutate_part(
     params: Parameters,
     prev_start: int,
     offset: int,
-    parentID: str,
-    thisID: str = "1",
+    id: int,
     mutate_parent: bool = False,
 ) -> List[Part]:
     if len(mutants) < params["max_parts"]:
@@ -127,7 +137,7 @@ def mutate_part(
         if len(tumors) < params["how_many"]:
             return mutants
 
-        dup = utils.duplicate_part(p)
+        dup = utils.duplicate_part(p, id)
         dpm = dup.getElementsByClass("Measure")[prev_start + offset :]
 
         to_duplicate = []
@@ -162,13 +172,12 @@ def mutate_part(
                 if rng.random() < params["reproduction"]:
                     to_duplicate.append(prev_start + params["how_many"] + i)
 
-        id = f"{parentID}.{thisID}"
-
         # mark ancestry - can throw this into a function as well
         f = utils.get_first_element(dup.getElementsByClass("Measure")[0])
         f.addLyric(id)
 
         mutants.append(dup)
+        child_id = id + 1
         for i, child in enumerate(to_duplicate):
             mutate_part(
                 dup,
@@ -177,10 +186,11 @@ def mutate_part(
                 params,
                 child,
                 rng.randint(1, params["how_many"]),
-                id,
-                str(i + 1),
+                child_id,
                 True,
             )
+            child_id += 1
+
         dup.makeBeams(inPlace=True)
 
         if mutate_parent:

@@ -6,8 +6,9 @@
   // import { parseMXL } from "../api/parser";
   import * as Tone from "tone";
 
-  export let vis;
   export let midi;
+  export let original;
+  export let mutationParams;
   export let musicxml;
 
   let osmd;
@@ -31,12 +32,14 @@
       disableCursor: false,
       renderSingleHorizontalStaffline: true,
     });
+
+    console.log(mutationParams, original);
+
     osmd.load(musicxml).then(() => {
       osmd.render();
 
       const width = container.offsetWidth;
       const height = container.offsetHeight;
-      console.log(vis);
 
       // https://dirk.net/2021/10/26/magenta-music-soundfontplayer-instrument-selection/
       blobToNoteSequence(midi).then((res) => {
