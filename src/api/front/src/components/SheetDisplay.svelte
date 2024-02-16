@@ -19,6 +19,11 @@
   let page = 0;
   // https://magenta.github.io/magenta-js/music/
 
+  function setCursorStyle(h) {
+    osmd.cursor.cursorElement.style.height = `${h}px`;
+    osmd.cursor.cursorElement.style.top = `0px`;
+  }
+
   onMount(() => {
     osmd = new OpenSheetMusicDisplay(container, {
       drawingParameters: "compacttight",
@@ -37,6 +42,7 @@
       blobToNoteSequence(midi).then((res) => {
         midiObject = res;
         osmd.cursor.show();
+        setCursorStyle(height);
 
         player = new SoundFontPlayer(
           "https://storage.googleapis.com/magentadata/js/soundfonts/sgm_plus",
@@ -50,12 +56,12 @@
                 osmd.cursor.NotesUnderCursor().every((e) => e.isRestFlag)
               ) {
                 osmd.cursor.next();
+                setCursorStyle(height);
               }
               if (note.startTime > time) {
                 time = note.startTime;
                 osmd.cursor.next();
-                osmd.cursor.cursorElement.style.top = `0px`;
-                osmd.cursor.cursorElement.style.height = `${height}px`;
+                setCursorStyle(height);
 
                 const left = parseFloat(
                   osmd.cursor.cursorElement.style.left.replace(/[^0-9.]/g, "")
@@ -74,8 +80,7 @@
             },
           }
         );
-        osmd.cursor.cursorElement.style.height = `${height}px`;
-        osmd.cursor.cursorElement.style.top = `0px`;
+
         playState = player.getPlayState();
       });
     });
@@ -90,6 +95,7 @@
 
   function resetPlayer() {
     osmd.cursor.reset();
+    setCursorStyle(container.offsetHeight);
     time = 0;
     page = 0;
     container.scrollLeft = 0;
