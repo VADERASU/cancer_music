@@ -172,7 +172,7 @@ def process_file(
             files.append((f"{fname}.mid", mfb))
             files.append((f"{fname}.wav", wfb))
 
-        s = mutate(
+        s, tree = mutate(
             s,
             mutation_parameters,
             therapy_parameters,
@@ -182,7 +182,8 @@ def process_file(
         mf = streamToMidiFile(s)
         files.append((f"{mut_fname}.mid", mf.writestr()))
         files.append((f"{mut_fname}.wav", midiToWav(mf)))
-
+        files.append(("metadata.json", json.dumps(tree)))
+        
         gex = GeneralObjectExporter()
         content = gex.parse(s)
         files.append((f"{fname}.musicxml", content))
