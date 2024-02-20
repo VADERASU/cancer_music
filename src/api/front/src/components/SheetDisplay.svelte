@@ -112,7 +112,7 @@
           if (i > 0) {
             const d = groupedMeasures[i - 1];
             const wl = d.length * bw;
-            return getX(i - 1, w + wl + (xPad * mutationParams.how_many));
+            return getX(i - 1, w + wl + xPad * mutationParams.how_many);
           }
           return w;
         };
@@ -351,16 +351,35 @@
     return sequence.flat();
   }
 
-  function renderCursor(note) {
+  function getAbsX(note) {
+    return (
+      getAttr(note.svg, "x") +
+      getAttr(note.mgSVG, "x") +
+      getAttr(note.measureSVG, "x")
+    );
+  }
+
+  function renderCursor() {
+    const note = cursorSequence[noteIdx];
+    let next = null;
+    if (noteIdx + 1 < cursorSequence.length) {
+      next = cursorSequence[noteIdx + 1];
+    }
     if (note) {
       cursor.setAttribute("height", cursorHeight);
-      cursor.setAttribute("width", getAttr(note.svg, "width"));
-      cursor.setAttribute(
-        "x",
-        getAttr(note.svg, "x") +
-          getAttr(note.mgSVG, "x") +
-          getAttr(note.measureSVG, "x")
-      );
+      cursor.setAttribute("x", getAbsX(note));
+
+      if (next === null) {
+        cursor.setAttribute("width", getAttr(note.svg, "width"));
+      } else {
+        const thisX = getAbsX(note);
+        const nextX = getAbsX(next);
+        let width = getAttr(note.svg, "width");
+        if (nextX - thisX < width) {
+          width = thisX - nextX;
+        }
+        cursor.setAttribute("width", width);
+      }
     }
   }
 
@@ -385,7 +404,7 @@
               if (note.startTime > time) {
                 time = note.startTime;
                 noteIdx += 1;
-                renderCursor(cursorSequence[noteIdx]);
+                renderCursor(noteIdx);
               }
             },
             stop: () => {
@@ -409,7 +428,7 @@
   function resetPlayer() {
     time = 0;
     noteIdx = 0;
-    renderCursor(cursorSequence[noteIdx]);
+    renderCursor(noteIdx);
   }
 
   function startPlayer() {
