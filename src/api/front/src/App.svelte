@@ -86,8 +86,7 @@
 
             if (e.filename.endsWith(".json")) {
               e.getData(new zip.TextWriter()).then((res) => {
-                mutationMetadata = params;
-                mutationMetadata.tree = JSON.parse(res);
+                mutationMetadata = {...params, tree: JSON.parse(res)}; 
               });
             }
 
@@ -252,7 +251,7 @@
   {/if}
 </div>
 <div class="min-h-48">
-  {#if mutant}
+  {#if mutant && mutationMetadata}
     {#key mutant}
       <SheetDisplay
         {midi}
