@@ -8,7 +8,7 @@
   let howMany = 4;
   let maxParts = 4;
   let reproductionProbability = 0.3;
-  let cancerStart = 0.25;
+  let cancerStart = 0.1;
   let seed = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
 
   const probabilities = {
