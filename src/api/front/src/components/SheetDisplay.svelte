@@ -20,7 +20,6 @@
   let noteIdx = 0;
   let cursorSequence = [];
   let cursorHeight = 0;
-  // let page = 0;
 
   // https://magenta.github.io/magenta-js/music/
 
@@ -113,7 +112,7 @@
           if (i > 0) {
             const d = groupedMeasures[i - 1];
             const wl = d.length * bw;
-            return getX(i - 1, w + wl + xPad * mutationParams.how_many);
+            return getX(i - 1, w + wl + (xPad * mutationParams.how_many));
           }
           return w;
         };
@@ -439,7 +438,7 @@
     </div>
   {/if}
 
-  <svg class="w-11/12 h-screen" bind:this={container}>
+  <svg class="w-full h-screen" bind:this={container}>
     <rect bind:this={cursor} stroke="black" opacity="0.5" stroke-width="3" />
   </svg>
 </div>
