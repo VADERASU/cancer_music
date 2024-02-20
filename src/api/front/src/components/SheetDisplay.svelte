@@ -11,7 +11,6 @@
   export let mutationParams;
   export let musicxml;
 
-
   let midiObject;
   let player;
   let cursor;
@@ -55,6 +54,7 @@
     const cancerStart = Math.floor(
       mutationParams.cancerStart * measures.length
     );
+    const therapyStart = Math.floor(mutationParams.start * measures.length);
     const howMany = mutationParams.how_many;
     const groupedMeasures = [];
     groupedMeasures.push(measures.slice(0, cancerStart));
@@ -80,7 +80,7 @@
     const xPad = measureXScaleUnPadded.bandwidth() - measureXScale.bandwidth();
 
     const bw = measureXScale.bandwidth();
-    
+
     const partDivisionScale = d3
       .scaleBand()
       .domain(originalParts)
@@ -91,6 +91,8 @@
 
     cursorHeight = partContainerHeight * originalParts.length;
 
+    let therapyStartX = 0;
+    let cancerStartX = 0;
     const notePositions = [];
     d3.select(container)
       .selectAll("svg")
@@ -152,6 +154,16 @@
                   ml.push(mML[partNumber]);
                 }
                 const measureSVG = this;
+
+                if (measureNumber === therapyStart) {
+                  therapyStartX =
+                    getAttr(mgSVG, "x") + getAttr(measureSVG, "x");
+                }
+
+                if (measureNumber === cancerStart) {
+                  cancerStartX = getAttr(mgSVG, "x") + getAttr(measureSVG, "x");
+                }
+
                 childrenParts.forEach((pn) => ml.push(mML[pn]));
 
                 const measureYScale = d3
@@ -294,6 +306,23 @@
               });
           });
       });
+
+    if (mutationParams.mode !== 0) {
+      d3.select(container)
+        .append("rect")
+        .attr("x", therapyStartX)
+        .attr("height", cursorHeight)
+        .attr("width", 5)
+        .attr("fill", "blue");
+    }
+
+    d3.select(container)
+      .append("rect")
+      .attr("x", cancerStartX)
+      .attr("height", cursorHeight)
+      .attr("width", 5)
+      .attr("fill", "red");
+
     // sourcemeasures gives you # measures
     // in each sourceMeasure there is activeTimeSignature giving you time
     // vertical measure list gives you each part
@@ -354,7 +383,6 @@
           new Map(),
           {
             run: (note) => {
-              // catch up if we're on rests
               if (note.startTime > time) {
                 time = note.startTime;
                 noteIdx += 1;
@@ -413,7 +441,7 @@
 
   <svg class="w-11/12 h-screen" bind:this={container}>
     <rect bind:this={cursor} stroke="black" opacity="0.5" stroke-width="3" />
-    </svg>
+  </svg>
 </div>
 
 <style>

@@ -21,7 +21,7 @@
   };
 
   const therapy = {
-    mode: 0, // OFF, CURE
+    mode: 1, // OFF, CURE
     start: 0.75,
     mutant_survival: 0.5,
   };
