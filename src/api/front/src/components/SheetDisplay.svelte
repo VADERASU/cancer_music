@@ -369,7 +369,7 @@
       cursor.setAttribute("height", cursorHeight);
       cursor.setAttribute("x", getAbsX(note));
 
-      if (next === null) {
+      if (next === null || note.measureSVG !== next.measureSVG) {
         cursor.setAttribute("width", getAttr(note.svg, "width"));
       } else {
         const thisX = getAbsX(note);
