@@ -11,13 +11,17 @@
   export let mutationParams;
   export let musicxml;
 
-  let osmd;
+
   let midiObject;
   let player;
+  let cursor;
   let container;
   let playState;
   let time = 0;
-  let page = 0;
+  let noteIdx = 0;
+  let cursorSequence = [];
+  let cursorHeight = 0;
+  // let page = 0;
 
   // https://magenta.github.io/magenta-js/music/
 
@@ -39,9 +43,8 @@
   const keymap = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
   const accidentalModifier = { n: 0, "#": 1, "##": 2, b: -1, bb: -2, null: 0 };
 
-  function setCursorStyle(h) {
-    osmd.cursor.cursorElement.style.height = `${h}px`;
-    osmd.cursor.cursorElement.style.top = `0px`;
+  function getAttr(svg, attr) {
+    return parseFloat(svg.getAttribute(attr));
   }
 
   function render(width, height, sheet) {
@@ -77,7 +80,7 @@
     const xPad = measureXScaleUnPadded.bandwidth() - measureXScale.bandwidth();
 
     const bw = measureXScale.bandwidth();
-
+    
     const partDivisionScale = d3
       .scaleBand()
       .domain(originalParts)
@@ -86,11 +89,14 @@
 
     const partContainerHeight = partDivisionScale.bandwidth();
 
+    cursorHeight = partContainerHeight * originalParts.length;
+
+    const notePositions = [];
     d3.select(container)
       .selectAll("svg")
       .data(originalParts)
       .enter()
-      .append("svg")
+      .insert("svg", "rect")
       .attr("width", width)
       .attr("y", (_, i) => i * partContainerHeight)
       .attr("height", partContainerHeight)
@@ -127,6 +133,7 @@
               .attr("height", partContainerHeight)
               .attr("fill", "none");
 
+            const mgSVG = this;
             d3.select(this)
               .selectAll("svg")
               .data(measureGroup)
@@ -144,7 +151,7 @@
                 } else {
                   ml.push(mML[partNumber]);
                 }
-
+                const measureSVG = this;
                 childrenParts.forEach((pn) => ml.push(mML[pn]));
 
                 const measureYScale = d3
@@ -220,9 +227,10 @@
 
                         // https://ericjknapp.com/2019/09/26/midi-measures/
                         // shifts pickups correctly
-                        let currentTime =
-                          totalLength -
-                          v.ticksUsed.numerator / v.ticksUsed.denominator;
+                        let localTime = 0;
+                        // totalLength -
+                        // v.ticksUsed.numerator / v.ticksUsed.denominator;
+
                         d3.select(this)
                           .selectAll("rect")
                           .data(notes)
@@ -235,8 +243,8 @@
                             (note) => xScale(note.intrinsicTicks) - 1
                           )
                           .attr("x", (note) => {
-                            const t = currentTime;
-                            currentTime += note.intrinsicTicks;
+                            const t = localTime;
+                            localTime += note.intrinsicTicks;
                             return xScale(t);
                           })
                           .attr("fill", (note) => {
@@ -257,6 +265,16 @@
                               colorIdx += 12;
                             }
                             return colors[colorIdx % colors.length];
+                          })
+                          .each(function (note) {
+                            if (note.noteType !== "r") {
+                              notePositions.push({
+                                svg: this,
+                                measureNumber,
+                                mgSVG,
+                                measureSVG,
+                              });
+                            }
                           });
                       });
                   });
@@ -281,21 +299,53 @@
     // vertical measure list gives you each part
     // vf voices is voices per measure
     // tickables.keys & .duration is the note value
+    const sequence = measures.map((measureNumber) => {
+      const notes = notePositions.filter(
+        (e) => e.measureNumber === measureNumber
+      );
+      const xGroups = d3.group(notes, (n) => getAttr(n.svg, "x"));
+      return [...xGroups.values()]
+        .map(
+          (g) =>
+            g.reduce(
+              (acc, v) => {
+                const w = getAttr(v.svg, "width");
+                if (w < acc.width) {
+                  return { note: v, width: w };
+                }
+                return acc;
+              },
+              { note: null, width: Number.MAX_VALUE }
+            ).note
+        )
+        .sort((a, b) => getAttr(a.svg, "x") - getAttr(b.svg, "x"));
+    });
+    return sequence.flat();
+  }
+
+  function renderCursor(note) {
+    if (note) {
+      cursor.setAttribute("height", cursorHeight);
+      cursor.setAttribute("width", getAttr(note.svg, "width"));
+      cursor.setAttribute(
+        "x",
+        getAttr(note.svg, "x") +
+          getAttr(note.mgSVG, "x") +
+          getAttr(note.measureSVG, "x")
+      );
+    }
   }
 
   onMount(() => {
-    console.log(mutationParams, original);
-
     parseMXL(musicxml).then((sheet) => {
       const width = container.clientWidth;
       const height = container.clientHeight;
 
-      console.log(container);
-      console.log(width, height);
-      render(width, height, sheet);
+      cursorSequence = render(width, height, sheet);
       // https://dirk.net/2021/10/26/magenta-music-soundfontplayer-instrument-selection/
       blobToNoteSequence(midi).then((res) => {
         midiObject = res;
+        renderCursor(cursorSequence[0]);
 
         player = new SoundFontPlayer(
           "https://storage.googleapis.com/magentadata/js/soundfonts/sgm_plus",
@@ -305,27 +355,10 @@
           {
             run: (note) => {
               // catch up if we're on rests
-              while (
-                osmd.cursor.NotesUnderCursor().every((e) => e.isRestFlag)
-              ) {
-                osmd.cursor.next();
-                setCursorStyle(height);
-              }
               if (note.startTime > time) {
                 time = note.startTime;
-                osmd.cursor.next();
-                setCursorStyle(height);
-
-                const left = parseFloat(
-                  osmd.cursor.cursorElement.style.left.replace(/[^0-9.]/g, "")
-                );
-                if (left - container.scrollLeft > width) {
-                  page += 1;
-                  container.scrollLeft = page * width;
-                } else if (left - container.scrollLeft < 0) {
-                  page = 0;
-                  container.scrollLeft = 0;
-                }
+                noteIdx += 1;
+                renderCursor(cursorSequence[noteIdx]);
               }
             },
             stop: () => {
@@ -347,11 +380,9 @@
   });
 
   function resetPlayer() {
-    osmd.cursor.reset();
-    setCursorStyle(container.offsetHeight);
     time = 0;
-    page = 0;
-    container.scrollLeft = 0;
+    noteIdx = 0;
+    renderCursor(cursorSequence[noteIdx]);
   }
 
   function startPlayer() {
@@ -380,7 +411,9 @@
     </div>
   {/if}
 
-  <svg class="w-11/12 h-screen" bind:this={container} />
+  <svg class="w-11/12 h-screen" bind:this={container}>
+    <rect bind:this={cursor} stroke="black" opacity="0.5" stroke-width="3" />
+    </svg>
 </div>
 
 <style>
