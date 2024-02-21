@@ -161,6 +161,8 @@ def process_file(
         therapy_mode=Therapy(mode),
         mutant_survival=mutant_survival,
         start=start,
+        adaptive_threshold=2,
+        adaptive_interval=8,
     )
 
     fname = drop_extension(file.filename)

@@ -27,6 +27,15 @@ def reseed(seed: Optional[int] = None):
     return rng
 
 
+def choose_for_slices(start, end, steps, rng):
+    choices = []
+    for i in range(start, end, steps):
+        vals = [n for n in range(i, min(i + steps, end))]
+        if len(vals) == steps:
+            choices.append(rng.choice(vals))
+    return choices
+
+
 @typechecked
 def get_time(m: Measure) -> TimeSignature:
     """
@@ -41,6 +50,13 @@ def get_time(m: Measure) -> TimeSignature:
         return ts
     else:
         raise ValueError(f"No time signature found for measure {m.number}.")
+
+
+@typechecked
+def annotate_first_of_measure(p: Stream, number: int, *args: str):
+    f = get_first_element(p.getElementsByClass("Measure")[number])
+    for text in args:
+        f.addLyric(text)
 
 
 @typechecked
@@ -238,12 +254,11 @@ def get_score_length_in_measures(s: Score):
     return max([len(p.getElementsByClass("Measure")) for p in parts])
 
 
-def slice_part(p, start, end):
+def slice_part(p, start, end, dropList=[], removeLyrics=False):
     measures = p.getElementsByClass("Measure")
-
     return list(
         map(
-            lambda m: copy_measure(m),
+            lambda m: copy_measure(m, dropList, removeLyrics),
             measures[start:end],
         )
     )

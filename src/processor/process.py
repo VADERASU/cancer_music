@@ -42,7 +42,11 @@ def mutate(
         start=0.1,
     ),
     t_params: TherapyParameters = TherapyParameters(
-        therapy_mode=Therapy.OFF, mutant_survival=0.0, start=0.0
+        therapy_mode=Therapy.OFF,
+        mutant_survival=0.0,
+        start=0.0,
+        adaptive_threshold=2,
+        adaptive_interval=8,
     ),
     seed: int = random.randrange(sys.maxsize),
 ):
@@ -82,24 +86,24 @@ def mutate(
         np = None
         if p in candidates:
             np = utils.duplicate_part_keep_measures(p, p.id, cancer_start)
-            tumors = list(
-                map(
-                    lambda measure: utils.copy_measure(
-                        measure,
-                        ["Clef", "KeySignature", "TimeSignature"],
-                        removeLyrics=True,
-                    ),
-                    p.getElementsByClass("Measure")[
-                        cancer_start : cancer_start + params["how_many"]
-                    ],
-                )
+            
+            tumors = utils.slice_part(
+                p,
+                cancer_start,
+                cancer_start + params["how_many"],
+                dropList=["Clef", "KeySignature", "TimeSignature"],
+                removeLyrics=True,
             )
+
             mutants.append(np)
             mutation_info[np.id] = {
                 "parent": p,
                 "tumors": tumors,
                 "alive": True,
                 "start": cancer_start,
+                "mutants": utils.choose_for_slices(
+                    cancer_start, score_length, params["how_many"], rng
+                ),
             }
         else:
             np = utils.duplicate_part_keep_measures(
@@ -112,10 +116,24 @@ def mutate(
     offspring_count = 0
 
     # slice
-    print(therapy_start)
     therapy_started = False
     for i in range(cancer_start, score_length):
-        if i == therapy_start and not therapy_started:
+        # have adaptive therapy check every 2
+        if (
+            t_params["therapy_mode"] == Therapy.ADAPTIVE
+            and (i - cancer_start) % t_params["adaptive_interval"] == 0
+        ):
+            # try to keep the number of mutants down
+            alive = [mut for mut in mutants if mutation_info[mut.id]["alive"]]
+            if len(alive) > t_params["adaptive_threshold"]:
+                to_kill = rng.sample(
+                    alive, len(alive) - t_params["adaptive_threshold"]
+                )
+                for mp in to_kill:
+                    mutation_info[mp.id]["alive"] = False
+                    utils.annotate_first_of_measure(mp, i, "c")
+
+        elif i == therapy_start and not therapy_started:
             if t_params["therapy_mode"] == Therapy.CURE:
                 for mp in mutants:
                     mutation_info[mp.id]["alive"] = False
@@ -123,18 +141,12 @@ def mutate(
             if t_params["therapy_mode"] == Therapy.PARTIAL_CURE:
                 # all but one die
                 survivor = rng.choice(mutants)
-                f = utils.get_first_element(
-                    survivor.getElementsByClass("Measure")[0]
-                )
-                f.addLyric("s")
+                utils.annotate_first_of_measure(survivor, i, "s")
 
                 for mp in mutants:
                     if mp.id != survivor.id:
                         mutation_info[mp.id]["alive"] = False
-                        f = utils.get_first_element(
-                            mp.getElementsByClass("Measure")[0]
-                        )
-                        f.addLyric("c")
+                        utils.annotate_first_of_measure(mp, i, "c")
             therapy_started = True
 
         for mp in mutants:
@@ -143,49 +155,45 @@ def mutate(
             parent = m_info["parent"]
             is_alive = m_info["alive"]
             start = m_info["start"]
-            cycle = i - start
+            to_mutate = m_info["mutants"]
 
-            if is_alive and cycle % params["how_many"] == 0:
-                dms = mp.getElementsByClass("Measure")[
-                    i : i + params["how_many"]
-                ]
-                candidate = rng.choice(
-                    [k for k in range(0, params["how_many"])]
-                )
-                for j, dm in enumerate(dms):
-                    t = tumors[(i + j) % len(tumors)]
-                    if j == candidate:
-                        mutation = choose_mutation(
-                            rng,
-                            [
-                                params["noop"],
-                                params["insertion"],
-                                params["transposition"],
-                                params["deletion"],
-                                params["translocation"],
-                                params["inversion"],
-                            ],
-                        )
-                    else:
-                        mutation = noop
-                    mutant_measure = mutation(t, rng, parent)
-                    mutant_measure.number = dm.number
-                    mutant_measure.makeBeams(inPlace=True)
-                    mp.replace(dm, mutant_measure)
+            if is_alive:
+                dm = mp.getElementsByClass("Measure")[i]
+                t = tumors[i % len(tumors)]
+                if i in to_mutate:
+                    mutation = choose_mutation(
+                        rng,
+                        [
+                            params["noop"],
+                            params["insertion"],
+                            params["transposition"],
+                            params["deletion"],
+                            params["translocation"],
+                            params["inversion"],
+                        ],
+                    )
+                else:
+                    mutation = noop
+                mutant_measure = mutation(t, rng, parent)
+                mutant_measure.number = dm.number
+                mutant_measure.makeBeams(inPlace=True)
+                mp.replace(dm, mutant_measure)
+                tumors[i % len(tumors)] = mutant_measure
 
-                    tumors[(i + j) % len(tumors)] = mutant_measure
-                    # check if we will reproduce this group or not
-
-                if rng.random() < params["reproduction"]:
+                if (i - start) % params[
+                    "how_many"
+                ] == 0 and rng.random() < params["reproduction"]:
                     # if there's still room, create a new part
                     if offspring_count < params["max_parts"]:
                         dup = utils.duplicate_part(mp, available_id)
-                        f = utils.get_first_element(
-                            dup.getElementsByClass("Measure")[0]
+                        utils.annotate_first_of_measure(
+                            dup, 0, f"a.{mp.id}", str(available_id)
                         )
-                        f.addLyric(f"a.{mp.id}")
-                        f.addLyric(available_id)
                         mutants.append(dup)
+                        new_start = i + rng.randint(
+                            0, math.floor(params["how_many"] / 2)
+                        )
+
                         # take greatest ancestor as parent for transpositions
                         mutation_info[dup.id] = {
                             "parent": parent,
@@ -203,11 +211,14 @@ def mutate(
                                     tumors,
                                 ),
                             ),
-                            "start": i
-                            + rng.randint(
-                                0, math.floor(params["how_many"] / 2)
-                            ),
+                            "start": new_start,
                             "alive": True,
+                            "mutants": utils.choose_for_slices(
+                                cancer_start,
+                                score_length,
+                                params["how_many"],
+                                rng,
+                            ),
                         }
                         available_id += 1
                         offspring_count += 1
@@ -224,10 +235,9 @@ def mutate(
                             new_child = rng.choice(dead)
                             mutation_info[new_child.id]["alive"] = True
                             mutation_info[new_child.id]["start"] = i
-                            f = utils.get_first_element(
-                                new_child.getElementsByClass("Measure")[0]
+                            utils.annotate_first_of_measure(
+                                new_child, 0, f"r.{mp.id}"
                             )
-                            f.addLyric(f"r.{mp.id}")
 
     all_parts.extend(mutants)
     all_parts.sort(key=lambda x: x.id)

@@ -21,9 +21,10 @@
   };
 
   const therapy = {
-    mode: 2, // OFF, CURE
+    mode: 3, // OFF, FULL_CURE, PARTIAL_CURE, ADAPTIVE
     start: 0.5,
     mutant_survival: 0.5,
+    adaptive_therapy_interval: 8
   };
 
   let sum = 1;
@@ -129,9 +130,10 @@
             <option value={0}>Off</option>
             <option value={1}>Full Cure</option>
             <option value={2}>Partial Cure</option>
+            <option value={3}>Adaptive</option>
           </select>
         </div>
-        {#if therapy.mode !== 0}
+        {#if therapy.mode !== 0 && therapy.mode !== 3}
           <ProbSlider text="Therapy start" bind:val={therapy.start} />
           <ProbSlider
             text="Mutant survival rate"
