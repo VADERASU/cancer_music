@@ -5,6 +5,7 @@ from typing import TypedDict
 class Therapy(Enum):
     OFF = 0
     CURE = 1
+    PARTIAL_CURE = 2
 
 
 class TherapyParameters(TypedDict):

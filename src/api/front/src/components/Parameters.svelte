@@ -21,7 +21,7 @@
   };
 
   const therapy = {
-    mode: 1, // OFF, CURE
+    mode: 2, // OFF, CURE
     start: 0.75,
     mutant_survival: 0.5,
   };
@@ -127,7 +127,8 @@
           <label class="grow" for="therapyMode">Therapy</label>
           <select name="therapyMode" bind:value={therapy.mode}>
             <option value={0}>Off</option>
-            <option value={1}>On</option>
+            <option value={1}>Full Cure</option>
+            <option value={2}>Partial Cure</option>
           </select>
         </div>
         {#if therapy.mode !== 0}
