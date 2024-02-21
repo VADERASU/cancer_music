@@ -46,6 +46,7 @@
         midiObject = res;
         osmd.cursor.show();
         setCursorStyle(height);
+        console.log(midiObject);
 
         player = new SoundFontPlayer(
           "https://storage.googleapis.com/magentadata/js/soundfonts/sgm_plus",

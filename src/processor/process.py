@@ -137,29 +137,37 @@ def mutate(
 
                 tumors[(i + j) % len(tumors)] = mutant_measure
                 # check if we will reproduce this measure or not
-                if (
-                    offspring_count < params["max_parts"]
-                    and rng.random() < params["reproduction"]
-                ):
-                    dup = utils.duplicate_part(mp, available_id)
-                    f = utils.get_first_element(
-                        dup.getElementsByClass("Measure")[0]
-                    )
-                    f.addLyric(available_id)
-                    mutants.append(dup)
-                    # take greatest ancestor as parent for transpositions
-                    mutation_info[dup.id] = {
-                        "parent": parent,
-                        "tumors": copy.deepcopy(tumors),
-                    }
-                    available_id += 1
-                    offspring_count += 1
+            if (
+                offspring_count < params["max_parts"]
+                and rng.random() < params["reproduction"]
+            ):
+                dup = utils.duplicate_part(mp, available_id)
+                f = utils.get_first_element(
+                    dup.getElementsByClass("Measure")[0]
+                )
+                f.addLyric(available_id)
+                mutants.append(dup)
+                # take greatest ancestor as parent for transpositions
+                mutation_info[dup.id] = {
+                    "parent": parent,
+                    "tumors": list(
+                        map(
+                            lambda measure: utils.copy_measure(
+                                measure,
+                                ["Clef", "KeySignature", "TimeSignature"],
+                                removeLyrics=True,
+                            ),
+                            tumors,
+                        )
+                    ),
+                }
+                available_id += 1
+                offspring_count += 1
 
     # mutant_part.makeBeams(inPlace=True)
     all_parts.extend(mutants)
     all_parts.sort(key=lambda x: x.id)
     [m.append(mut) for mut in all_parts]
-
     """ 
     if t_params["therapy_mode"] == Therapy.CURE:
         t_start = utils.get_percentile_measure_number(

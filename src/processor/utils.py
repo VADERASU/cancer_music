@@ -14,7 +14,7 @@ from music21.instrument import Instrument
 from music21.key import Key
 from music21.meter.base import TimeSignature
 from music21.note import GeneralNote, Lyric, Note, Rest
-from music21.stream.base import Measure, Part, PartStaff, Stream, Voice, Score
+from music21.stream.base import Measure, Part, PartStaff, Score, Stream, Voice
 from music21.volume import Volume
 from typeguard import typechecked
 
@@ -232,23 +232,23 @@ def get_percentile_measure_number(s: Stream, percentile: float):
     length = len(s.getElementsByClass("Measure"))
     return math.floor(percentile * length)
 
+
 def get_score_length_in_measures(s: Score):
     parts = list(s.getElementsByClass("Part"))
     return max([len(p.getElementsByClass("Measure")) for p in parts])
 
 
 def slice_part(p, start, end):
-        measures = p.getElementsByClass("Measure")
+    measures = p.getElementsByClass("Measure")
 
-        return list(
-            map(
-                lambda m: copy_measure(
-                    m,
-                    ["Instrument"]
-                ),
-                measures[start : end],
-            )
+    return list(
+        map(
+            lambda m: copy_measure(m, ["Instrument"]),
+            measures[start:end],
         )
+    )
+
+
 @typechecked
 def duplicate_part_keep_measures(p, id, to) -> Part:
     dup = duplicate_part(p, id)
@@ -257,6 +257,7 @@ def duplicate_part_keep_measures(p, id, to) -> Part:
     for old_measure, new_measure in zip(region, og):
         dup.replace(old_measure, new_measure)
     return dup
+
 
 def copy_measure(
     measure: Measure, dropList: Optional[List[str]] = [], removeLyrics=False
