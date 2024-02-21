@@ -22,7 +22,7 @@
 
   const therapy = {
     mode: 2, // OFF, CURE
-    start: 0.75,
+    start: 0.5,
     mutant_survival: 0.5,
   };
 

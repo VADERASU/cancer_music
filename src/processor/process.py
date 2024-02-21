@@ -175,35 +175,59 @@ def mutate(
 
                     tumors[(i + j) % len(tumors)] = mutant_measure
                     # check if we will reproduce this group or not
-                if (
-                    offspring_count < params["max_parts"]
-                    and rng.random() < params["reproduction"]
-                ):
-                    dup = utils.duplicate_part(mp, available_id)
-                    f = utils.get_first_element(
-                        dup.getElementsByClass("Measure")[0]
-                    )
-                    f.addLyric(available_id)
-                    mutants.append(dup)
-                    # take greatest ancestor as parent for transpositions
-                    mutation_info[dup.id] = {
-                        "parent": parent,
-                        "tumors": list(
-                            map(
-                                lambda measure: utils.copy_measure(
-                                    measure,
-                                    ["Clef", "KeySignature", "TimeSignature"],
-                                    removeLyrics=True,
+
+                if rng.random() < params["reproduction"]:
+                    # if there's still room, create a new part
+                    if offspring_count < params["max_parts"]:
+                        dup = utils.duplicate_part(mp, available_id)
+                        f = utils.get_first_element(
+                            dup.getElementsByClass("Measure")[0]
+                        )
+                        f.addLyric(f"a.{mp.id}")
+                        f.addLyric(available_id)
+                        mutants.append(dup)
+                        # take greatest ancestor as parent for transpositions
+                        mutation_info[dup.id] = {
+                            "parent": parent,
+                            "tumors": list(
+                                map(
+                                    lambda measure: utils.copy_measure(
+                                        measure,
+                                        [
+                                            "Clef",
+                                            "KeySignature",
+                                            "TimeSignature",
+                                        ],
+                                        removeLyrics=True,
+                                    ),
+                                    tumors,
                                 ),
-                                tumors,
                             ),
-                        ),
-                        "start": i
-                        + rng.randint(0, math.floor(params["how_many"] / 2)),
-                        "alive": True,
-                    }
-                    available_id += 1
-                    offspring_count += 1
+                            "start": i
+                            + rng.randint(
+                                0, math.floor(params["how_many"] / 2)
+                            ),
+                            "alive": True,
+                        }
+                        available_id += 1
+                        offspring_count += 1
+                    else:
+                        # otherwise, look for parts we can bring back to life
+                        dead = [
+                            p
+                            for p in mutants
+                            if not mutation_info[p.id]["alive"]
+                            and mutation_info[p.id]["parent"] == parent
+                            and p.id != mp.id
+                        ]
+                        if len(dead) > 0:
+                            new_child = rng.choice(dead)
+                            mutation_info[new_child.id]["alive"] = True
+                            mutation_info[new_child.id]["start"] = i
+                            f = utils.get_first_element(
+                                new_child.getElementsByClass("Measure")[0]
+                            )
+                            f.addLyric(f"r.{mp.id}")
 
     all_parts.extend(mutants)
     all_parts.sort(key=lambda x: x.id)
