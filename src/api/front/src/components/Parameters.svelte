@@ -8,7 +8,7 @@
   let howMany = 4;
   let maxParts = 4;
   let reproductionProbability = 0.3;
-  let cancerStart = 0.25;
+  let cancerStart = 0.1;
   let seed = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
 
   const probabilities = {
@@ -23,8 +23,9 @@
   const therapy = {
     mode: 3, // OFF, FULL_CURE, PARTIAL_CURE, ADAPTIVE
     start: 0.5,
+    adaptive_therapy_threshold: 2,
     mutant_survival: 0.5,
-    adaptive_therapy_interval: 8
+    adaptive_therapy_interval: 8,
   };
 
   let sum = 1;
@@ -41,8 +42,6 @@
       reproductionProbability,
       seed,
       cancerStart,
-      midi: true,
-      wav: true,
     });
   };
 </script>
@@ -139,6 +138,39 @@
             text="Mutant survival rate"
             bind:val={therapy.mutant_survival}
           />
+        {/if}
+        {#if therapy.mode === 3}
+          <div class="flex gap-2">
+            <label class="grow" for="adaptiveThreshold">
+              Adaptive therapy threshold: <b>
+                {therapy.adaptive_therapy_threshold}
+              </b></label
+            >
+            <input
+              class="shrink"
+              type="range"
+              name="adaptiveThreshold"
+              min="1"
+              max={maxParts}
+              bind:value={therapy.adaptive_therapy_threshold}
+            />
+          </div>
+          <div class="flex gap-2">
+            <label class="grow" for="adaptiveInterval">
+              Adaptive therapy interval:
+              <b>
+                {therapy.adaptive_therapy_interval}
+              </b></label
+            >
+            <input
+              class="shrink"
+              type="range"
+              name="adaptiveThreshold"
+              min="1"
+              max={howMany * 4}
+              bind:value={therapy.adaptive_therapy_interval}
+            />
+          </div>
         {/if}
       </div>
     </div>

@@ -135,6 +135,8 @@ def process_file(
     reproductionProbability: float,
     seed: int,
     cancerStart: float,
+    adaptive_therapy_threshold: int,
+    adaptive_therapy_interval: int,
     file: UploadFile,
 ):
     # MIDI? https://pypi.org/project/defusedxml/
@@ -161,8 +163,8 @@ def process_file(
         therapy_mode=Therapy(mode),
         mutant_survival=mutant_survival,
         start=start,
-        adaptive_threshold=2,
-        adaptive_interval=8,
+        adaptive_threshold=adaptive_therapy_threshold,
+        adaptive_interval=adaptive_therapy_interval,
     )
 
     fname = drop_extension(file.filename)

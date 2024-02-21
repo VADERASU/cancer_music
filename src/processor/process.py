@@ -86,7 +86,6 @@ def mutate(
         np = None
         if p in candidates:
             np = utils.duplicate_part_keep_measures(p, p.id, cancer_start)
-            
             tumors = utils.slice_part(
                 p,
                 cancer_start,

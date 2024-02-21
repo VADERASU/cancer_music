@@ -1,11 +1,14 @@
+import random
 from random import randint
+
 import pytest
 from music21.chord import Chord
 from music21.clef import BassClef, TrebleClef
 from music21.key import Key, KeySignature
 from music21.meter.base import TimeSignature
 from music21.note import GeneralNote, Note, Rest
-from music21.stream.base import Measure, Part, Score 
+from music21.stream.base import Measure, Part, Score
+
 from processor import utils
 
 
@@ -62,6 +65,7 @@ def s_stream():
     [s.append(m) for m in mes]
     return s
 
+
 @pytest.fixture
 def s_score():
     s = Score()
@@ -72,10 +76,18 @@ def s_score():
         s.append(p)
     return s
 
+
 def test_get_length_score(s_score):
     num = utils.get_score_length_in_measures(s_score)
-    assert num == 3 
-    
+    assert num == 3
+
+
+def test_choice_for_slices():
+    rng = random.Random(12345)
+    v = utils.choose_for_slices(5, 23, 4, rng)
+    assert v == [8, 9, 15, 19]
+
+
 def test_get_percentile_measure_number(s_stream):
     num = utils.get_percentile_measure_number(s_stream, 0.5)
     assert num == 2
