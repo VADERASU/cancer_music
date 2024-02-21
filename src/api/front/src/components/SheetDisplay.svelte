@@ -84,7 +84,7 @@
             },
           }
         );
-
+        console.log(Tone.getContext().latencyHint);
         playState = player.getPlayState();
       });
     });
