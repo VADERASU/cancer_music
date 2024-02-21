@@ -243,7 +243,7 @@ def slice_part(p, start, end):
 
     return list(
         map(
-            lambda m: copy_measure(m, ["Instrument"]),
+            lambda m: copy_measure(m),
             measures[start:end],
         )
     )
@@ -253,7 +253,7 @@ def slice_part(p, start, end):
 def duplicate_part_keep_measures(p, id, to) -> Part:
     dup = duplicate_part(p, id)
     og = slice_part(p, 0, to)
-    region = dup.measures(0, to)
+    region = dup.getElementsByClass("Measure")[0:to]
     for old_measure, new_measure in zip(region, og):
         dup.replace(old_measure, new_measure)
     return dup

@@ -1,4 +1,5 @@
 import io
+import json
 import math
 import os
 import time
@@ -22,7 +23,6 @@ import api.utils as utils
 from processor.parameters import Parameters, Therapy, TherapyParameters
 from processor.process import mutate
 from processor.synth import PatchedSynth
-import json
 
 app = FastAPI()
 this_dir = utils.get_this_dir()
@@ -65,13 +65,16 @@ def to_score(file: UploadFile) -> Score:
 
     s = converter.parse(contents, format="musicxml")
     if type(s) is not Score:
-        raise ValueError("Invalid format. Please provide a score, not an opus or part.")
+        raise ValueError(
+            "Invalid format. Please provide a score, not an opus or part."
+        )
 
     return s
 
 
 def drop_extension(fname: str):
-    return fname.split('.')[0]
+    return fname.split(".")[0]
+
 
 def log_error(
     file: UploadFile,
@@ -97,6 +100,7 @@ def log_error(
         f.write(f"{ts}: mutant parameters: {p}")
         f.write(f"{ts}: therapy parameters: {t}")
 
+
 def get_samples(fname: str):
     utils.mkdir(os.path.join(this_dir, "music_samples"))
     sample_dir = os.path.join(this_dir, "music_samples")
@@ -104,15 +108,16 @@ def get_samples(fname: str):
     mfp = os.path.join(sample_dir, f"{fname}.mid")
     wfp = os.path.join(sample_dir, f"{fname}.wav")
 
-    if os.path.isfile(wfp) and os.path.isfile(mfp):  
+    if os.path.isfile(wfp) and os.path.isfile(mfp):
         mf = open(mfp, mode="rb")
         mfb = mf.read()
 
         wf = open(wfp, mode="rb")
         wfb = wf.read()
 
-        return (mfb, wfb) 
+        return (mfb, wfb)
     return None
+
 
 @app.post("/process_file")
 def process_file(
@@ -186,11 +191,11 @@ def process_file(
         files.append((f"{mut_fname}.mid", mf.writestr()))
         files.append((f"{mut_fname}.wav", midiToWav(mf)))
         files.append(("metadata.json", json.dumps(tree)))
-        
+
         gex = GeneralObjectExporter()
         content = gex.parse(m)
         files.append((f"{fname}.musicxml", content))
-        
+
     except Exception as e:
         error_str = str(e)
         log_error(

@@ -164,10 +164,11 @@ def mutate(
                 available_id += 1
                 offspring_count += 1
 
-    # mutant_part.makeBeams(inPlace=True)
     all_parts.extend(mutants)
     all_parts.sort(key=lambda x: x.id)
-    [m.append(mut) for mut in all_parts]
+    for p in all_parts:
+        p.makeBeams(inPlace=True)
+        m.append(p)
     """ 
     if t_params["therapy_mode"] == Therapy.CURE:
         t_start = utils.get_percentile_measure_number(
