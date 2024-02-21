@@ -16,6 +16,7 @@ from fastapi.staticfiles import StaticFiles
 from music21 import converter
 from music21.midi.translate import streamToMidiFile
 from music21.musicxml.m21ToXml import GeneralObjectExporter
+from music21.stream.base import Score
 
 import api.utils as utils
 from processor.parameters import Parameters, Therapy, TherapyParameters
@@ -43,7 +44,7 @@ def redirect_to_index():
     return RedirectResponse(url="/index.html", status_code=303)
 
 
-def toStream(file: UploadFile):
+def to_score(file: UploadFile) -> Score:
     if file.filename is None:
         raise ValueError("File corrupt.")
 
@@ -63,6 +64,8 @@ def toStream(file: UploadFile):
         )
 
     s = converter.parse(contents, format="musicxml")
+    if type(s) is not Score:
+        raise ValueError("Invalid format. Please provide a score, not an opus or part.")
 
     return s
 
@@ -132,7 +135,7 @@ def process_file(
     # MIDI? https://pypi.org/project/defusedxml/
 
     try:
-        s = toStream(file)
+        s = to_score(file)
     except ValueError as e:
         return JSONResponse(status_code=422, content={"message": str(e)})
 
@@ -172,20 +175,20 @@ def process_file(
             files.append((f"{fname}.mid", mfb))
             files.append((f"{fname}.wav", wfb))
 
-        s, tree = mutate(
+        m, tree = mutate(
             s,
             mutation_parameters,
             therapy_parameters,
             seed=seed,
         )
 
-        mf = streamToMidiFile(s)
+        mf = streamToMidiFile(m)
         files.append((f"{mut_fname}.mid", mf.writestr()))
         files.append((f"{mut_fname}.wav", midiToWav(mf)))
         files.append(("metadata.json", json.dumps(tree)))
         
         gex = GeneralObjectExporter()
-        content = gex.parse(s)
+        content = gex.parse(m)
         files.append((f"{fname}.musicxml", content))
         
     except Exception as e:
