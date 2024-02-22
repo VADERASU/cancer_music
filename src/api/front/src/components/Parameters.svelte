@@ -176,9 +176,7 @@
     </div>
   {/if}
   <div class="flex justify-center">
-    {#if parseFloat(sum) === 1.0}
-      <button class="" on:click={submit}>Mutate</button>
-    {/if}
+      <button disabled={parseFloat(sum) !== 1.0} on:click={submit}>Mutate</button>
   </div>
 </div>
 
