@@ -22,7 +22,7 @@
 
   const therapy = {
     mode: 1, // OFF, FULL_CURE, PARTIAL_CURE, ADAPTIVE
-    start: 0.5,
+    start: 0.75,
     adaptive_therapy_threshold: 2,
     mutant_survival: 0.5,
     adaptive_therapy_interval: 8,

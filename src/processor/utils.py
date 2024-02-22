@@ -87,14 +87,14 @@ def get_first_element(m: Stream) -> GeneralNote:
     :return: The first note in the measure.
     :raises ValueError: Raised if no notes or rests are present in the measure.
     """
-    first = m.flat.notesAndRests.first()
+    first = m.flatten().notesAndRests.first()
     if first is None:
         raise ValueError(f"Error: No notes or rests in measure {m.number}.")
     return first
 
 
 def add_lyric_for_measure(m: Stream, annotation: str):
-    notes = m.flat.notesAndRests
+    notes = m.flatten().notesAndRests
     for n in notes:
         add_lyric_for_note(n, annotation)
 
@@ -114,7 +114,7 @@ def random_offsets(
     :param m: The measure to pick a note from.
     :return: A list of random offsets from the measure.
     """
-    timing = list(set([el.offset for el in m.flat.notesAndRests]))
+    timing = list(set([el.offset for el in m.flatten().notesAndRests]))
     timing.sort()
     start = rng.randint(0, len(timing) - 1)
     return timing[start:]
@@ -289,7 +289,7 @@ def copy_measure(
     cloned = copy.deepcopy(measure)
     cloned.removeByClass(["Barline"] + dropList)
     if removeLyrics:
-        notes = cloned.flat.notesAndRests
+        notes = cloned.flatten().notesAndRests
         for n in notes:
             n.lyric = ""
     return cloned

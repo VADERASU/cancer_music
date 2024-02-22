@@ -3,6 +3,7 @@ import json
 import math
 import os
 import time
+import warnings
 import wave
 import zipfile
 from typing import Annotated
@@ -25,6 +26,7 @@ from processor.process import mutate
 from processor.synth import PatchedSynth
 
 app = FastAPI()
+
 this_dir = utils.get_this_dir()
 origins = ["http://localhost:5173"]
 app.add_middleware(
@@ -140,11 +142,12 @@ def process_file(
     file: UploadFile,
 ):
     # MIDI? https://pypi.org/project/defusedxml/
-
+    warnings.filterwarnings("error")
     try:
         s = to_score(file)
-    except ValueError as e:
+    except Exception as e:
         return JSONResponse(status_code=422, content={"message": str(e)})
+    warnings.resetwarnings()
 
     mutation_parameters = Parameters(
         max_parts=maxParts,
