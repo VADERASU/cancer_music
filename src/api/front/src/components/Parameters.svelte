@@ -13,15 +13,15 @@
 
   const probabilities = {
     noop: 0.05,
-    insertion: 0.25,
-    transposition: 0.15,
+    insertion: 0.20,
+    transposition: 0.30,
     deletion: 0.15,
     translocation: 0.15,
-    inversion: 0.25,
+    inversion: 0.15,
   };
 
   const therapy = {
-    mode: 3, // OFF, FULL_CURE, PARTIAL_CURE, ADAPTIVE
+    mode: 1, // OFF, FULL_CURE, PARTIAL_CURE, ADAPTIVE
     start: 0.5,
     adaptive_therapy_threshold: 2,
     mutant_survival: 0.5,
