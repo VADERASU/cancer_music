@@ -77,14 +77,16 @@
         .then((entries) => {
           entries.forEach((e) => {
             if (e.filename.endsWith(".musicxml")) {
-              e.getData(new zip.TextWriter()).then((res) => {
+              e.getData(
+                new zip.BlobWriter("application/vnd.recordare.musicxml")
+              ).then((res) => {
                 mutant = res;
               });
             }
 
             if (e.filename.endsWith(".json")) {
               e.getData(new zip.TextWriter()).then((res) => {
-                mutationMetadata = {...params, tree: JSON.parse(res)}; 
+                mutationMetadata = { ...params, tree: JSON.parse(res) };
               });
             }
 
@@ -251,11 +253,15 @@
 <div class="min-h-48">
   {#if mutant && mutationMetadata}
     {#key mutant}
-      <SheetDisplay
-        {midi}
-        mutationParams={mutationMetadata}
-        musicxml={mutant}
-      />
+      {#if mutant.size < 3000000}
+        <SheetDisplay
+          {midi}
+          mutationParams={mutationMetadata}
+          musicxml={mutant}
+        />
+      {:else}
+        <div class="text-center" >Output file too large to render.</div>
+      {/if}
     {/key}
   {/if}
 </div>
