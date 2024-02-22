@@ -334,7 +334,7 @@ def transposition(measure: Measure, rng: random.Random, _: Stream) -> Measure:
     :param _: Stream, unused, do not remove.
     :returns: A tranposed copy of the measure.
     """
-    options = [i for i in range(-12, 13)]
+    options = [-1, 1]
     choice = rng.choice(options)
     offsets = utils.random_offsets(measure, rng)
 
