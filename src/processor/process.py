@@ -11,6 +11,8 @@ from typeguard import typechecked
 from processor import utils
 from processor.parameters import Parameters, Therapy, TherapyParameters
 
+MAX_SUBDIVISION_QUARTER_LENGTH = 0.125
+
 
 def repair_stream(s):
     for el in s.flatten().notes:
@@ -302,7 +304,11 @@ def subdivide_stream(
             )
 
             if el is not None:
-                new_el = utils.subdivide_element(el)
+                # don't divide more than a 32nd
+                if el.duration.quarterLength > MAX_SUBDIVISION_QUARTER_LENGTH:
+                    new_el = utils.subdivide_element(el)
+                else:
+                    new_el = utils.duplicate_element(el)
                 if off is None:
                     off = el.offset
 
@@ -319,10 +325,11 @@ def subdivide_stream(
                 .first()
             )
             if el is not None:
-                new_el = utils.subdivide_element(el)
-                new_el.addLyric("i")
-                s.insert(off + sub_offset, new_el)
-                sub_offset += new_el.duration.quarterLength
+                if el.duration.quarterLength > MAX_SUBDIVISION_QUARTER_LENGTH:
+                    new_el = utils.subdivide_element(el)
+                    new_el.addLyric("i")
+                    s.insert(off + sub_offset, new_el)
+                    sub_offset += new_el.duration.quarterLength
 
 
 @typechecked
