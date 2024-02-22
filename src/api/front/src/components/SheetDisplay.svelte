@@ -7,7 +7,6 @@
   import * as Tone from "tone";
 
   export let midi;
-  export let original;
   export let mutationParams;
   export let musicxml;
 
@@ -33,7 +32,7 @@
       renderSingleHorizontalStaffline: true,
     });
 
-    console.log(mutationParams, original);
+    console.log(mutationParams);
 
     osmd.load(musicxml).then(() => {
       osmd.render();

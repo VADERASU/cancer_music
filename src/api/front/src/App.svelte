@@ -18,7 +18,6 @@
   let midi;
   let wav;
   let originalWav;
-  let fileSheet;
   let mutationMetadata;
 
   let file;
@@ -33,7 +32,6 @@
 
   function resetToDefaults() {
     file = null;
-    fileSheet = null;
     mutant = null;
     midi = null;
     originalWav = null;
@@ -225,7 +223,7 @@
     <hr />
     <h2 class="text-3xl text-center">Try it out!</h2>
     {#if !hideParams}
-      <FilePicker bind:file  bind:fileSheet />
+      <FilePicker bind:file />
       {#if file !== null}
         <Parameters onSubmit={startMutate} />
       {/if}
@@ -256,7 +254,6 @@
       <SheetDisplay
         {midi}
         mutationParams={mutationMetadata}
-        original={fileSheet}
         musicxml={mutant}
       />
     {/key}
