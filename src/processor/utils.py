@@ -37,7 +37,7 @@ def choose_for_slices(start, end, steps, rng):
 
 
 @typechecked
-def get_time(m: Measure) -> TimeSignature:
+def get_time(m: Measure, parent_stream: Part) -> TimeSignature:
     """
     Gets the current active time signature for a measure.
 
@@ -46,27 +46,23 @@ def get_time(m: Measure) -> TimeSignature:
     :raises ValueError: Raised if no time signature exists.
     """
 
-    parent_stream = m.activeSite
-    if parent_stream is not None:
-        all_measures = list(parent_stream.getElementsByClass("Measure"))
+    all_measures = list(parent_stream.getElementsByClass("Measure"))
 
-        ts_list = [
-            (m.timeSignature, m.offset)
-            for m in all_measures
-            if m.timeSignature is not None
-        ]
-        # find the latest timesignature
-        previous = list(filter(lambda ts: ts[1] <= m.offset, ts_list))
-        ts = max(previous, key=lambda p: p[1])
+    ts_list = [
+        (m.timeSignature, m.offset)
+        for m in all_measures
+        if m.timeSignature is not None
+    ]
+    # find the latest timesignature
+    previous = list(filter(lambda ts: ts[1] <= m.offset, ts_list))
+    ts = max(previous, key=lambda p: p[1])
 
-        if isinstance(ts[0], TimeSignature):
-            return ts[0]
-        else:
-            raise ValueError(
-                f"No time signature found for measure {m.number}."
-            )
+    if isinstance(ts[0], TimeSignature):
+        return ts[0]
     else:
-        raise ValueError(f"Measure {m.number} not in any part!")
+        raise ValueError(
+            f"No time signature found for measure {m.number}."
+        )
 
 
 @typechecked

@@ -441,12 +441,12 @@ def translocation(og: Measure, rng: random.Random, s: Stream):
     )
 
     # filter out measures that don't match the timesignature of the original measure
-    ts = utils.get_time(og)
+    ts = utils.get_time(og, s)
 
     def comp(a, b):
         return a.numerator == b.numerator and a.denominator == b.denominator
 
-    safe = list(filter(lambda m: comp(ts, m), measures))
+    safe = list(filter(lambda m: comp(ts, utils.get_time(m,s)), measures))
 
     choice = utils.copy_measure(
         rng.choice(safe), ["Clef", "KeySignature", "TimeSignature"]
