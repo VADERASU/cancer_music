@@ -116,7 +116,7 @@ def mutate(
 
     offspring_count = 0
 
-    # slice
+    # slice - heart of loop
     therapy_started = False
     for i in range(cancer_start, score_length):
         # have adaptive therapy check every 2
@@ -133,7 +133,6 @@ def mutate(
                 for mp in to_kill:
                     mutation_info[mp.id]["alive"] = False
                     utils.annotate_first_of_measure(mp, i, "c")
-
         elif i == therapy_start and not therapy_started:
             if t_params["therapy_mode"] == Therapy.CURE:
                 for mp in mutants:
@@ -187,12 +186,13 @@ def mutate(
                     # if there's still room, create a new part
                     if offspring_count < params["max_parts"]:
                         dup = utils.duplicate_part(mp, available_id)
-                        utils.annotate_first_of_measure(
-                            dup, 0, f"a.{mp.id}", str(available_id)
-                        )
                         mutants.append(dup)
+
                         new_start = i + rng.randint(
                             0, math.floor(params["how_many"] / 2)
+                        )
+                        utils.annotate_first_of_measure(
+                            dup, new_start, f"a.{mp.id}", str(available_id)
                         )
 
                         # take greatest ancestor as parent for transpositions
@@ -237,7 +237,7 @@ def mutate(
                             mutation_info[new_child.id]["alive"] = True
                             mutation_info[new_child.id]["start"] = i
                             utils.annotate_first_of_measure(
-                                new_child, 0, f"r.{mp.id}"
+                                new_child, i, f"r.{mp.id}"
                             )
 
     all_parts.extend(mutants)
@@ -446,7 +446,7 @@ def translocation(og: Measure, rng: random.Random, s: Stream):
     def comp(a, b):
         return a.numerator == b.numerator and a.denominator == b.denominator
 
-    safe = list(filter(lambda m: comp(ts, utils.get_time(m,s)), measures))
+    safe = list(filter(lambda m: comp(ts, utils.get_time(m, s)), measures))
 
     choice = utils.copy_measure(
         rng.choice(safe), ["Clef", "KeySignature", "TimeSignature"]

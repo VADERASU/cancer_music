@@ -60,9 +60,7 @@ def get_time(m: Measure, parent_stream: Part) -> TimeSignature:
     if isinstance(ts[0], TimeSignature):
         return ts[0]
     else:
-        raise ValueError(
-            f"No time signature found for measure {m.number}."
-        )
+        raise ValueError(f"No time signature found for measure {m.number}.")
 
 
 @typechecked
