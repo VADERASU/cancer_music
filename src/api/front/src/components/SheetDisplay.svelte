@@ -3,11 +3,10 @@
   import { blobToNoteSequence, SoundFontPlayer } from "@magenta/music";
 
   import { OpenSheetMusicDisplay } from "opensheetmusicdisplay";
-  // import { parseMXL } from "../api/parser";
   import * as Tone from "tone";
 
-  export let vis;
   export let midi;
+  export let mutationParams;
   export let musicxml;
 
   let osmd;
@@ -31,57 +30,60 @@
       disableCursor: false,
       renderSingleHorizontalStaffline: true,
     });
-    osmd.load(musicxml).then(() => {
-      osmd.render();
 
-      const width = container.offsetWidth;
-      const height = container.offsetHeight;
-      console.log(vis);
+    console.log(mutationParams);
 
-      // https://dirk.net/2021/10/26/magenta-music-soundfontplayer-instrument-selection/
-      blobToNoteSequence(midi).then((res) => {
-        midiObject = res;
-        osmd.cursor.show();
-        setCursorStyle(height);
+    musicxml.text().then((rawData) => {
+      osmd.load(rawData).then(() => {
+        osmd.render();
 
-        player = new SoundFontPlayer(
-          "https://storage.googleapis.com/magentadata/js/soundfonts/sgm_plus",
-          Tone.Master,
-          new Map(),
-          new Map(),
-          {
-            run: (note) => {
-              // catch up if we're on rests
-              while (
-                osmd.cursor.NotesUnderCursor().every((e) => e.isRestFlag)
-              ) {
-                osmd.cursor.next();
-                setCursorStyle(height);
-              }
-              if (note.startTime > time) {
-                time = note.startTime;
-                osmd.cursor.next();
-                setCursorStyle(height);
+        const width = container.offsetWidth;
+        const height = container.offsetHeight;
 
-                const left = parseFloat(
-                  osmd.cursor.cursorElement.style.left.replace(/[^0-9.]/g, "")
-                );
-                if (left - container.scrollLeft > width) {
-                  page += 1;
-                  container.scrollLeft = page * width;
-                } else if (left - container.scrollLeft < 0) {
-                  page = 0;
-                  container.scrollLeft = 0;
+        // https://dirk.net/2021/10/26/magenta-music-soundfontplayer-instrument-selection/
+        blobToNoteSequence(midi).then((res) => {
+          midiObject = res;
+          osmd.cursor.show();
+          setCursorStyle(height);
+
+          player = new SoundFontPlayer(
+            "https://storage.googleapis.com/magentadata/js/soundfonts/sgm_plus",
+            Tone.Master,
+            new Map(),
+            new Map(),
+            {
+              run: (note) => {
+                // catch up if we're on rests
+                while (
+                  osmd.cursor.NotesUnderCursor().every((e) => e.isRestFlag)
+                ) {
+                  osmd.cursor.next();
+                  setCursorStyle(height);
                 }
-              }
-            },
-            stop: () => {
-              playState = player.getPlayState();
-            },
-          }
-        );
+                if (note.startTime > time) {
+                  time = note.startTime;
+                  osmd.cursor.next();
+                  setCursorStyle(height);
 
-        playState = player.getPlayState();
+                  const left = parseFloat(
+                    osmd.cursor.cursorElement.style.left.replace(/[^0-9.]/g, "")
+                  );
+                  if (left - container.scrollLeft > width) {
+                    page += 1;
+                    container.scrollLeft = page * width;
+                  } else if (left - container.scrollLeft < 0) {
+                    page = 0;
+                    container.scrollLeft = 0;
+                  }
+                }
+              },
+              stop: () => {
+                playState = player.getPlayState();
+              },
+            }
+          );
+          playState = player.getPlayState();
+        });
       });
     });
 

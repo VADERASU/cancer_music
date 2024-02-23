@@ -63,7 +63,7 @@ def main():
     mutant_survival = 0.5
     start = 0.75
 
-    s = process.mutate(
+    s, tree = process.mutate(
         s,
         Parameters(
             max_parts=maxParts,
@@ -81,6 +81,8 @@ def main():
             therapy_mode=Therapy(mode),
             mutant_survival=mutant_survival,
             start=start,
+            adaptive_threshold=2,
+            adaptive_interval=8,
         ),
         seed=args.seed,
     )

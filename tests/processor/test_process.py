@@ -93,6 +93,56 @@ def test_subdivide_mid(sm):
     assert m[5] == Note("F", type="quarter")
 
 
+def test_subdivision_no_notes_can_subdivide():
+    offsets = [0.0, 0.0625]
+
+    sm = Measure()
+    # completes one beat
+    sm.append(Note("C", type="64th"))
+    sm.append(Note("D", type="64th"))
+    sm.append(Note("E", type="64th"))
+    sm.append(Note("F", type="64th"))
+    sm.append(Note("F", type="16th"))
+    sm.append(Note("F", type="16th"))
+    sm.append(Note("F", type="16th"))
+
+    sm.append(Note("F", type="quarter"))
+    sm.append(Note("F", type="quarter"))
+    sm.append(Note("F", type="quarter"))
+
+    m = utils.copy_inverse(sm, offsets)
+    subdivide_stream(m, sm, offsets)
+
+    assert m.duration == 4
+
+
+def test_subdivision_some_notes_can_subdivide():
+    sm = Measure()
+    # eight 32nds in a beat
+    offsets = [0.0, 0.125, 0.25, 0.3125, 0.375]
+
+    # same as one 16th
+    sm.append(Note("G", type="32nd"))
+    sm.append(Note("A", type="32nd"))
+
+    sm.append(Note("C", type="64th"))
+    sm.append(Note("D", type="64th"))
+    sm.append(Note("E", type="64th"))
+    sm.append(Note("F", type="64th"))
+
+    sm.append(Note("F", type="16th"))
+    sm.append(Note("F", type="16th"))
+
+    sm.append(Note("F", type="quarter"))
+    sm.append(Note("F", type="quarter"))
+    sm.append(Note("F", type="quarter"))
+
+    m = utils.copy_inverse(sm, offsets)
+    subdivide_stream(m, sm, offsets)
+
+    assert m.duration == 4
+
+
 def test_transpose_measure(sm):
     m = transpose_measure(sm, 2)
     assert m[0] == Note("D", type="quarter")

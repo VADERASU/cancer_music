@@ -13,17 +13,19 @@
 
   const probabilities = {
     noop: 0.05,
-    insertion: 0.25,
-    transposition: 0.15,
+    insertion: 0.20,
+    transposition: 0.30,
     deletion: 0.15,
     translocation: 0.15,
-    inversion: 0.25,
+    inversion: 0.15,
   };
 
   const therapy = {
-    mode: 1, // OFF, CURE
+    mode: 1, // OFF, FULL_CURE, PARTIAL_CURE, ADAPTIVE
     start: 0.75,
+    adaptive_therapy_threshold: 2,
     mutant_survival: 0.5,
+    adaptive_therapy_interval: 8,
   };
 
   let sum = 1;
@@ -40,8 +42,6 @@
       reproductionProbability,
       seed,
       cancerStart,
-      midi: true,
-      wav: true,
     });
   };
 </script>
@@ -127,23 +127,56 @@
           <label class="grow" for="therapyMode">Therapy</label>
           <select name="therapyMode" bind:value={therapy.mode}>
             <option value={0}>Off</option>
-            <option value={1}>On</option>
+            <option value={1}>Full Cure</option>
+            <option value={2}>Partial Cure</option>
+            <option value={3}>Adaptive</option>
           </select>
         </div>
-        {#if therapy.mode !== 0}
+        {#if therapy.mode !== 0 && therapy.mode !== 3}
           <ProbSlider text="Therapy start" bind:val={therapy.start} />
           <ProbSlider
             text="Mutant survival rate"
             bind:val={therapy.mutant_survival}
           />
         {/if}
+        {#if therapy.mode === 3}
+          <div class="flex gap-2">
+            <label class="grow" for="adaptiveThreshold">
+              Adaptive therapy threshold: <b>
+                {therapy.adaptive_therapy_threshold}
+              </b></label
+            >
+            <input
+              class="shrink"
+              type="range"
+              name="adaptiveThreshold"
+              min="1"
+              max={maxParts}
+              bind:value={therapy.adaptive_therapy_threshold}
+            />
+          </div>
+          <div class="flex gap-2">
+            <label class="grow" for="adaptiveInterval">
+              Adaptive therapy interval:
+              <b>
+                {therapy.adaptive_therapy_interval}
+              </b></label
+            >
+            <input
+              class="shrink"
+              type="range"
+              name="adaptiveThreshold"
+              min="1"
+              max={howMany * 4}
+              bind:value={therapy.adaptive_therapy_interval}
+            />
+          </div>
+        {/if}
       </div>
     </div>
   {/if}
   <div class="flex justify-center">
-    {#if parseFloat(sum) === 1.0}
-      <button class="" on:click={submit}>Mutate</button>
-    {/if}
+      <button disabled={parseFloat(sum) !== 1.0} on:click={submit}>Mutate</button>
   </div>
 </div>
 

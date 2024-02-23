@@ -18,6 +18,8 @@
   let midi;
   let wav;
   let originalWav;
+  let mutationMetadata;
+
   let file;
   let isLoading = false;
 
@@ -34,32 +36,17 @@
     midi = null;
     originalWav = null;
     wav = null;
+    mutationMetadata = null;
     hideParams = false;
-  }
-
-  let vis = {
-    insertion: {},
-    transposition: {},
-    deletion: {},
-    inversion: {},
-    translocation: {},
-  };
-
-  // reset effects if sheet changes
-  $: if (mutant) {
-    vis = {
-      insertion: {},
-      transposition: {},
-      deletion: {},
-      inversion: {},
-      translocation: {},
-      cure: {},
-    };
   }
 
   const mouseLeave = () => {
     setMutSVG("original");
   };
+
+  $: if (mutant && mutationMetadata) {
+    isLoading = false;
+  }
 
   async function startMutate(params) {
     const fd = new FormData();
@@ -90,14 +77,21 @@
         .then((entries) => {
           entries.forEach((e) => {
             if (e.filename.endsWith(".musicxml")) {
-              e.getData(new zip.TextWriter()).then((res) => {
+              e.getData(
+                new zip.BlobWriter("application/vnd.recordare.musicxml")
+              ).then((res) => {
                 mutant = res;
-                isLoading = false;
+              });
+            }
+
+            if (e.filename.endsWith(".json")) {
+              e.getData(new zip.TextWriter()).then((res) => {
+                mutationMetadata = { ...params, tree: JSON.parse(res) };
               });
             }
 
             // check if mutant or original, currently not doing anything with original midi
-            // need more foolproof way to check for mutant but this is fine for not
+            // need more foolproof way to check for mutant but this is fine for now
             if (e.filename.endsWith(".mid")) {
               if (e.filename.startsWith("mutant_")) {
                 e.getData(new zip.BlobWriter("audio/midi")).then((res) => {
@@ -257,9 +251,20 @@
   {/if}
 </div>
 <div class="min-h-48">
-  {#if mutant}
+  {#if mutant && mutationMetadata}
     {#key mutant}
-      <SheetDisplay {midi} {vis} musicxml={mutant} />
+      {#if mutant.size < 3000000}
+        <SheetDisplay
+          {midi}
+          mutationParams={mutationMetadata}
+          musicxml={mutant}
+        />
+      {:else}
+        <div class="text-center">
+          Output too large to render. For best results, download it as a WAV or
+          .mxl file and open it in the appropriate player.
+        </div>
+      {/if}
     {/key}
   {/if}
 </div>
