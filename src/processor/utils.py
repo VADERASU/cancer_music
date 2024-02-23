@@ -39,17 +39,34 @@ def choose_for_slices(start, end, steps, rng):
 @typechecked
 def get_time(m: Measure) -> TimeSignature:
     """
-    Gets the time signature for a measure.
+    Gets the current active time signature for a measure.
 
     :param m: Measure to get time signature for.
     :return: The measure's time signature.
     :raises ValueError: Raised if no time signature exists.
     """
-    ts = m.getTimeSignatures()[0]
-    if isinstance(ts, TimeSignature):
-        return ts
+
+    parent_stream = m.activeSite
+    if parent_stream is not None:
+        all_measures = list(parent_stream.getElementsByClass("Measure"))
+
+        ts_list = [
+            (m.timeSignature, m.offset)
+            for m in all_measures
+            if m.timeSignature is not None
+        ]
+        # find the latest timesignature
+        previous = list(filter(lambda ts: ts[1] <= m.offset, ts_list))
+        ts = max(previous, key=lambda p: p[1])
+
+        if isinstance(ts[0], TimeSignature):
+            return ts[0]
+        else:
+            raise ValueError(
+                f"No time signature found for measure {m.number}."
+            )
     else:
-        raise ValueError(f"No time signature found for measure {m.number}.")
+        raise ValueError(f"Measure {m.number} not in any part!")
 
 
 @typechecked

@@ -68,9 +68,26 @@ def s_stream():
 
 @pytest.fixture
 def s_score():
+    # builds a score with unequal numbers of measures
     s = Score()
     for i in range(1, 4):
         mes = [Measure() for _ in range(i)]
+        p = Part()
+        [p.append(m) for m in mes]
+        s.append(p)
+    return s
+
+
+@pytest.fixture
+def proper_score():
+    s = Score()
+    for i in range(2):
+        mes = [Measure() for _ in range(4)]
+        for m in mes:
+            for _ in range(4):
+                m.append(Note("C", type="quarter"))
+        mes[0].insert(0, TimeSignature("4/4"))
+        mes[2].insert(0, TimeSignature("7/8"))
         p = Part()
         [p.append(m) for m in mes]
         s.append(p)
@@ -91,3 +108,20 @@ def test_choice_for_slices():
 def test_get_percentile_measure_number(s_stream):
     num = utils.get_percentile_measure_number(s_stream, 0.5)
     assert num == 2
+
+
+def test_get_time(proper_score):
+    part = proper_score.getElementsByClass("Part")[0]
+    measures = part.getElementsByClass("Measure")
+    times = [utils.get_time(measure) for measure in measures]
+    # should be two measures of 7/8 and two of 4/4
+    correct = [
+        TimeSignature("4/4"),
+        TimeSignature("4/4"),
+        TimeSignature("7/8"),
+        TimeSignature("7/8"),
+    ]
+
+    for r, a in zip(times, correct):
+        assert r.numerator == a.numerator
+        assert r.denominator == a.denominator

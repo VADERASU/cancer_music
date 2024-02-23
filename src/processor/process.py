@@ -305,10 +305,11 @@ def subdivide_stream(
 
             if el is not None:
                 # don't divide more than a 32nd
-                if el.duration.quarterLength > MAX_SUBDIVISION_QUARTER_LENGTH:
+                if el.duration.quarterLength >= MAX_SUBDIVISION_QUARTER_LENGTH:
                     new_el = utils.subdivide_element(el)
                 else:
                     new_el = utils.duplicate_element(el)
+
                 if off is None:
                     off = el.offset
 
@@ -325,7 +326,7 @@ def subdivide_stream(
                 .first()
             )
             if el is not None:
-                if el.duration.quarterLength > MAX_SUBDIVISION_QUARTER_LENGTH:
+                if el.duration.quarterLength >= MAX_SUBDIVISION_QUARTER_LENGTH:
                     new_el = utils.subdivide_element(el)
                     new_el.addLyric("i")
                     s.insert(off + sub_offset, new_el)
@@ -419,7 +420,7 @@ def delete_substring(
 
 
 @typechecked
-def translocation(_: Measure, rng: random.Random, s: Stream):
+def translocation(og: Measure, rng: random.Random, s: Stream):
     """
     Picks a random measure from the part to replace
     the measure with.
@@ -439,8 +440,16 @@ def translocation(_: Measure, rng: random.Random, s: Stream):
         )
     )
 
+    # filter out measures that don't match the timesignature of the original measure
+    ts = utils.get_time(og)
+
+    def comp(a, b):
+        return a.numerator == b.numerator and a.denominator == b.denominator
+
+    safe = list(filter(lambda m: comp(ts, m), measures))
+
     choice = utils.copy_measure(
-        rng.choice(measures), ["Clef", "KeySignature", "TimeSignature"]
+        rng.choice(safe), ["Clef", "KeySignature", "TimeSignature"]
     )
     utils.add_lyric_for_measure(choice, "tl")
     return choice

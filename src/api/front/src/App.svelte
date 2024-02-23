@@ -260,7 +260,10 @@
           musicxml={mutant}
         />
       {:else}
-        <div class="text-center" >Output file too large to render.</div>
+        <div class="text-center">
+          Output too large to render. For best results, download it as a WAV or
+          .mxl file and open it in the appropriate player.
+        </div>
       {/if}
     {/key}
   {/if}
