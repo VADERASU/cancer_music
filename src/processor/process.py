@@ -119,14 +119,14 @@ def mutate(
                 "mutants": utils.choose_for_slices(
                     cancer_start, score_length, params["how_many"], rng
                 ),
+                "annotations": {0: str(np.id)},
             }
         else:
             np = utils.duplicate_part_keep_measures(
                 p, p.id, len(p.getElementsByClass("Measure"))
             )
             all_parts.append(np)
-        f = utils.get_first_element(np.getElementsByClass("Measure")[0])
-        f.addLyric(np.id)
+            utils.annotate_first_of_measure(np, 0, str(np.id))
 
     msgCallback(MutationStatus.SETUP_COMPLETE)
     offspring_count = 0
@@ -148,7 +148,7 @@ def mutate(
                 )
                 for mp in to_kill:
                     mutation_info[mp.id]["alive"] = False
-                    utils.annotate_first_of_measure(mp, i, "c")
+                    mutation_info[mp.id]["annotations"][i] = "c"
         elif i == therapy_start and not therapy_started:
             if t_params["therapy_mode"] == Therapy.CURE:
                 for mp in mutants:
@@ -157,12 +157,12 @@ def mutate(
             if t_params["therapy_mode"] == Therapy.PARTIAL_CURE:
                 # all but one die
                 survivor = rng.choice(mutants)
-                utils.annotate_first_of_measure(survivor, i, "s")
+                mutation_info[survivor.id]["annotations"][i] = "s"
 
                 for mp in mutants:
                     if mp.id != survivor.id:
                         mutation_info[mp.id]["alive"] = False
-                        utils.annotate_first_of_measure(mp, i, "c")
+                        mutation_info[mp.id]["annotations"][i] = "c"
             therapy_started = True
 
         for mp in mutants:
@@ -173,9 +173,9 @@ def mutate(
             start = m_info["start"]
             to_mutate = m_info["mutants"]
 
-            if is_alive:
+            if is_alive and i >= start:
                 dm = mp.getElementsByClass("Measure")[i]
-                t = tumors[i % len(tumors)]
+                t = tumors[(i - start) % len(tumors)]
                 if i in to_mutate:
                     mutation = choose_mutation(
                         rng,
@@ -194,7 +194,7 @@ def mutate(
                 mutant_measure.number = dm.number
                 mutant_measure.makeBeams(inPlace=True)
                 mp.replace(dm, mutant_measure)
-                tumors[i % len(tumors)] = mutant_measure
+                tumors[(i - start) % len(tumors)] = mutant_measure
 
                 if (i - start) % params[
                     "how_many"
@@ -203,14 +203,10 @@ def mutate(
                     if offspring_count < params["max_parts"]:
                         dup = utils.duplicate_part(mp, available_id)
                         mutants.append(dup)
-
-                        new_start = i + rng.randint(
+                        offset = rng.randint(
                             0, math.floor(params["how_many"] / 2)
                         )
-                        utils.annotate_first_of_measure(
-                            dup, new_start, f"a.{mp.id}", str(available_id)
-                        )
-
+                        new_start = i + offset
                         # take greatest ancestor as parent for transpositions
                         mutation_info[dup.id] = {
                             "parent": parent,
@@ -236,6 +232,10 @@ def mutate(
                                 params["how_many"],
                                 rng,
                             ),
+                            "annotations": {
+                                0: str(available_id),
+                                new_start: f"a.{mp.id}; off {offset}",
+                            },
                         }
                         available_id += 1
                         offspring_count += 1
@@ -252,9 +252,15 @@ def mutate(
                             new_child = rng.choice(dead)
                             mutation_info[new_child.id]["alive"] = True
                             mutation_info[new_child.id]["start"] = i
-                            utils.annotate_first_of_measure(
-                                new_child, i, f"r.{mp.id}"
-                            )
+                            mutation_info[new_child.id]["annotations"][
+                                i
+                            ] = f"r.{mp.id}"
+
+    # once we're done, add all the ancestry annotations
+    for mp in mutants:
+        annotations = mutation_info[mp.id]["annotations"]
+        for k, v in annotations.items():
+            utils.annotate_first_of_measure(mp, k, v)
 
     all_parts.extend(mutants)
     all_parts.sort(key=lambda x: x.id)

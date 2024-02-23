@@ -113,7 +113,7 @@ def test_get_percentile_measure_number(s_stream):
 def test_get_time(proper_score):
     part = proper_score.getElementsByClass("Part")[0]
     measures = part.getElementsByClass("Measure")
-    times = [utils.get_time(measure) for measure in measures]
+    times = [utils.get_time(measure, part) for measure in measures]
     # should be two measures of 7/8 and two of 4/4
     correct = [
         TimeSignature("4/4"),
