@@ -1,6 +1,7 @@
 import math
 import random
 import sys
+from enum import Enum
 from fractions import Fraction
 from typing import List, Optional, Union
 
@@ -28,6 +29,18 @@ def repair_stream(s):
         )
 
 
+class MutationStatus(Enum):
+    SETUP_COMPLETE = 0
+    PROCESSING = 1
+
+
+def toStdOut(status: MutationStatus, *args):
+    if status == MutationStatus.SETUP_COMPLETE:
+        print("Setup complete.")
+    else:
+        print(f"Processing measure {args[0]} of {args[1]}.", end="\r")
+
+
 @typechecked
 def mutate(
     s: Score,
@@ -51,6 +64,7 @@ def mutate(
         adaptive_interval=8,
     ),
     seed: int = random.randrange(sys.maxsize),
+    msgCallback=toStdOut,
 ):
     """
     Main method for mutating a file.
@@ -114,11 +128,13 @@ def mutate(
         f = utils.get_first_element(np.getElementsByClass("Measure")[0])
         f.addLyric(np.id)
 
+    msgCallback(MutationStatus.SETUP_COMPLETE)
     offspring_count = 0
 
     # slice - heart of loop
     therapy_started = False
     for i in range(cancer_start, score_length):
+        msgCallback(MutationStatus.PROCESSING, i, score_length)
         # have adaptive therapy check every 2
         if (
             t_params["therapy_mode"] == Therapy.ADAPTIVE
