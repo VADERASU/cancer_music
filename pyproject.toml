@@ -14,7 +14,7 @@ mutate_sheet = 'processor.main:main'
 
 [tool.poetry.dependencies]
 python = "^3.11"
-music21 = "^8.1.0"
+music21 = "^9.0"
 fastapi = "^0.95.1"
 python-multipart = "^0.0.6"
 typeguard = "^3.0.2"
