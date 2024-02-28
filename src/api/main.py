@@ -1,7 +1,9 @@
 import io
+import json
 import math
 import os
 import time
+import warnings
 import wave
 import zipfile
 from typing import Annotated
@@ -16,14 +18,15 @@ from fastapi.staticfiles import StaticFiles
 from music21 import converter
 from music21.midi.translate import streamToMidiFile
 from music21.musicxml.m21ToXml import GeneralObjectExporter
+from music21.stream.base import Score
 
 import api.utils as utils
 from processor.parameters import Parameters, Therapy, TherapyParameters
 from processor.process import mutate
 from processor.synth import PatchedSynth
-import json
 
 app = FastAPI()
+
 this_dir = utils.get_this_dir()
 origins = ["http://localhost:5173"]
 app.add_middleware(
@@ -43,7 +46,7 @@ def redirect_to_index():
     return RedirectResponse(url="/index.html", status_code=303)
 
 
-def toStream(file: UploadFile):
+def to_score(file: UploadFile) -> Score:
     if file.filename is None:
         raise ValueError("File corrupt.")
 
@@ -63,12 +66,17 @@ def toStream(file: UploadFile):
         )
 
     s = converter.parse(contents, format="musicxml")
+    if type(s) is not Score:
+        raise ValueError(
+            "Invalid format. Please provide a score, not an opus or part."
+        )
 
     return s
 
 
 def drop_extension(fname: str):
-    return fname.split('.')[0]
+    return fname.split(".")[0]
+
 
 def log_error(
     file: UploadFile,
@@ -94,6 +102,7 @@ def log_error(
         f.write(f"{ts}: mutant parameters: {p}")
         f.write(f"{ts}: therapy parameters: {t}")
 
+
 def get_samples(fname: str):
     utils.mkdir(os.path.join(this_dir, "music_samples"))
     sample_dir = os.path.join(this_dir, "music_samples")
@@ -101,15 +110,16 @@ def get_samples(fname: str):
     mfp = os.path.join(sample_dir, f"{fname}.mid")
     wfp = os.path.join(sample_dir, f"{fname}.wav")
 
-    if os.path.isfile(wfp) and os.path.isfile(mfp):  
+    if os.path.isfile(wfp) and os.path.isfile(mfp):
         mf = open(mfp, mode="rb")
         mfb = mf.read()
 
         wf = open(wfp, mode="rb")
         wfb = wf.read()
 
-        return (mfb, wfb) 
+        return (mfb, wfb)
     return None
+
 
 @app.post("/process_file")
 def process_file(
@@ -127,14 +137,17 @@ def process_file(
     reproductionProbability: float,
     seed: int,
     cancerStart: float,
+    adaptive_therapy_threshold: int,
+    adaptive_therapy_interval: int,
     file: UploadFile,
 ):
     # MIDI? https://pypi.org/project/defusedxml/
-
+    warnings.filterwarnings("error")
     try:
-        s = toStream(file)
-    except ValueError as e:
+        s = to_score(file)
+    except Exception as e:
         return JSONResponse(status_code=422, content={"message": str(e)})
+    warnings.resetwarnings()
 
     mutation_parameters = Parameters(
         max_parts=maxParts,
@@ -153,6 +166,8 @@ def process_file(
         therapy_mode=Therapy(mode),
         mutant_survival=mutant_survival,
         start=start,
+        adaptive_threshold=adaptive_therapy_threshold,
+        adaptive_interval=adaptive_therapy_interval,
     )
 
     fname = drop_extension(file.filename)
@@ -172,22 +187,23 @@ def process_file(
             files.append((f"{fname}.mid", mfb))
             files.append((f"{fname}.wav", wfb))
 
-        s, tree = mutate(
+
+        m, tree = mutate(
             s,
             mutation_parameters,
             therapy_parameters,
             seed=seed,
         )
 
-        mf = streamToMidiFile(s)
+        mf = streamToMidiFile(m)
         files.append((f"{mut_fname}.mid", mf.writestr()))
         files.append((f"{mut_fname}.wav", midiToWav(mf)))
         files.append(("metadata.json", json.dumps(tree)))
-        
+
         gex = GeneralObjectExporter()
-        content = gex.parse(s)
+        content = gex.parse(m)
         files.append((f"{fname}.musicxml", content))
-        
+
     except Exception as e:
         error_str = str(e)
         log_error(
@@ -278,4 +294,4 @@ app.mount(
     "/",
     StaticFiles(directory=f"{this_dir}/front/dist"),
     name="static",
-)
+    )

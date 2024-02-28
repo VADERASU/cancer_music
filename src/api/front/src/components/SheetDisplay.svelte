@@ -1,13 +1,11 @@
 <script>
   import { onMount } from "svelte";
   import { blobToNoteSequence, SoundFontPlayer } from "@magenta/music";
-
   import * as Tone from "tone";
   import * as d3 from "d3";
   import { parseMXL } from "../api/parser";
 
   export let midi;
-  export let original;
   export let mutationParams;
   export let musicxml;
 
@@ -46,14 +44,14 @@
   }
 
   function render(width, height, sheet) {
-    const ogMeasures = original.sourceMeasures;
+  console.log(mutationParams);
     const mutantMeasures = sheet.sourceMeasures;
     const originalParts = Object.keys(mutationParams.tree);
     const measures = [...Array(sheet.sourceMeasures.length).keys()];
     const cancerStart = Math.floor(
       mutationParams.cancerStart * measures.length
     );
-    const therapyStart = Math.floor(mutationParams.start * measures.length);
+    const therapyStart = Math.floor(mutationParams.start * measures.length) - 1;
     const howMany = mutationParams.how_many;
     const groupedMeasures = [];
     groupedMeasures.push(measures.slice(0, cancerStart));
@@ -102,10 +100,6 @@
       .attr("y", (_, i) => i * partContainerHeight)
       .attr("height", partContainerHeight)
       .each(function (partNumber) {
-        const ogStop = Math.floor(
-          mutationParams.cancerStart * measures.length + mutationParams.how_many
-        );
-
         const childrenParts = mutationParams.tree[partNumber];
 
         const getX = (i, w) => {
@@ -145,13 +139,8 @@
               .attr("height", partContainerHeight)
               .each(function (measureNumber) {
                 const ml = [];
-                const ogML = ogMeasures[measureNumber].verticalMeasureList;
                 const mML = mutantMeasures[measureNumber].verticalMeasureList;
-                if (measureNumber < ogStop) {
-                  ml.push(ogML[partNumber]);
-                } else {
-                  ml.push(mML[partNumber]);
-                }
+                ml.push(mML[partNumber]);
                 const measureSVG = this;
 
                 if (measureNumber === therapyStart) {
@@ -164,7 +153,6 @@
                 }
 
                 childrenParts.forEach((pn) => ml.push(mML[pn]));
-
                 const measureYScale = d3
                   .scaleBand()
                   .domain([...Array(ml.length).keys()])
@@ -199,95 +187,98 @@
                   .attr("x", 0)
                   .attr("y", (_, i) => measureYScale(i))
                   .each(function (m) {
-                    const voices = Object.values(m.vfVoices);
+                    if (m) {
+                      const voices = Object.values(m.vfVoices);
 
-                    const totalLength = Math.max(
-                      ...voices.map(
-                        (v) => v.totalTicks.numerator / v.totalTicks.denominator
-                      )
-                    );
+                      const totalLength = Math.max(
+                        ...voices.map(
+                          (v) =>
+                            v.totalTicks.numerator / v.totalTicks.denominator
+                        )
+                      );
 
-                    // each measure has 1-N voices
-                    const voiceHeightScale = d3
-                      .scaleBand()
-                      .domain([...Array(voices.length).keys()])
-                      .range([0, measureYScale.bandwidth()]);
+                      // each measure has 1-N voices
+                      const voiceHeightScale = d3
+                        .scaleBand()
+                        .domain([...Array(voices.length).keys()])
+                        .range([0, measureYScale.bandwidth()]);
 
-                    const vbw = voiceHeightScale.bandwidth();
+                      const vbw = voiceHeightScale.bandwidth();
 
-                    d3.select(this)
-                      .selectAll("svg")
-                      .data(voices)
-                      .enter()
-                      .append("svg")
-                      .attr("height", vbw)
-                      .attr("width", bw)
-                      .attr("x", 0)
-                      .attr("y", (_, i) => voiceHeightScale(i))
-                      .each(function (v) {
-                        // each voice has 1-N notes
-                        const { tickables } = v;
-                        const xScale = d3
-                          .scaleLinear()
-                          .domain([0, totalLength])
-                          .range([0, bw]);
+                      d3.select(this)
+                        .selectAll("svg")
+                        .data(voices)
+                        .enter()
+                        .append("svg")
+                        .attr("height", vbw)
+                        .attr("width", bw)
+                        .attr("x", 0)
+                        .attr("y", (_, i) => voiceHeightScale(i))
+                        .each(function (v) {
+                          // each voice has 1-N notes
+                          const { tickables } = v;
+                          const xScale = d3
+                            .scaleLinear()
+                            .domain([0, totalLength])
+                            .range([0, bw]);
 
-                        const notes = tickables.filter(
-                          (n) => n.attrs.type !== "GhostNote"
-                        );
+                          const notes = tickables.filter(
+                            (n) => n.attrs.type !== "GhostNote"
+                          );
 
-                        // https://ericjknapp.com/2019/09/26/midi-measures/
-                        // shifts pickups correctly
-                        let localTime = 0;
-                        // totalLength -
-                        // v.ticksUsed.numerator / v.ticksUsed.denominator;
+                          // https://ericjknapp.com/2019/09/26/midi-measures/
+                          // shifts pickups correctly
+                          let localTime = 0;
+                          // totalLength -
+                          // v.ticksUsed.numerator / v.ticksUsed.denominator;
 
-                        d3.select(this)
-                          .selectAll("rect")
-                          .data(notes)
-                          .enter()
-                          .append("rect")
-                          .attr("height", vbw)
-                          .attr("y", 0)
-                          .attr(
-                            "width",
-                            (note) => xScale(note.intrinsicTicks) - 1
-                          )
-                          .attr("x", (note) => {
-                            const t = localTime;
-                            localTime += note.intrinsicTicks;
-                            return xScale(t);
-                          })
-                          .attr("fill", (note) => {
-                            // deal with chords later
-                            // don't show rests
-                            if (note.noteType === "r") {
-                              return "#DADADA";
-                            }
+                          d3.select(this)
+                            .selectAll("rect")
+                            .data(notes)
+                            .enter()
+                            .append("rect")
+                            .attr("height", vbw)
+                            .attr("y", 0)
+                            .attr(
+                              "width",
+                              (note) => xScale(note.intrinsicTicks) - 1
+                            )
+                            .attr("x", (note) => {
+                              const t = localTime;
+                              localTime += note.intrinsicTicks;
+                              return xScale(t);
+                            })
+                            .attr("fill", (note) => {
+                              // deal with chords later
+                              // don't show rests
+                              if (note.noteType === "r") {
+                                return "#DADADA";
+                              }
 
-                            const keyProp = note.keyProps[0];
-                            const { accidental, key } = keyProp;
-                            const pitch = key.charAt(0).toUpperCase();
+                              const keyProp = note.keyProps[0];
+                              const { accidental, key } = keyProp;
+                              const pitch = key.charAt(0).toUpperCase();
 
-                            let colorIdx =
-                              keymap[pitch] + accidentalModifier[accidental];
+                              let colorIdx =
+                                keymap[pitch] + accidentalModifier[accidental];
 
-                            if (colorIdx < 0) {
-                              colorIdx += 12;
-                            }
-                            return colors[colorIdx % colors.length];
-                          })
-                          .each(function (note) {
-                            if (note.noteType !== "r") {
-                              notePositions.push({
-                                svg: this,
-                                measureNumber,
-                                mgSVG,
-                                measureSVG,
-                              });
-                            }
-                          });
-                      });
+                              if (colorIdx < 0) {
+                                colorIdx += 12;
+                              }
+                              return colors[colorIdx % colors.length];
+                            })
+                            .each(function (note) {
+                              if (note.noteType !== "r") {
+                                notePositions.push({
+                                  svg: this,
+                                  measureNumber,
+                                  mgSVG,
+                                  measureSVG,
+                                });
+                              }
+                            });
+                        });
+                    }
                   });
                 if (
                   measureGroup.indexOf(measureNumber) !==
@@ -384,51 +375,50 @@
   }
 
   onMount(() => {
-    parseMXL(musicxml).then((sheet) => {
-      const width = container.clientWidth;
-      const height = container.clientHeight;
+    musicxml.text().then((rawData) => {
+      parseMXL(rawData).then((sheet) => {
+        const width = container.clientWidth;
+        const height = container.clientHeight;
 
-      cursorSequence = render(width, height, sheet);
-      // https://dirk.net/2021/10/26/magenta-music-soundfontplayer-instrument-selection/
-      blobToNoteSequence(midi).then((res) => {
-        midiObject = res;
-        renderCursor(cursorSequence[0]);
+        cursorSequence = render(width, height, sheet);
+        // https://dirk.net/2021/10/26/magenta-music-soundfontplayer-instrument-selection/
+        blobToNoteSequence(midi).then((res) => {
+          midiObject = res;
+          renderCursor();
 
-        player = new SoundFontPlayer(
-          "https://storage.googleapis.com/magentadata/js/soundfonts/sgm_plus",
-          Tone.Master,
-          new Map(),
-          new Map(),
-          {
-            run: (note) => {
-              if (note.startTime > time) {
-                time = note.startTime;
-                noteIdx += 1;
-                renderCursor(noteIdx);
-              }
-            },
-            stop: () => {
-              playState = player.getPlayState();
-            },
-          }
-        );
-
-        playState = player.getPlayState();
+          player = new SoundFontPlayer(
+            "https://storage.googleapis.com/magentadata/js/soundfonts/sgm_plus",
+            Tone.Master,
+            new Map(),
+            new Map(),
+            {
+              run: (note) => {
+                if (note.startTime > time) {
+                  time = note.startTime;
+                  noteIdx += 1;
+                  renderCursor();
+                }
+              },
+              stop: () => {
+                playState = player.getPlayState();
+              },
+            }
+          );
+          playState = player.getPlayState();
+          // cleanup to avoid memory leak
+          return () => {
+            if (player) {
+              player.stop();
+            }
+          };
+        });
       });
     });
-
-    // cleanup to avoid memory leak
-    return () => {
-      if (player) {
-        player.stop();
-      }
-    };
   });
-
   function resetPlayer() {
     time = 0;
     noteIdx = 0;
-    renderCursor(noteIdx);
+    renderCursor();
   }
 
   function startPlayer() {

@@ -81,6 +81,8 @@ def main():
             therapy_mode=Therapy(mode),
             mutant_survival=mutant_survival,
             start=start,
+            adaptive_threshold=2,
+            adaptive_interval=8,
         ),
         seed=args.seed,
     )

@@ -14,7 +14,7 @@ from music21.instrument import Instrument
 from music21.key import Key
 from music21.meter.base import TimeSignature
 from music21.note import GeneralNote, Lyric, Note, Rest
-from music21.stream.base import Measure, Part, PartStaff, Stream, Voice
+from music21.stream.base import Measure, Part, PartStaff, Score, Stream, Voice
 from music21.volume import Volume
 from typeguard import typechecked
 
@@ -27,20 +27,47 @@ def reseed(seed: Optional[int] = None):
     return rng
 
 
+def choose_for_slices(start, end, steps, rng):
+    choices = []
+    for i in range(start, end, steps):
+        vals = [n for n in range(i, min(i + steps, end))]
+        if len(vals) == steps:
+            choices.append(rng.choice(vals))
+    return choices
+
+
 @typechecked
-def get_time(m: Measure) -> TimeSignature:
+def get_time(m: Measure, parent_stream: Part) -> TimeSignature:
     """
-    Gets the time signature for a measure.
+    Gets the current active time signature for a measure.
 
     :param m: Measure to get time signature for.
     :return: The measure's time signature.
     :raises ValueError: Raised if no time signature exists.
     """
-    ts = m.getTimeSignatures()[0]
-    if isinstance(ts, TimeSignature):
-        return ts
+
+    all_measures = list(parent_stream.getElementsByClass("Measure"))
+
+    ts_list = [
+        (m.timeSignature, m.offset)
+        for m in all_measures
+        if m.timeSignature is not None
+    ]
+    # find the latest timesignature
+    previous = list(filter(lambda ts: ts[1] <= m.offset, ts_list))
+    ts = max(previous, key=lambda p: p[1])
+
+    if isinstance(ts[0], TimeSignature):
+        return ts[0]
     else:
         raise ValueError(f"No time signature found for measure {m.number}.")
+
+
+@typechecked
+def annotate_first_of_measure(p: Stream, number: int, *args: str):
+    f = get_first_element(p.getElementsByClass("Measure")[number])
+    for text in args:
+        f.addLyric(text)
 
 
 @typechecked
@@ -71,14 +98,14 @@ def get_first_element(m: Stream) -> GeneralNote:
     :return: The first note in the measure.
     :raises ValueError: Raised if no notes or rests are present in the measure.
     """
-    first = m.flat.notesAndRests.first()
+    first = m.flatten().notesAndRests.first()
     if first is None:
         raise ValueError(f"Error: No notes or rests in measure {m.number}.")
     return first
 
 
 def add_lyric_for_measure(m: Stream, annotation: str):
-    notes = m.flat.notesAndRests
+    notes = m.flatten().notesAndRests
     for n in notes:
         add_lyric_for_note(n, annotation)
 
@@ -98,7 +125,7 @@ def random_offsets(
     :param m: The measure to pick a note from.
     :return: A list of random offsets from the measure.
     """
-    timing = list(set([el.offset for el in m.flat.notesAndRests]))
+    timing = list(set([el.offset for el in m.flatten().notesAndRests]))
     timing.sort()
     start = rng.randint(0, len(timing) - 1)
     return timing[start:]
@@ -233,6 +260,31 @@ def get_percentile_measure_number(s: Stream, percentile: float):
     return math.floor(percentile * length)
 
 
+def get_score_length_in_measures(s: Score):
+    parts = list(s.getElementsByClass("Part"))
+    return max([len(p.getElementsByClass("Measure")) for p in parts])
+
+
+def slice_part(p, start, end, dropList=[], removeLyrics=False):
+    measures = p.getElementsByClass("Measure")
+    return list(
+        map(
+            lambda m: copy_measure(m, dropList, removeLyrics),
+            measures[start:end],
+        )
+    )
+
+
+@typechecked
+def duplicate_part_keep_measures(p, id, to) -> Part:
+    dup = duplicate_part(p, id)
+    og = slice_part(p, 0, to)
+    region = dup.getElementsByClass("Measure")[0:to]
+    for old_measure, new_measure in zip(region, og):
+        dup.replace(old_measure, new_measure)
+    return dup
+
+
 def copy_measure(
     measure: Measure, dropList: Optional[List[str]] = [], removeLyrics=False
 ):
@@ -248,7 +300,7 @@ def copy_measure(
     cloned = copy.deepcopy(measure)
     cloned.removeByClass(["Barline"] + dropList)
     if removeLyrics:
-        notes = cloned.flat.notesAndRests
+        notes = cloned.flatten().notesAndRests
         for n in notes:
             n.lyric = ""
     return cloned

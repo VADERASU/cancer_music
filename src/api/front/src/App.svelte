@@ -18,7 +18,6 @@
   let midi;
   let wav;
   let originalWav;
-  let fileSheet;
   let mutationMetadata;
 
   let file;
@@ -33,7 +32,6 @@
 
   function resetToDefaults() {
     file = null;
-    fileSheet = null;
     mutant = null;
     midi = null;
     originalWav = null;
@@ -79,7 +77,9 @@
         .then((entries) => {
           entries.forEach((e) => {
             if (e.filename.endsWith(".musicxml")) {
-              e.getData(new zip.TextWriter()).then((res) => {
+              e.getData(
+                new zip.BlobWriter("application/vnd.recordare.musicxml")
+              ).then((res) => {
                 mutant = res;
               });
             }
@@ -225,7 +225,7 @@
     <hr />
     <h2 class="text-3xl text-center">Try it out!</h2>
     {#if !hideParams}
-      <FilePicker bind:file bind:fileSheet />
+      <FilePicker bind:file />
       {#if file !== null}
         <Parameters onSubmit={startMutate} />
       {/if}
@@ -253,12 +253,18 @@
 <div class="min-h-48">
   {#if mutant && mutationMetadata}
     {#key mutant}
-      <SheetDisplay
-        {midi}
-        mutationParams={mutationMetadata}
-        original={fileSheet}
-        musicxml={mutant}
-      />
+      {#if mutant.size < 3000000}
+        <SheetDisplay
+          {midi}
+          mutationParams={mutationMetadata}
+          musicxml={mutant}
+        />
+      {:else}
+        <div class="text-center">
+          Output too large to render. For best results, download it as a WAV or
+          .mxl file and open it in the appropriate player.
+        </div>
+      {/if}
     {/key}
   {/if}
 </div>
