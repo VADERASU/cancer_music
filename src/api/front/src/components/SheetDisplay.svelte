@@ -297,7 +297,7 @@
           });
       });
 
-    if (mutationParams.mode !== 0) {
+    if (mutationParams.mode !== 0 && mutationParams.mode !== 3) {
       d3.select(container)
         .append("rect")
         .attr("x", therapyStartX)
