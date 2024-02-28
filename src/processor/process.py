@@ -208,6 +208,7 @@ def mutate(
                         )
                         new_start = i + offset
                         # take greatest ancestor as parent for transpositions
+                        tree[parent.id].append(dup.id)
                         mutation_info[dup.id] = {
                             "parent": parent,
                             "tumors": list(
