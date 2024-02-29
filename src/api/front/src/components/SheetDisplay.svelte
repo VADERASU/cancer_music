@@ -1,90 +1,94 @@
 <script>
   import { onMount } from "svelte";
-  import { blobToNoteSequence, SoundFontPlayer } from "@magenta/music";
-
-  import { OpenSheetMusicDisplay } from "opensheetmusicdisplay";
+  import {
+    blobToNoteSequence,
+    PianoRollSVGVisualizer,
+    SoundFontPlayer,
+    NoteSequence,
+  } from "@magenta/music";
+  // import { OpenSheetMusicDisplay } from "opensheetmusicdisplay";
   import * as Tone from "tone";
 
   export let midi;
   export let mutationParams;
   export let musicxml;
 
-  let osmd;
+  let noteGroups = [];
   let midiObject;
   let player;
   let container;
   let playState;
-  let time = 0;
-  let page = 0;
+  let currentPos = 0;
+  let pages = 1;
+  let maxPitch = 0;
+  let minPitch = 0;
+  const staves = [];
+
   // https://magenta.github.io/magenta-js/music/
 
-  function setCursorStyle(h) {
-    osmd.cursor.cursorElement.style.height = `${h}px`;
-    osmd.cursor.cursorElement.style.top = `0px`;
+  function generateStaff(node, noteGroup) {
+    const staff = new PianoRollSVGVisualizer(noteGroup, node, {
+      minPitch,
+      maxPitch,
+    });
+
+    /* eslint-disable-next-line */
+    //staff.render.parentElement.lastChild.setAttribute("width", staff.width);
+    console.log(staff);
+    staves.push(staff);
+  }
+
+  function setScrollPosition(pos) {
+    staves.forEach((s) => {
+      /* eslint-disable-next-line */
+      s.render.parentElement.scrollLeft = pos;
+    });
   }
 
   onMount(() => {
-    osmd = new OpenSheetMusicDisplay(container, {
-      drawingParameters: "compacttight",
-      followCursor: false,
-      disableCursor: false,
-      renderSingleHorizontalStaffline: true,
-    });
+    const width = container.offsetWidth;
+    console.log(mutationParams, musicxml);
 
-    console.log(mutationParams);
+    // https://dirk.net/2021/10/26/magenta-music-soundfontplayer-instrument-selection/
+    blobToNoteSequence(midi).then((res) => {
+      midiObject = res;
+      const uniqueInstruments = [
+        ...new Set(midiObject.notes.map((n) => n.instrument)),
+      ];
+      const pitches = midiObject.notes.map((n) => n.pitch);
+      minPitch = Math.min(...pitches);
+      maxPitch = Math.max(...pitches);
 
-    musicxml.text().then((rawData) => {
-      osmd.load(rawData).then(() => {
-        osmd.render();
-
-        const width = container.offsetWidth;
-        const height = container.offsetHeight;
-
-        // https://dirk.net/2021/10/26/magenta-music-soundfontplayer-instrument-selection/
-        blobToNoteSequence(midi).then((res) => {
-          midiObject = res;
-          osmd.cursor.show();
-          setCursorStyle(height);
-
-          player = new SoundFontPlayer(
-            "https://storage.googleapis.com/magentadata/js/soundfonts/sgm_plus",
-            Tone.Master,
-            new Map(),
-            new Map(),
-            {
-              run: (note) => {
-                // catch up if we're on rests
-                while (
-                  osmd.cursor.NotesUnderCursor().every((e) => e.isRestFlag)
-                ) {
-                  osmd.cursor.next();
-                  setCursorStyle(height);
-                }
-                if (note.startTime > time) {
-                  time = note.startTime;
-                  osmd.cursor.next();
-                  setCursorStyle(height);
-
-                  const left = parseFloat(
-                    osmd.cursor.cursorElement.style.left.replace(/[^0-9.]/g, "")
-                  );
-                  if (left - container.scrollLeft > width) {
-                    page += 1;
-                    container.scrollLeft = page * width;
-                  } else if (left - container.scrollLeft < 0) {
-                    page = 0;
-                    container.scrollLeft = 0;
-                  }
-                }
-              },
-              stop: () => {
-                playState = player.getPlayState();
-              },
-            }
-          );
-          playState = player.getPlayState();
-        });
+      noteGroups = uniqueInstruments.map((id) => {
+        const notes = midiObject.notes.filter((n) => n.instrument === id);
+        const seq = NoteSequence.decode(
+          NoteSequence.encode(midiObject).finish()
+        );
+        seq.notes = notes;
+        return seq;
       });
+
+      player = new SoundFontPlayer(
+        "https://storage.googleapis.com/magentadata/js/soundfonts/sgm_plus",
+        Tone.Master,
+        new Map(),
+        new Map(),
+        {
+          run: (note) => {
+            const notePositions = staves.map((s) => s.redraw(note, false));
+            const sx = Math.max(...notePositions);
+            if (sx - currentPos > width) {
+              currentPos = pages * width;
+              pages += 1;
+              setScrollPosition(currentPos);
+            }
+          },
+          stop: () => {
+            playState = player.getPlayState();
+          },
+        }
+      );
+      playState = player.getPlayState();
     });
 
     // cleanup to avoid memory leak
@@ -96,10 +100,8 @@
   });
 
   function resetPlayer() {
-    osmd.cursor.reset();
-    setCursorStyle(container.offsetHeight);
-    time = 0;
-    page = 0;
+    pages = 0;
+    currentPos = 0;
     container.scrollLeft = 0;
   }
 
@@ -120,7 +122,7 @@
   }
 </script>
 
-<div class="w-11/12 mx-auto">
+<div class="w-11/12 mx-auto" bind:this={container}>
   {#if player}
     <div>
       <button on:click={startPlayer}>
@@ -128,10 +130,9 @@
       </button>
     </div>
   {/if}
-
-  <div class="overflow-scroll max-h-screen">
-    <div class="overflow-x-scroll overflow-y-clip" bind:this={container} />
-  </div>
+  {#each noteGroups as ng}
+    <svg use:generateStaff={ng} />
+  {/each}
 </div>
 
 <style>
