@@ -21,16 +21,14 @@
   let playState;
   let currentPos = 0;
   let pages = 1;
-  let maxPitch = 0;
-  let minPitch = 0;
   const staves = [];
 
   // https://magenta.github.io/magenta-js/music/
 
   function generateStaff(node, noteGroup) {
     const staff = new CustomPianoRollSVGVisualizer(noteGroup, node, {
-      minPitch,
-      maxPitch,
+    //  minPitch,
+    //  maxPitch,
       activeNoteRGB: "0, 0, 0",
       pixelsPerTimeStep: 100,
     });
@@ -57,9 +55,6 @@
       const uniqueInstruments = [
         ...new Set(midiObject.notes.map((n) => n.instrument)),
       ];
-      const pitches = midiObject.notes.map((n) => n.pitch);
-      minPitch = Math.min(...pitches);
-      maxPitch = Math.max(...pitches);
 
       noteGroups = uniqueInstruments.map((id) => {
         const notes = midiObject.notes.filter((n) => n.instrument === id);
