@@ -77,7 +77,14 @@
         new Map(),
         {
           run: (note) => {
-            const notePositions = staves.map((s) => s.redraw(note, false));
+            const notePositions = staves.map((s) => {
+              const np = s.redraw(note, false);
+              if (np !== undefined) {
+                return np;
+              }
+              return 0;
+            });
+            console.log(notePositions);
             const sx = Math.max(...notePositions);
             if (sx - currentPos > width) {
               currentPos = pages * width;
@@ -124,7 +131,7 @@
   }
 </script>
 
-<div class="w-11/12 mx-auto" bind:this={container}>
+<div class="w-11/12 mx-auto" >
   {#if player}
     <div>
       <button on:click={startPlayer}>
@@ -132,10 +139,12 @@
       </button>
     </div>
   {/if}
-  {#each noteGroups as ng}
-    <svg use:generateStaff={ng} />
-    <hr />
-  {/each}
+  <div class="overflow-x-scroll" bind:this={container}>
+    {#each noteGroups as ng}
+      <hr />
+      <svg use:generateStaff={ng} />
+    {/each}
+  </div>
 </div>
 
 <style>
