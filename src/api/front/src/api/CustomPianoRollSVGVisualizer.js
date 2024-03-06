@@ -56,8 +56,8 @@ export default class CustomPianoRollSVGVisualizer extends BaseSVGVisualizer {
         });
 
         this.staffModel.staffBlockMap.forEach((staffBlock, quarters) => {
-            const barNum = staffBlock.barNumber; 
-            const x =  this.staffModel.barsInfo.quartersToTime(quarters) * this.config.pixelsPerTimeStep;
+            const barNum = staffBlock.barNumber;
+            const x = this.staffModel.barsInfo.quartersToTime(quarters) * this.config.pixelsPerTimeStep;
             if (barNum === Math.trunc(barNum)) {
                 const bar = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
                 bar.setAttribute('fill', 'black');
@@ -74,7 +74,9 @@ export default class CustomPianoRollSVGVisualizer extends BaseSVGVisualizer {
     getNoteFillColor(note, isActive) {
         const opacityBaseline = 0.2;  // Shift all the opacities up a little.
         const opacity = note.velocity ? note.velocity / 100 + opacityBaseline : 1;
-        const colors = ['#a6cee3', '#1f78b4', '#b2df8a', '#33a02c', '#fb9a99', '#e31a1c', '#fdbf6f', '#ff7f00', '#cab2d6', '#6a3d9a', '#ffff99', '#b15928'];
+
+        const colors =
+            ["#1C0D82", "#1A907E", "#139032", "#719227", "#F7F63C", "#F6D33C", "#F77F0E", "#FA0C0A", "#A10C08", "#D71384", "#4B0D80", "#80067D"];
 
         const fill =
             `rgba(${isActive ? this.config.activeNoteRGB : hexToRgbA(colors[note.pitch % 12])}, ${opacity})`;
