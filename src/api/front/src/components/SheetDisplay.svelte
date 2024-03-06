@@ -2,12 +2,13 @@
   import { onMount } from "svelte";
   import {
     blobToNoteSequence,
-    PianoRollSVGVisualizer,
     SoundFontPlayer,
     NoteSequence,
   } from "@magenta/music";
-  // import { OpenSheetMusicDisplay } from "opensheetmusicdisplay";
   import * as Tone from "tone";
+  /* eslint-disable-next-line */
+  import CustomPianoRollSVGVisualizer from "../api/CustomPianoRollSVGVisualizer";
+  // import { OpenSheetMusicDisplay } from "opensheetmusicdisplay";
 
   export let midi;
   export let mutationParams;
@@ -27,22 +28,23 @@
   // https://magenta.github.io/magenta-js/music/
 
   function generateStaff(node, noteGroup) {
-    const staff = new PianoRollSVGVisualizer(noteGroup, node, {
+    const staff = new CustomPianoRollSVGVisualizer(noteGroup, node, {
       minPitch,
       maxPitch,
+      activeNoteRGB: "0, 0, 0",
+      pixelsPerTimeStep: 100,
     });
 
     /* eslint-disable-next-line */
     //staff.render.parentElement.lastChild.setAttribute("width", staff.width);
-    console.log(staff);
     staves.push(staff);
   }
 
   function setScrollPosition(pos) {
-    staves.forEach((s) => {
-      /* eslint-disable-next-line */
-      s.render.parentElement.scrollLeft = pos;
-    });
+    // staves.forEach((s) => {
+    /* eslint-disable-next-line */
+    container.scrollLeft = pos;
+    // });
   }
 
   onMount(() => {
@@ -132,6 +134,7 @@
   {/if}
   {#each noteGroups as ng}
     <svg use:generateStaff={ng} />
+    <hr />
   {/each}
 </div>
 

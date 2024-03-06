@@ -25,6 +25,7 @@
     "@magenta/music": "^1.23.1",
     "@zip.js/zip.js": "^2.7.32",
     "opensheetmusicdisplay": "^1.7.5",
+    "staffrender": "^1.2.4",
     "svelte": "^3.57.0",
     "svelte-loading-spinners": "^0.3.4",
     "tone": "^14.7.77",
