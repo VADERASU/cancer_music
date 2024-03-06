@@ -21,7 +21,20 @@
 
   // https://magenta.github.io/magenta-js/music/
 
-  const colors = ["#1C0D82", "#1A907E", "#139032", "#719227", "#F7F63C", "#F6D33C", "#F77F0E", "#FA0C0A", "#A10C08", "#D71384", "#4B0D80", "#80067D"];
+  const colors = [
+    "#1C0D82",
+    "#1A907E",
+    "#139032",
+    "#719227",
+    "#F7F63C",
+    "#F6D33C",
+    "#F77F0E",
+    "#FA0C0A",
+    "#A10C08",
+    "#D71384",
+    "#4B0D80",
+    "#80067D",
+  ];
   const keymap = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
   const accidentalModifier = { n: 0, "#": 1, "##": 2, b: -1, bb: -2, null: 0 };
 
@@ -30,7 +43,7 @@
   }
 
   function render(width, height, sheet) {
-  console.log(mutationParams);
+    console.log(mutationParams);
     const mutantMeasures = sheet.sourceMeasures;
     const originalParts = Object.keys(mutationParams.tree);
     const measures = [...Array(sheet.sourceMeasures.length).keys()];
