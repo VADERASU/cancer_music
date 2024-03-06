@@ -84,7 +84,6 @@
               }
               return 0;
             });
-            console.log(notePositions);
             const sx = Math.max(...notePositions);
             if (sx - currentPos > width) {
               currentPos = pages * width;
