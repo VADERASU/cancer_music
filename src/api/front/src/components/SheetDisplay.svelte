@@ -21,21 +21,7 @@
 
   // https://magenta.github.io/magenta-js/music/
 
-  const colors = [
-    "#a6cee3",
-    "#1f78b4",
-    "#b2df8a",
-    "#33a02c",
-    "#fb9a99",
-    "#e31a1c",
-    "#fdbf6f",
-    "#ff7f00",
-    "#cab2d6",
-    "#6a3d9a",
-    "#ffff99",
-    "#b15928",
-  ];
-
+  const colors = ["#1C0D82", "#1A907E", "#139032", "#719227", "#F7F63C", "#F6D33C", "#F77F0E", "#FA0C0A", "#A10C08", "#D71384", "#4B0D80", "#80067D"];
   const keymap = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
   const accidentalModifier = { n: 0, "#": 1, "##": 2, b: -1, bb: -2, null: 0 };
 
