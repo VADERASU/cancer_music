@@ -18,39 +18,42 @@
   let noteIdx = 0;
   let cursorSequence = [];
   let cursorHeight = 0;
+  let svgContainer;
+  let pages = 0;
+  let currentPos = 0;
 
   // https://magenta.github.io/magenta-js/music/
-
-  const colors = [
-    "#1C0D82",
-    "#1A907E",
-    "#139032",
-    "#719227",
-    "#F7F63C",
-    "#F6D33C",
-    "#F77F0E",
-    "#FA0C0A",
-    "#A10C08",
-    "#D71384",
-    "#4B0D80",
-    "#80067D",
-  ];
-  const keymap = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
-  const accidentalModifier = { n: 0, "#": 1, "##": 2, b: -1, bb: -2, null: 0 };
-
   function getAttr(svg, attr) {
     return parseFloat(svg.getAttribute(attr));
   }
 
-  function render(width, height, sheet) {
-    console.log(mutationParams);
+  function getGTransform(g) {
+    const transform = d3.select(g).attr("transform");
+    const raw = transform.replace(/[^0-9.,]/g, "");
+    return raw.split(",").map((s) => parseFloat(s));
+  }
+
+  function getGx(g) {
+    const vals = getGTransform(g);
+    return vals[0];
+  }
+
+  function setScrollPosition(pos) {
+    // staves.forEach((s) => {
+    /* eslint-disable-next-line */
+    container.scrollLeft = pos;
+    // });
+  }
+
+  function render(height, sheet) {
     const mutantMeasures = sheet.sourceMeasures;
     const originalParts = Object.keys(mutationParams.tree);
     const measures = [...Array(sheet.sourceMeasures.length).keys()];
     const cancerStart = Math.floor(
       mutationParams.cancerStart * measures.length
     );
-    const therapyStart = Math.floor(mutationParams.start * measures.length) - 1;
+    // const therapyStart = Math.floor(mutationParams.start * measures.length) - 1;
+
     const howMany = mutationParams.how_many;
     const groupedMeasures = [];
     groupedMeasures.push(measures.slice(0, cancerStart));
@@ -62,35 +65,25 @@
       }
     }
 
-    const measureXScale = d3
-      .scaleBand()
-      .domain(measures)
-      .range([0, width])
-      .paddingInner(0.1);
+    const bw = 100;
+    const xPad = 5;
+    const width = bw * measures.length + (bw * 1.25);
 
-    const measureXScaleUnPadded = d3
-      .scaleBand()
-      .domain(measures)
-      .range([0, width]);
-
-    const xPad = measureXScaleUnPadded.bandwidth() - measureXScale.bandwidth();
-
-    const bw = measureXScale.bandwidth();
+    d3.select(svgContainer).attr("width", width).attr("height", height);
 
     const partDivisionScale = d3
       .scaleBand()
       .domain(originalParts)
-      .range([0, height])
-      .paddingInner(0.1);
+      .range([0, height]);
 
     const partContainerHeight = partDivisionScale.bandwidth();
 
     cursorHeight = partContainerHeight * originalParts.length;
 
-    let therapyStartX = 0;
-    let cancerStartX = 0;
+    // let therapyStartX = 0;
+    // let cancerStartX = 0;
     const notePositions = [];
-    d3.select(container)
+    d3.select(svgContainer)
       .selectAll("svg")
       .data(originalParts)
       .enter()
@@ -100,6 +93,7 @@
       .attr("height", partContainerHeight)
       .each(function (partNumber) {
         const childrenParts = mutationParams.tree[partNumber];
+        const partAnnotations = mutationParams.annotations[partNumber];
 
         const getX = (i, w) => {
           if (i > 0) {
@@ -141,16 +135,9 @@
                 const mML = mutantMeasures[measureNumber].verticalMeasureList;
                 ml.push(mML[partNumber]);
                 const measureSVG = this;
-
-                if (measureNumber === therapyStart) {
-                  therapyStartX =
-                    getAttr(mgSVG, "x") + getAttr(measureSVG, "x");
-                }
-
-                if (measureNumber === cancerStart) {
-                  cancerStartX = getAttr(mgSVG, "x") + getAttr(measureSVG, "x");
-                }
-
+                const measureAnnotations = partAnnotations
+                  ? partAnnotations[measureNumber]
+                  : {};
                 childrenParts.forEach((pn) => ml.push(mML[pn]));
                 const measureYScale = d3
                   .scaleBand()
@@ -164,23 +151,6 @@
                   .data(ml)
                   .enter()
                   .append("svg")
-                  .attr("opacity", (_, i) => {
-                    if (
-                      i === 0 &&
-                      measureNumber >=
-                        Math.floor(
-                          mutationParams.cancerStart * measures.length
-                        ) &&
-                      childrenParts.length > 0 &&
-                      Math.floor(mutationParams.cancerStart * measures.length) +
-                        mutationParams.how_many -
-                        1 >=
-                        measureNumber
-                    ) {
-                      return 0.3;
-                    }
-                    return 1.0;
-                  })
                   .attr("height", measureYScale.bandwidth())
                   .attr("width", bw)
                   .attr("x", 0)
@@ -188,7 +158,6 @@
                   .each(function (m) {
                     if (m) {
                       const voices = Object.values(m.vfVoices);
-
                       const totalLength = Math.max(
                         ...voices.map(
                           (v) =>
@@ -203,6 +172,10 @@
                         .range([0, measureYScale.bandwidth()]);
 
                       const vbw = voiceHeightScale.bandwidth();
+
+                      const lyrics = measureAnnotations
+                        ? Object.values(measureAnnotations)
+                        : [];
 
                       d3.select(this)
                         .selectAll("svg")
@@ -230,49 +203,45 @@
                           let localTime = 0;
                           // totalLength -
                           // v.ticksUsed.numerator / v.ticksUsed.denominator;
-
                           d3.select(this)
-                            .selectAll("rect")
+                            .selectAll("g")
                             .data(notes)
                             .enter()
-                            .append("rect")
-                            .attr("height", vbw)
-                            .attr("y", 0)
-                            .attr(
-                              "width",
-                              (note) => xScale(note.intrinsicTicks) - 1
-                            )
-                            .attr("x", (note) => {
+                            .append("g")
+                            .attr("transform", (note) => {
                               const t = localTime;
                               localTime += note.intrinsicTicks;
-                              return xScale(t);
+                              return `translate(${xScale(t)}, 0)`;
                             })
-                            .attr("fill", (note) => {
-                              // deal with chords later
-                              // don't show rests
-                              if (note.noteType === "r") {
-                                return "#DADADA";
+                            .each(function (note, i) {
+                              // this = the text and rect group
+                              let lyric = lyrics[i];
+
+                              if (!lyric) {
+                                if (note.noteType === "r") {
+                                  lyric = "-";
+                                } else {
+                                  lyric = "n";
+                                }
+                              }
+                              const noteWidth = xScale(note.intrinsicTicks) - 1;
+
+                              if (lyric) {
+                                d3.select(this)
+                                  .append("text")
+                                  .attr("x", 0)
+                                  .attr("y", vbw / 2)
+                                  .text(lyric);
                               }
 
-                              const keyProp = note.keyProps[0];
-                              const { accidental, key } = keyProp;
-                              const pitch = key.charAt(0).toUpperCase();
-
-                              let colorIdx =
-                                keymap[pitch] + accidentalModifier[accidental];
-
-                              if (colorIdx < 0) {
-                                colorIdx += 12;
-                              }
-                              return colors[colorIdx % colors.length];
-                            })
-                            .each(function (note) {
                               if (note.noteType !== "r") {
                                 notePositions.push({
-                                  svg: this,
+                                  svg: this.parentElement,
+                                  g: this,
                                   measureNumber,
                                   mgSVG,
                                   measureSVG,
+                                  noteWidth,
                                 });
                               }
                             });
@@ -296,7 +265,7 @@
           });
       });
 
-    if (mutationParams.mode !== 0 && mutationParams.mode !== 3) {
+    /* if (mutationParams.mode !== 0 && mutationParams.mode !== 3) {
       d3.select(container)
         .append("rect")
         .attr("x", therapyStartX)
@@ -310,7 +279,7 @@
       .attr("x", cancerStartX)
       .attr("height", cursorHeight)
       .attr("width", 5)
-      .attr("fill", "red");
+      .attr("fill", "red"); */
 
     // sourcemeasures gives you # measures
     // in each sourceMeasure there is activeTimeSignature giving you time
@@ -321,13 +290,13 @@
       const notes = notePositions.filter(
         (e) => e.measureNumber === measureNumber
       );
-      const xGroups = d3.group(notes, (n) => getAttr(n.svg, "x"));
+      const xGroups = d3.group(notes, (n) => getGx(n.g));
       return [...xGroups.values()]
         .map(
           (g) =>
             g.reduce(
               (acc, v) => {
-                const w = getAttr(v.svg, "width");
+                const w = v.noteWidth;
                 if (w < acc.width) {
                   return { note: v, width: w };
                 }
@@ -336,35 +305,39 @@
               { note: null, width: Number.MAX_VALUE }
             ).note
         )
-        .sort((a, b) => getAttr(a.svg, "x") - getAttr(b.svg, "x"));
+        .sort((a, b) => getGx(a.g) - getGx(b.g));
     });
     return sequence.flat();
   }
 
   function getAbsX(note) {
     return (
-      getAttr(note.svg, "x") +
-      getAttr(note.mgSVG, "x") +
-      getAttr(note.measureSVG, "x")
+      getGx(note.g) + getAttr(note.mgSVG, "x") + getAttr(note.measureSVG, "x")
     );
   }
 
   function renderCursor() {
     const note = cursorSequence[noteIdx];
     let next = null;
+    console.log(note);
     if (noteIdx + 1 < cursorSequence.length) {
       next = cursorSequence[noteIdx + 1];
     }
     if (note) {
+      const noteX = getAbsX(note);
       cursor.setAttribute("height", cursorHeight);
       cursor.setAttribute("x", getAbsX(note));
-
+      if (noteX - currentPos > container.clientWidth) {
+        currentPos = pages * container.clientWidth;
+        pages += 1;
+        setScrollPosition(currentPos);
+      }
       if (next === null || note.measureSVG !== next.measureSVG) {
-        cursor.setAttribute("width", getAttr(note.svg, "width"));
+        cursor.setAttribute("width", note.noteWidth);
       } else {
         const thisX = getAbsX(note);
         const nextX = getAbsX(next);
-        let width = getAttr(note.svg, "width");
+        let width = note.noteWidth;
         if (nextX - thisX < width) {
           width = thisX - nextX;
         }
@@ -376,10 +349,9 @@
   onMount(() => {
     musicxml.text().then((rawData) => {
       parseMXL(rawData).then((sheet) => {
-        const width = container.clientWidth;
         const height = container.clientHeight;
 
-        cursorSequence = render(width, height, sheet);
+        cursorSequence = render(height, sheet);
         // https://dirk.net/2021/10/26/magenta-music-soundfontplayer-instrument-selection/
         blobToNoteSequence(midi).then((res) => {
           midiObject = res;
@@ -414,9 +386,12 @@
       });
     });
   });
+  
   function resetPlayer() {
     time = 0;
     noteIdx = 0;
+    pages = 0;
+    currentPos = 0;
     renderCursor();
   }
 
@@ -446,9 +421,11 @@
     </div>
   {/if}
 
-  <svg class="w-full h-screen" bind:this={container}>
-    <rect bind:this={cursor} stroke="black" opacity="0.5" stroke-width="3" />
-  </svg>
+  <div class="overflow-auto h-screen" bind:this={container}>
+    <svg bind:this={svgContainer}>
+      <rect bind:this={cursor} stroke="black" opacity="0.5" stroke-width="3" />
+    </svg>
+  </div>
 </div>
 
 <style>

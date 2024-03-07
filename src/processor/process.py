@@ -13,6 +13,8 @@ from processor import utils
 from processor.parameters import Parameters, Therapy, TherapyParameters
 
 MAX_SUBDIVISION_QUARTER_LENGTH = 0.125
+NOOP_ANNOT = "n"
+
 
 def repair_stream(s):
     for el in s.flatten().notes:
@@ -77,7 +79,6 @@ def mutate(
     rng = utils.reseed(seed)
 
     tree = {}
-    
     for i, p in enumerate(parts):
         p.id = i
         tree[p.id] = []
@@ -117,14 +118,13 @@ def mutate(
                 "mutants": utils.choose_for_slices(
                     cancer_start, score_length, params["how_many"], rng
                 ),
-                "annotations": {0: str(np.id)},
+                "annotations": {},
             }
         else:
             np = utils.duplicate_part_keep_measures(
                 p, p.id, len(p.getElementsByClass("Measure"))
             )
             all_parts.append(np)
-            utils.annotate_first_of_measure(np, 0, str(np.id))
 
     msgCallback(MutationStatus.SETUP_COMPLETE)
     offspring_count = 0
@@ -146,7 +146,7 @@ def mutate(
                 )
                 for mp in to_kill:
                     mutation_info[mp.id]["alive"] = False
-                    mutation_info[mp.id]["annotations"][i] = "c"
+        
         elif i == therapy_start and not therapy_started:
             if t_params["therapy_mode"] == Therapy.CURE:
                 for mp in mutants:
@@ -155,12 +155,10 @@ def mutate(
             if t_params["therapy_mode"] == Therapy.PARTIAL_CURE:
                 # all but one die
                 survivor = rng.choice(mutants)
-                mutation_info[survivor.id]["annotations"][i] = "s"
 
                 for mp in mutants:
                     if mp.id != survivor.id:
                         mutation_info[mp.id]["alive"] = False
-                        mutation_info[mp.id]["annotations"][i] = "c"
             therapy_started = True
 
         for mp in mutants:
@@ -170,7 +168,7 @@ def mutate(
             is_alive = m_info["alive"]
             start = m_info["start"]
             to_mutate = m_info["mutants"]
-
+            
             if is_alive and i >= start:
                 dm = mp.getElementsByClass("Measure")[i]
                 t = tumors[(i - start) % len(tumors)]
@@ -188,11 +186,12 @@ def mutate(
                     )
                 else:
                     mutation = noop
-                mutant_measure = mutation(t, rng, parent)
+                mutant_measure, annotations = mutation(t, rng, parent)
                 mutant_measure.number = dm.number
                 mutant_measure.makeBeams(inPlace=True)
                 mp.replace(dm, mutant_measure)
                 tumors[(i - start) % len(tumors)] = mutant_measure
+                m_info["annotations"][mutant_measure.number] = annotations
 
                 if (i - start) % params[
                     "how_many"
@@ -231,10 +230,7 @@ def mutate(
                                 params["how_many"],
                                 rng,
                             ),
-                            "annotations": {
-                                0: str(available_id),
-                                new_start: f"a.{mp.id}; off {offset}",
-                            },
+                            "annotations": {},
                         }
                         available_id += 1
                         offspring_count += 1
@@ -251,15 +247,12 @@ def mutate(
                             new_child = rng.choice(dead)
                             mutation_info[new_child.id]["alive"] = True
                             mutation_info[new_child.id]["start"] = i
-                            mutation_info[new_child.id]["annotations"][
-                                i
-                            ] = f"r.{mp.id}"
 
-    # once we're done, add all the ancestry annotations
+    metadata = {}
+    metadata["tree"] = tree
+    metadata["annotations"] = {}
     for mp in mutants:
-        annotations = mutation_info[mp.id]["annotations"]
-        for k, v in annotations.items():
-            utils.annotate_first_of_measure(mp, k, v)
+        metadata["annotations"][mp.id] = mutation_info[mp.id]["annotations"]
 
     all_parts.extend(mutants)
     all_parts.sort(key=lambda x: x.id)
@@ -267,10 +260,14 @@ def mutate(
         p.makeBeams(inPlace=True)
         m.append(p)
 
-    return m, tree
+    return m, metadata 
 
-def noop(m: Measure, __: random.Random, _: Stream):
-    return utils.copy_measure(m)
+def noop(m: Measure, __: random.Random, _: Optional[Stream]):
+    annotations = {} 
+    for n in m.flatten().notesAndRests:
+        annotations[n.offset] = NOOP_ANNOT
+
+    return utils.copy_measure(m), annotations
 
 
 @typechecked
@@ -282,14 +279,18 @@ def insertion(measure: Measure, rng: random.Random, _: Optional[Stream]):
     :param m: Measure to insert a note into.
     :param _: Stream, unused but do not remove.
     """
+    annotations = {}
     offsets = utils.random_offsets(measure, rng)
     m = utils.copy_inverse(measure, offsets)
-
     subdivide_stream(m, measure, offsets)
+    # might fail if note doesn't get subdivided, not worth spending time on for the study
+    for n in m.flatten().notesAndRests:
+        lyric = "i" if n.offset in offsets else NOOP_ANNOT
+        annotations[n.offset] = lyric
     # n = utils.get_first_element(m)
     # n.addLyric("ins")
 
-    return m
+    return m, annotations
 
 
 @typechecked
@@ -354,7 +355,7 @@ def subdivide_stream(
 
 
 @typechecked
-def transposition(measure: Measure, rng: random.Random, _: Stream) -> Measure:
+def transposition(measure: Measure, rng: random.Random, _: Stream):
     """
     Transposes the measure by either 1 or -1 half-steps.
 
@@ -365,8 +366,14 @@ def transposition(measure: Measure, rng: random.Random, _: Stream) -> Measure:
     options = [-1, 1]
     choice = rng.choice(options)
     offsets = utils.random_offsets(measure, rng)
-
-    return transpose_measure(measure, offsets, choice)
+    
+    annotations = {}
+    measure = transpose_measure(measure, offsets, choice)  
+    for n in measure.flatten().notesAndRests:
+        lyric = "t" if n.offset in offsets else NOOP_ANNOT
+        annotations[n.offset] = lyric
+    
+    return measure, annotations 
 
 
 @typechecked
@@ -406,12 +413,14 @@ def deletion(measure: Measure, rng: random.Random, _: Stream):
     """
     offsets = utils.random_offsets(measure, rng)
     m = utils.copy_inverse(measure, offsets)
-
     delete_substring(m, measure, offsets)
-    # n = utils.get_first_element(m)
-    # n.addLyric("del")
 
-    return m
+    annotations = {}
+    for n in m.flatten().notesAndRests:
+        lyric = "d" if n.offset in offsets else NOOP_ANNOT
+        annotations[n.offset] = lyric
+
+    return m, annotations
 
 
 @typechecked
@@ -471,8 +480,12 @@ def translocation(og: Measure, rng: random.Random, s: Stream):
     choice = utils.copy_measure(
         rng.choice(safe), ["Clef", "KeySignature", "TimeSignature"]
     )
-    utils.add_lyric_for_measure(choice, "tl")
-    return choice
+
+    annotations = {}
+    for n in choice.flatten().notesAndRests:
+        annotations[n.offset] = "tl" 
+
+    return choice, annotations
 
 
 @typechecked
@@ -492,9 +505,14 @@ def inversion(measure: Measure, rng: random.Random, _: Optional[Stream]):
         invert_stream(m, measure, offsets)
         # n = utils.get_first_element(m)
         # n.addLyric("inv")
+        annotations = {}
+        for n in m.flatten().notesAndRests:
+            lyric = "inv" if n.offset in offsets else NOOP_ANNOT
+            annotations[n.offset] = lyric
     else:
-        m = noop(measure, rng, _)
-    return m
+        m, annotations = noop(measure, rng, _)
+
+    return m, annotations
 
 
 @typechecked

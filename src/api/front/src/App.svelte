@@ -86,7 +86,9 @@
 
             if (e.filename.endsWith(".json")) {
               e.getData(new zip.TextWriter()).then((res) => {
-                mutationMetadata = { ...params, tree: JSON.parse(res) };
+                const md = JSON.parse(res);
+                const { tree, annotations } = md;
+                mutationMetadata = { ...params, tree, annotations };
               });
             }
 
