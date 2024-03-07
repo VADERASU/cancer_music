@@ -67,7 +67,7 @@
 
     const bw = 100;
     const xPad = 5;
-    const width = bw * measures.length + (bw * 1.25);
+    const width = bw * measures.length + bw * 1.25;
 
     d3.select(svgContainer).attr("width", width).attr("height", height);
 
@@ -77,9 +77,9 @@
       .range([0, height]);
 
     const partContainerHeight = partDivisionScale.bandwidth();
-
+    const { annotations } = mutationParams;
+    console.log(annotations);
     cursorHeight = partContainerHeight * originalParts.length;
-
     // let therapyStartX = 0;
     // let cancerStartX = 0;
     const notePositions = [];
@@ -93,7 +93,6 @@
       .attr("height", partContainerHeight)
       .each(function (partNumber) {
         const childrenParts = mutationParams.tree[partNumber];
-        const partAnnotations = mutationParams.annotations[partNumber];
 
         const getX = (i, w) => {
           if (i > 0) {
@@ -133,12 +132,12 @@
               .each(function (measureNumber) {
                 const ml = [];
                 const mML = mutantMeasures[measureNumber].verticalMeasureList;
-                ml.push(mML[partNumber]);
+                ml.push({ m: mML[partNumber], pn: partNumber });
+
                 const measureSVG = this;
-                const measureAnnotations = partAnnotations
-                  ? partAnnotations[measureNumber]
-                  : {};
-                childrenParts.forEach((pn) => ml.push(mML[pn]));
+                childrenParts.forEach((pn) => {
+                  ml.push({ m: mML[pn], pn });
+                });
                 const measureYScale = d3
                   .scaleBand()
                   .domain([...Array(ml.length).keys()])
@@ -155,7 +154,9 @@
                   .attr("width", bw)
                   .attr("x", 0)
                   .attr("y", (_, i) => measureYScale(i))
-                  .each(function (m) {
+                  .each(function (measureObject) {
+                    const { m, pn } = measureObject;
+
                     if (m) {
                       const voices = Object.values(m.vfVoices);
                       const totalLength = Math.max(
@@ -164,7 +165,6 @@
                             v.totalTicks.numerator / v.totalTicks.denominator
                         )
                       );
-
                       // each measure has 1-N voices
                       const voiceHeightScale = d3
                         .scaleBand()
@@ -172,10 +172,14 @@
                         .range([0, measureYScale.bandwidth()]);
 
                       const vbw = voiceHeightScale.bandwidth();
-
-                      const lyrics = measureAnnotations
-                        ? Object.values(measureAnnotations)
-                        : [];
+                      let lyrics = [];
+                      if (pn in annotations) {
+                        if (measureNumber in annotations[pn]) {
+                          lyrics = Object.values(
+                            annotations[pn][measureNumber]
+                          );
+                        }
+                      }
 
                       d3.select(this)
                         .selectAll("svg")
@@ -214,7 +218,6 @@
                               return `translate(${xScale(t)}, 0)`;
                             })
                             .each(function (note, i) {
-                              // this = the text and rect group
                               let lyric = lyrics[i];
 
                               if (!lyric) {
@@ -319,7 +322,6 @@
   function renderCursor() {
     const note = cursorSequence[noteIdx];
     let next = null;
-    console.log(note);
     if (noteIdx + 1 < cursorSequence.length) {
       next = cursorSequence[noteIdx + 1];
     }
@@ -386,7 +388,7 @@
       });
     });
   });
-  
+
   function resetPlayer() {
     time = 0;
     noteIdx = 0;

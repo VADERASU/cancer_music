@@ -186,12 +186,18 @@ def mutate(
                     )
                 else:
                     mutation = noop
-                mutant_measure, annotations = mutation(t, rng, parent)
+                mutant_measure = mutation(t, rng, parent)
+                annotations = {}
+                for n in mutant_measure.flatten().notesAndRests:
+                    lyric = n.lyric if n.lyric is not None and n.lyric != "" else NOOP_ANNOT        
+                    annotations[n.offset] = lyric
+
                 mutant_measure.number = dm.number
                 mutant_measure.makeBeams(inPlace=True)
                 mp.replace(dm, mutant_measure)
                 tumors[(i - start) % len(tumors)] = mutant_measure
-                m_info["annotations"][mutant_measure.number] = annotations
+                print(mutant_measure.number)
+                m_info["annotations"][mutant_measure.number - 1] = annotations
 
                 if (i - start) % params[
                     "how_many"
@@ -263,11 +269,7 @@ def mutate(
     return m, metadata 
 
 def noop(m: Measure, __: random.Random, _: Optional[Stream]):
-    annotations = {} 
-    for n in m.flatten().notesAndRests:
-        annotations[n.offset] = NOOP_ANNOT
-
-    return utils.copy_measure(m), annotations
+    return utils.copy_measure(m)
 
 
 @typechecked
@@ -279,18 +281,11 @@ def insertion(measure: Measure, rng: random.Random, _: Optional[Stream]):
     :param m: Measure to insert a note into.
     :param _: Stream, unused but do not remove.
     """
-    annotations = {}
     offsets = utils.random_offsets(measure, rng)
     m = utils.copy_inverse(measure, offsets)
     subdivide_stream(m, measure, offsets)
-    # might fail if note doesn't get subdivided, not worth spending time on for the study
-    for n in m.flatten().notesAndRests:
-        lyric = "i" if n.offset in offsets else NOOP_ANNOT
-        annotations[n.offset] = lyric
-    # n = utils.get_first_element(m)
-    # n.addLyric("ins")
 
-    return m, annotations
+    return m
 
 
 @typechecked
@@ -335,7 +330,7 @@ def subdivide_stream(
                     off = el.offset
 
                 s.insert(off, new_el)
-                # new_el.addLyric("i")
+                utils.add_lyric_for_note(new_el,"i")
                 off += new_el.duration.quarterLength
 
         # the copy appended after
@@ -349,8 +344,8 @@ def subdivide_stream(
             if el is not None:
                 if el.duration.quarterLength >= MAX_SUBDIVISION_QUARTER_LENGTH:
                     new_el = utils.subdivide_element(el)
-                    new_el.addLyric("i")
                     s.insert(off + sub_offset, new_el)
+                    utils.add_lyric_for_note(new_el,"i") 
                     sub_offset += new_el.duration.quarterLength
 
 
@@ -367,13 +362,7 @@ def transposition(measure: Measure, rng: random.Random, _: Stream):
     choice = rng.choice(options)
     offsets = utils.random_offsets(measure, rng)
     
-    annotations = {}
-    measure = transpose_measure(measure, offsets, choice)  
-    for n in measure.flatten().notesAndRests:
-        lyric = "t" if n.offset in offsets else NOOP_ANNOT
-        annotations[n.offset] = lyric
-    
-    return measure, annotations 
+    return transpose_measure(measure, offsets, choice)
 
 
 @typechecked
@@ -415,12 +404,7 @@ def deletion(measure: Measure, rng: random.Random, _: Stream):
     m = utils.copy_inverse(measure, offsets)
     delete_substring(m, measure, offsets)
 
-    annotations = {}
-    for n in m.flatten().notesAndRests:
-        lyric = "d" if n.offset in offsets else NOOP_ANNOT
-        annotations[n.offset] = lyric
-
-    return m, annotations
+    return m
 
 
 @typechecked
@@ -481,11 +465,8 @@ def translocation(og: Measure, rng: random.Random, s: Stream):
         rng.choice(safe), ["Clef", "KeySignature", "TimeSignature"]
     )
 
-    annotations = {}
-    for n in choice.flatten().notesAndRests:
-        annotations[n.offset] = "tl" 
-
-    return choice, annotations
+    utils.add_lyric_for_measure(choice, "tl")
+    return choice
 
 
 @typechecked
@@ -503,17 +484,10 @@ def inversion(measure: Measure, rng: random.Random, _: Optional[Stream]):
     if len(offsets) > 1:
         m = utils.copy_inverse(measure, offsets)
         invert_stream(m, measure, offsets)
-        # n = utils.get_first_element(m)
-        # n.addLyric("inv")
-        annotations = {}
-        for n in m.flatten().notesAndRests:
-            lyric = "inv" if n.offset in offsets else NOOP_ANNOT
-            annotations[n.offset] = lyric
     else:
-        m, annotations = noop(measure, rng, _)
+        m = noop(measure, rng, _)
 
-    return m, annotations
-
+    return m
 
 @typechecked
 def invert_stream(
