@@ -145,6 +145,16 @@
           returns a "mutated" version of the piece. The code is based on a few simple
           rules, all inspired by the way cancer works on a cellular level.
         </p>
+        <p>
+          More information about how we designed and tested this project was
+          published in a paper for <a href="https://chi2024.acm.org"
+            >ACM CHI 2024</a
+          >. You can read the paper
+          <a href="https://arxiv.org/abs/2402.06777v1">on arXiv</a>. The source
+          code for this page and the algorithm which mutates the music is
+          available
+          <a href="https://github.com/VADERASU/cancer_music">on Github</a>.
+        </p>
       </div>
     </div>
     <hr />
