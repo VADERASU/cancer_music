@@ -1,13 +1,9 @@
 [tool.poetry]
-name = "cancer_music"
+name = "cancer-music"
 version = "0.1.0"
 description = ""
 authors = ["Rostyslav Hnatyshyn <rostyslav.hnatyshyn@gmail.com>"]
 readme = "readme.md"
-packages = [
-    {include="api", from="src"}, 
-    {include="processor", from="src"}
-]
 
 [tool.poetry.scripts]
 mutate_sheet = 'processor.main:main'
