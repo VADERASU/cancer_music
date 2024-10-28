@@ -9,8 +9,8 @@ from datetime import datetime
 
 from music21 import converter
 
-from processor import process, utils
-from processor.parameters import Parameters, Therapy, TherapyParameters
+from cancer_music.processor import process, utils
+from cancer_music.processor.parameters import Parameters, Therapy, TherapyParameters
 
 
 def main():

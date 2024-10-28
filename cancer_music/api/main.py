@@ -21,9 +21,9 @@ from music21.musicxml.m21ToXml import GeneralObjectExporter
 from music21.stream.base import Score
 
 import api.utils as utils
-from processor.parameters import Parameters, Therapy, TherapyParameters
-from processor.process import mutate
-from processor.synth import PatchedSynth
+from cancer_music.processor.parameters import Parameters, Therapy, TherapyParameters
+from cancer_music.processor.process import mutate
+from cancer_music.processor.synth import PatchedSynth
 
 app = FastAPI()
 

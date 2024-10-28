@@ -9,8 +9,8 @@ from music21.note import GeneralNote, Rest
 from music21.stream.base import Measure, Part, Score, Stream
 from typeguard import typechecked
 
-from processor import utils
-from processor.parameters import Parameters, Therapy, TherapyParameters
+from cancer_music.processor import utils
+from cancer_music.processor.parameters import Parameters, Therapy, TherapyParameters
 
 MAX_SUBDIVISION_QUARTER_LENGTH = 0.125
 
